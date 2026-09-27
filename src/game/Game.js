@@ -4,9 +4,8 @@ import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { config } from '../config.js';
 import { createFrontYard } from '../environment/FrontYard.js';
 import { createLighting, createSky } from '../environment/lighting.js';
-import { DeckCutter } from '../lawn/DeckCutter.js';
-import { GrassField } from '../lawn/GrassField.js';
-import { GrassGrid } from '../lawn/GrassGrid.js';
+import { Lawn } from '../lawn/Lawn.js';
+import { PushMower } from '../mower/PushMower.js';
 import { Player } from '../player/Player.js';
 import { DebugOverlay } from '../ui/DebugOverlay.js';
 import { Hud } from '../ui/Hud.js';
@@ -35,23 +34,19 @@ export class Game {
     const { shadows } = createLighting(this.scene);
     createSky(this.scene);
     this.level = createFrontYard(this.scene, shadows);
-
-    const { lawn } = this.level;
-    this.grass = new GrassGrid({
-      ...lawn,
-      texelsPerMeter: config.grass.texelsPerMeter,
-      targetHeight: config.grass.cutHeight,
-    });
-    this.grass.fill(lawn.heightAt, lawn.densityAt);
-    this.grassField = new GrassField(this.scene, this.grass, lawn);
-    this.brush = {
-      cutter: new DeckCutter(this.grass),
-      from: { x: 0, z: 0, yaw: 0 },
-      active: false,
-    };
+    this.lawn = new Lawn(this.scene, this.level.lawn);
 
     this.player = new Player(this.scene, shadows, this.input, this.level.spawn);
     this.camera = new ThirdPersonCamera(this.scene, this.input, this.player, this.level.spawn.yaw);
+    this.mower = new PushMower(
+      this.scene,
+      shadows,
+      this.input,
+      this.player,
+      this.camera,
+      this.level.mowerSpot,
+    );
+    this.grassCut = 0; // grass cut this frame (see GrassGrid.cutDeck)
     this.audio = new AudioSystem();
     this.jobs = new JobList(this.level.jobs, config.job.completeAt);
     this.celebration = new Celebration(this.scene);
@@ -77,19 +72,22 @@ export class Game {
    * @param {number} dt Seconds since the previous frame.
    */
   update(dt) {
-    this.player.update(dt, this.camera.yaw); // move relative to where the camera looks
+    // Walk relative to where the camera looks, unless you're pushing the mower.
+    if (!this.mower.isHeld) this.player.update(dt, this.camera.yaw);
+    this.updateMowing(dt);
+    this.camera.isMowing = this.mower.isHeld;
     this.camera.update(dt); // follow the player to their new position
-    this.updateDebugBrush(dt);
-    this.grassField.update(); // send cut grass to the GPU
+    this.lawn.update(); // send cut grass to the GPU
     const job = this.jobs.currentJob;
-    job.update(dt, this.grass.progress, this.brush.active);
+    job.update(dt, this.lawn.progress, this.grassCut > 0);
     if (this.input.wasPressed(config.audio.muteKey)) this.audio.toggleMute();
     if (this.input.wasPressed(config.debug.tuningKey)) this.tuning.toggle();
     this.hud.update({
-      prompt: null,
+      prompt: this.mower.prompt,
+      hasMower: this.mower.everHeld,
       job: this.jobs.current,
       jobStatus: job.status,
-      progress: job.displayProgress(this.grass.progress),
+      progress: job.displayProgress(this.lawn.progress),
       elapsed: job.elapsed,
       nextJob: this.jobs.upcoming,
     });
@@ -97,20 +95,18 @@ export class Game {
   }
 
   /**
-   * Test brush until the mower arrives: hold C to cut a deck-sized strip at your feet.
+   * Moves the mower (and the player holding it), then cuts the grass under its path.
    *
    * @param {number} dt
    */
-  updateDebugBrush(dt) {
-    const { brush } = this;
-    const feet = this.grassField.toLocal(this.player.position.x, this.player.position.z);
-    const to = { ...feet, yaw: this.player.root.rotation.y };
-    brush.active = this.input.isPointerLocked && this.input.isDown(config.debug.cutKey);
-    if (brush.active) {
-      brush.cutter.update(dt, brush.from, to, config.mower.deck, config.grass.cutHeight);
+  updateMowing(dt) {
+    const from = this.mower.deckPose;
+    this.mower.update(dt);
+    if (this.mower.isCutting) {
+      this.grassCut = this.lawn.cut(dt, from, this.mower.deckPose);
     } else {
-      brush.cutter.lift();
+      this.grassCut = 0;
+      this.lawn.lift();
     }
-    brush.from = to;
   }
 }

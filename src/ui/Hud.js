@@ -4,12 +4,13 @@ import './hud.css';
 /**
  * @typedef {{
  *   prompt: string | null,
+ *   hasMower: boolean,
  *   job: import('../game/jobList.js').JobDefinition,
  *   jobStatus: 'waiting' | 'active' | 'complete',
  *   progress: number,
  *   elapsed: number,
  *   nextJob: import('../game/jobList.js').JobDefinition | null,
- * }} HudState progress is 0..1 for display; elapsed is seconds on the job; nextJob is the one
+ * }} HudState hasMower: the player has grabbed the mower at least once; progress is 0..1 for display; elapsed is seconds on the job; nextJob is the one
  *   after this (null if this is the last).
  */
 
@@ -59,6 +60,9 @@ export class Hud {
         <dt>Mouse</dt><dd>Look around</dd>
         <dt>WASD</dt><dd>Move</dd>
         <dt>Shift</dt><dd>Run</dd>
+        <dt>E</dt><dd>Grab the mower / let go</dd>
+        <dt>W / S</dt><dd>Push / pull the mower</dd>
+        <dt>Mouse or A / D</dt><dd>Steer the mower</dd>
         <dt>M</dt><dd>Mute / unmute</dd>
         <dt>T</dt><dd>Tuning panel</dd>
         <dt>Esc</dt><dd>Release the mouse</dd>
@@ -86,11 +90,14 @@ export class Hud {
     });
 
     const { job } = state;
-    const title = complete ? job.doneTitle : job.title;
+    let title = job.title;
+    if (!state.hasMower) title = 'Grab the mower';
+    else if (complete) title = job.doneTitle;
     this.set('title', title, () => {
       this.objectiveTitle.textContent = title;
     });
-    const hint = complete ? '' : (job.hint ?? '');
+    let hint = complete ? '' : (job.hint ?? '');
+    if (!state.hasMower) hint = "It's parked on the driveway";
     this.set('hint', hint, () => {
       this.objectiveHint.textContent = hint;
       this.objectiveHint.hidden = !hint;

@@ -117,6 +117,19 @@ export class Player {
     this.velocity = { x: 0, z: 0 };
   }
 
+  /**
+   * Puts the player at a spot on the ground without walking there (e.g. behind the mower).
+   *
+   * @param {number} x
+   * @param {number} z
+   * @param {number} yaw
+   */
+  placeAt(x, z, yaw) {
+    this.root.position.set(x, this.groundHeight, z);
+    this.root.rotation.y = yaw;
+    this.velocity = { x: 0, z: 0 };
+  }
+
   /** @param {number} opacity 0 (invisible) to 1 (solid). The shadow stays either way. */
   setOpacity(opacity) {
     for (const mesh of this.meshes) mesh.visibility = opacity;

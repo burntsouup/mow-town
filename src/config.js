@@ -22,7 +22,6 @@ export const config = {
     // KeyboardEvent.code that toggles the Babylon Inspector (the ` key, left of 1).
     inspectorKey: 'Backquote',
     tuningKey: 'KeyT', // toggles the live tuning panel
-    cutKey: 'KeyC', // hold to cut a mower-deck-sized strip at your feet (test brush)
   },
   camera: {
     fov: 1.0, // vertical field of view in radians (~57°)
@@ -41,6 +40,15 @@ export const config = {
     // When pushed in close, fade the player out so they don't fill the screen (meters).
     playerHiddenBelow: 0.7,
     playerSolidAbove: 1.4,
+    // While pushing the mower: further back and higher, so you can see the mower ahead, with
+    // the player see-through (the mower would otherwise hide right behind them).
+    mowing: {
+      distance: 4.6,
+      shoulderOffset: 0.9,
+      pivotHeight: 1.7,
+      pitch: 0.42,
+      playerOpacity: 0.45,
+    },
   },
   player: {
     height: 1.8,
@@ -64,6 +72,23 @@ export const config = {
     colors: { root: '#23391a', tip: '#8dbb4c', longTip: '#5f8f35' },
   },
   mower: {
+    // 'mouse': the mower turns toward where you look (A/D swing the view too).
+    // 'keys': A/D turn the mower, and the camera swings in behind it when the mouse is idle.
+    steering: 'mouse',
+    pushSpeed: 1.4, // m/s: a brisk walk behind a mower
+    pullSpeed: 0.8, // m/s when pulling it back
+    acceleration: 1.8, // m/s²: heavy, so it takes most of a second to get rolling
+    braking: 4, // m/s²: how quickly it stops when you stop pushing
+    turnSpeed: 1.5, // radians per second at full turn (~85°/s)
+    turnAcceleration: 6, // radians per second²: turning takes a moment to build up, too
+    mouseFullTurnAngle: 0.35, // mouse steering turns fully when this far (radians) off your view
+    cameraFollow: 2.5, // key steering: how quickly the camera swings in behind the mower
+    grabKey: 'KeyE',
+    grabRange: 1.6, // meters from the middle of the mower
+    grabTime: 0.25, // seconds to step into the handle
+    handleLength: 1.3, // meters from the middle of the deck to where you stand
+    colliderRadius: 0.32, // meters: the round collision shape around the deck
+    engineShake: 0.0025, // meters: how much the engine rattles the mower while running
     // The cutting area under the mower, in meters: a 21-inch deck, like a real push mower.
     deck: { width: 0.53, length: 0.45 },
   },
