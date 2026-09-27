@@ -76,6 +76,11 @@ export class TuningPanel {
       .onChange((/** @type {number} */ value) => (game.jobs.completeAt = value));
     job.close();
 
+    const effects = gui.addFolder('Effects');
+    effects.add(config.effects, 'clippingsPerCut', 0, 3000, 10).name('Clippings amount');
+    effects.add(config.effects, 'maxClippingsRate', 0, 3000, 10).name('Clippings max / s');
+    effects.close();
+
     const audio = gui.addFolder('Sound');
     const applyVolume = () => game.audio.applyVolume();
     audio.add(config.audio, 'master', 0, 1, 0.01).name('Master volume').onChange(applyVolume);

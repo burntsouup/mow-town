@@ -98,6 +98,11 @@ export const config = {
     // The cutting area under the mower, in meters: a 21-inch deck, like a real push mower.
     deck: { width: 0.53, length: 0.45 },
   },
+  effects: {
+    clippingsPerCut: 900, // clippings per second, per unit of grass cut per second
+    maxClippingsRate: 1200, // clippings per second, at most
+    clippingColors: ['#86b84a', '#5b8a30'], // each clipping is somewhere between these
+  },
   audio: {
     master: 0.7,
     chime: 0.22, // "job complete" jingle

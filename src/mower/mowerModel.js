@@ -168,5 +168,5 @@ export function createMowerModel(scene, shadows) {
     wheels.push(axle);
   }
 
-  return { root, chassis, wheels, parts };
+  return { root, chassis, chute, wheels, parts };
 }

@@ -1,7 +1,9 @@
 import { Engine, Scene } from '@babylonjs/core';
+import { smoothTowards } from '../audio/audioMix.js';
 import { AudioSystem } from '../audio/AudioSystem.js';
 import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { config } from '../config.js';
+import { Clippings } from '../effects/Clippings.js';
 import { createFrontYard } from '../environment/FrontYard.js';
 import { createLighting, createSky } from '../environment/lighting.js';
 import { Lawn } from '../lawn/Lawn.js';
@@ -48,6 +50,8 @@ export class Game {
       this.level.mowerSpot,
     );
     this.grassCut = 0; // grass cut this frame (see GrassGrid.cutDeck)
+    this.cutRate = 0; // grass cut per second, smoothed so effects don't flicker
+    this.clippings = new Clippings(this.scene, this.mower.model.chute);
     this.audio = new AudioSystem();
     this.jobs = new JobList(this.level.jobs, config.job.completeAt);
     this.celebration = new Celebration(this.scene);
@@ -111,5 +115,7 @@ export class Game {
       this.grassCut = 0;
       this.lawn.lift();
     }
+    if (dt > 0) this.cutRate = smoothTowards(this.cutRate, this.grassCut / dt, dt, 10);
+    this.clippings.update(this.cutRate);
   }
 }
