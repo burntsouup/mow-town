@@ -6,15 +6,14 @@ import { Job } from './job.js';
  * to the next. Pure logic, like Job.
  *
  * @typedef {{ id: string, name?: string, title: string, doneTitle: string, summary: string,
- *   hint?: string, unlocks?: string }} JobDefinition
- *   name for sentences ("the backyard"); title while working; doneTitle once finished;
- *   summary before the time ("Driveway cleaned in"); hint shown under the title; unlocks
- *   names something to open when the job starts.
+ *   hint?: string }} JobDefinition
+ *   name for sentences ("the front lawn"); title while working; doneTitle once finished;
+ *   summary before the time ("Front lawn mowed in"); hint shown under the title.
  */
 export class JobList {
   /**
    * @param {JobDefinition[]} definitions In the order they're played.
-   * @param {number} completeAt Fraction of dirt that counts as done (see Job).
+   * @param {number} completeAt Fraction of the work that counts as done (see Job).
    */
   constructor(definitions, completeAt) {
     if (definitions.length === 0) throw new Error('JobList needs at least one job');
@@ -59,7 +58,7 @@ export class JobList {
     return this.current;
   }
 
-  /** Makes the current job start over (its dirt is reset elsewhere). */
+  /** Makes the current job start over (its lawn is reset elsewhere). */
   redoCurrent() {
     this.currentJob.reset();
   }

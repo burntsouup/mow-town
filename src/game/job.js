@@ -1,14 +1,14 @@
 // @ts-check
 
 /**
- * The rules of a cleaning job. Pure logic: no rendering, no Babylon.
+ * The rules of a job. Pure logic: no rendering, no Babylon.
  *
- * - The job waits until you first spray, so the timer measures cleaning, not wandering.
- * - It's complete once `completeAt` of the dirt is gone (e.g. 98%), so you're not forced to
- *   hunt down the last few invisible specks. The game clears those with a flourish.
+ * - The job waits until you first start working, so the timer measures work, not wandering.
+ * - It's complete once `completeAt` of the work is done (e.g. 98%), so you're not forced to
+ *   hunt down the last few tufts. The game finishes those with a flourish.
  */
 export class Job {
-  /** @param {number} completeAt Fraction of dirt (0..1) that counts as done. */
+  /** @param {number} completeAt Fraction of the work (0..1) that counts as done. */
   constructor(completeAt) {
     this.completeAt = completeAt;
     this.reset();
@@ -17,7 +17,7 @@ export class Job {
   reset() {
     /** @type {'waiting' | 'active' | 'complete'} */
     this.status = 'waiting';
-    /** Seconds spent on the job, from the first spray until completion. */
+    /** Seconds spent on the job, from the first bit of work until completion. */
     this.elapsed = 0;
   }
 
@@ -28,7 +28,7 @@ export class Job {
   /**
    * Progress for display: reaches exactly 1 (100%) at the moment the job completes.
    *
-   * @param {number} progress Fraction of dirt cleaned, 0..1.
+   * @param {number} progress Fraction of the work done, 0..1.
    */
   displayProgress(progress) {
     if (this.isComplete) return 1;
@@ -37,13 +37,13 @@ export class Job {
 
   /**
    * @param {number} dt Seconds since the previous frame.
-   * @param {number} progress Fraction of dirt cleaned, 0..1.
-   * @param {boolean} isSpraying
+   * @param {number} progress Fraction of the work done, 0..1.
+   * @param {boolean} isWorking True while the player is doing the job's work (e.g. mowing).
    * @returns {'completed' | null} 'completed' on the one frame the job finishes.
    */
-  update(dt, progress, isSpraying) {
+  update(dt, progress, isWorking) {
     if (this.status === 'complete') return null;
-    if (this.status === 'waiting' && isSpraying) this.status = 'active';
+    if (this.status === 'waiting' && isWorking) this.status = 'active';
     if (this.status === 'active') this.elapsed += dt;
     if (progress >= this.completeAt) {
       this.status = 'complete';

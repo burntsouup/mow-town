@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  // Relative asset paths let the same build run on GitHub Pages (/p-washer/) and itch.io.
+  // Relative asset paths let the same build run on GitHub Pages (/mow-town/) and itch.io.
   base: './',
   build: {
     target: 'es2022',

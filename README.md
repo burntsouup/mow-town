@@ -1,14 +1,18 @@
-# p-washer
+# mow-town
 
-**▶ Play the latest build: https://burntsouup.github.io/p-washer/**
+**▶ Play the latest build: https://burntsouup.github.io/mow-town/**
 
-A small, satisfying 3D pressure-washing game. Walk up to something dirty, blast it clean,
-enjoy the before/after. Built with [Babylon.js](https://www.babylonjs.com/) and plain
+A small, satisfying 3D lawn-mowing game. Grab the mower, push it across a shaggy lawn, and
+watch the stripes appear. Built with [Babylon.js](https://www.babylonjs.com/) and plain
 JavaScript.
 
-**Status:** v0.2: two jobs, a driveway, then a fence and patio out back,
-with stubborn moss and a flat-fan spray you can turn. See [docs/ROADMAP.md](docs/ROADMAP.md) for
-what's done and next.
+**Status:** working toward v0.1, "Mowing feels satisfying". Right now you can walk around
+the front yard; the grass and the mower come next. See [docs/ROADMAP.md](docs/ROADMAP.md)
+for what's done and next.
+
+mow-town started as a copy of [p-washer](https://github.com/burntsouup/p-washer) v0.2.0 (a
+pressure-washing game), stripped down to its base systems: the game loop, input, camera,
+player movement, jobs, tuning panel, HUD, and synthesized audio.
 
 ## Controls (current)
 
@@ -18,12 +22,6 @@ what's done and next.
 | Mouse         | Look around                                    |
 | WASD / arrows | Move                                           |
 | Shift         | Run                                            |
-| E             | Pick up the pressure washer (when close)       |
-| Hold click    | Spray                                          |
-| Q             | Turn the fan of water (upright / flat)         |
-| Hold F        | Highlight the dirt that's left                 |
-| N             | Next job (after finishing one)                 |
-| R             | Redo the job (after finishing it)              |
 | M             | Mute / unmute                                  |
 | T             | Tuning panel (live sliders; "Copy changes")    |
 | Esc           | Release the mouse                              |
@@ -57,13 +55,13 @@ npm run dev      # opens http://localhost:5173 with live reload
 src/
   main.js              Entry point: creates the Game
   config.js            Every tunable number lives here
-  game/                Game loop, keyboard/mouse input, shared helpers
-  environment/         The level: layout (Backyard.js), lighting + sky, greybox kit, textures
+  game/                Game loop, keyboard/mouse input, jobs, tuning helpers
+  environment/         The level: layout (FrontYard.js), lighting + sky, greybox kit
   player/              The player character (movement.js is the tested, pure part)
   camera/              Third-person camera (cameraMath.js is the tested, pure part)
-  cleaning/            Dirt and wetness grids, patterns, the dirt shader, CleaningSystem
-  pressure-washer/     The machine, the spray gun, aiming, water beam and particles
   audio/               Synthesized sounds (audioMix.js is the tested, pure part)
+  effects/             Particle textures drawn in code
+  math/                Small pure helpers: seeded noise, rectangles
   ui/                  HTML overlay: HUD, prompts, "click to play", tuning panel
 docs/
   ROADMAP.md           Milestones and checklists (our plan)
@@ -75,8 +73,8 @@ files (no Babylon imports) with a `*.test.js` file next to them.
 
 ## How we work
 
-1. Branch off `main` for each roadmap step: `git switch -c m2-greybox`
-2. Commit small, working steps with short imperative messages ("Add driveway mesh")
+1. Branch off `main` for each roadmap milestone: `git switch -c m2-grass-spike`
+2. Commit small, working steps with short imperative messages ("Add grass shells")
 3. Push and open a pull request. CI runs lint, format check, tests, and build
 4. Squash-merge when green. `main` auto-deploys to GitHub Pages in about a minute
 5. Play the deployed build, write down what feels bad, repeat
