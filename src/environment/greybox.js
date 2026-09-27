@@ -118,7 +118,7 @@ export class Greybox {
   }
 
   /**
-   * Invisible wall that stops the player but not the camera or the spray.
+   * Invisible wall that stops the player but not the camera.
    *
    * @param {string} name
    * @param {{ size: number[], at: number[] }} options

@@ -4,8 +4,6 @@ import './hud.css';
 /**
  * @typedef {{
  *   prompt: string | null,
- *   hasWasher: boolean,
- *   fanVertical: boolean,
  *   job: import('../game/jobList.js').JobDefinition,
  *   jobStatus: 'waiting' | 'active' | 'complete',
  *   progress: number,
@@ -17,8 +15,8 @@ import './hud.css';
 
 /**
  * The HTML overlay players see:
- * - while playing: the job objective with a progress bar, a crosshair, interaction prompts,
- *   and a "Job complete!" card at the end
+ * - while playing: the job objective with a progress bar, interaction prompts, and a
+ *   "Job complete!" card at the end
  * - otherwise: a "click to play" card with the controls
  */
 export class Hud {
@@ -29,10 +27,6 @@ export class Hud {
   constructor(root, input) {
     this.input = input;
 
-    this.crosshair = element('div', 'crosshair');
-    // A thin bar through the crosshair shows which way the fan of water is turned.
-    this.fanIndicator = element('div', 'fan-indicator');
-    this.crosshair.append(this.fanIndicator);
     this.prompt = element('div', 'interaction-prompt');
 
     this.objective = element('div', 'objective');
@@ -59,24 +53,18 @@ export class Hud {
 
     this.playPrompt = element('div', 'play-prompt');
     this.playPrompt.innerHTML = `
-      <h1>p-washer</h1>
+      <h1>mow-town</h1>
       <p class="play-prompt-action">Click to play</p>
       <dl class="controls">
         <dt>Mouse</dt><dd>Look around</dd>
         <dt>WASD</dt><dd>Move</dd>
         <dt>Shift</dt><dd>Run</dd>
-        <dt>E</dt><dd>Pick up the pressure washer</dd>
-        <dt>Hold click</dt><dd>Spray</dd>
-        <dt>Q</dt><dd>Turn the fan of water (upright / flat)</dd>
-        <dt>Hold F</dt><dd>Highlight the dirt that's left</dd>
-        <dt>N</dt><dd>Next job (after finishing one)</dd>
-        <dt>R</dt><dd>Redo the job (after finishing it)</dd>
         <dt>M</dt><dd>Mute / unmute</dd>
         <dt>T</dt><dd>Tuning panel</dd>
         <dt>Esc</dt><dd>Release the mouse</dd>
       </dl>`;
 
-    root.append(this.objective, this.crosshair, this.prompt, this.completeCard, this.playPrompt);
+    root.append(this.objective, this.prompt, this.completeCard, this.playPrompt);
     /** What's currently on screen, so we only touch the page when something changes. */
     this.shown = /** @type {Record<string, unknown>} */ ({});
   }
@@ -87,14 +75,8 @@ export class Hud {
     const complete = state.jobStatus === 'complete';
 
     this.set('locked', locked, () => {
-      this.crosshair.hidden = !locked;
       this.playPrompt.hidden = locked;
       this.objective.hidden = !locked;
-    });
-
-    this.set('fan', state.hasWasher ? (state.fanVertical ? 'upright' : 'flat') : 'none', (fan) => {
-      this.fanIndicator.hidden = fan === 'none';
-      this.fanIndicator.classList.toggle('is-upright', fan === 'upright');
     });
 
     const promptText = locked ? state.prompt : null;
@@ -104,13 +86,11 @@ export class Hud {
     });
 
     const { job } = state;
-    let title = job.title;
-    if (!state.hasWasher) title = 'Pick up the pressure washer';
-    else if (complete) title = job.doneTitle;
+    const title = complete ? job.doneTitle : job.title;
     this.set('title', title, () => {
       this.objectiveTitle.textContent = title;
     });
-    const hint = state.hasWasher && !complete ? (job.hint ?? '') : '';
+    const hint = complete ? '' : (job.hint ?? '');
     this.set('hint', hint, () => {
       this.objectiveHint.textContent = hint;
       this.objectiveHint.hidden = !hint;

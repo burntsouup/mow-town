@@ -1,19 +1,11 @@
-import { createRandom } from '../cleaning/noise.js';
 import { config } from '../config.js';
-import { audioMix, smoothTowards } from './audioMix.js';
 
 /** How quickly volumes follow the game (seconds). Short enough to feel instant, long enough
  * to avoid clicks when a sound starts or stops. */
 const FADE_TIME = 0.04;
 
 /**
- * Pressure washer sounds, synthesized with the Web Audio API (no audio files needed yet).
- *
- * Four layers play continuously at zero volume, and `update()` fades each one up or down:
- * - hum: the engine (a low, buzzy oscillator with a slight wobble)
- * - hiss: water rushing out of the nozzle (high-pitched filtered noise)
- * - impact: water hitting a surface (lower, rumbly filtered noise)
- * - strip: dirt coming off (a gritty crackle that follows how much dirt is being removed)
+ * Game sounds, synthesized with the Web Audio API (no audio files needed yet).
  *
  * Browsers only allow audio after the player interacts with the page, so nothing is created
  * until the first click.
@@ -23,7 +15,6 @@ export class AudioSystem {
     /** @type {AudioContext | null} */
     this.context = null;
     this.muted = false;
-    this.dirtRate = 0; // smoothed, so the crackle doesn't flutter frame to frame
     window.addEventListener('pointerdown', () => this.start());
   }
 
@@ -41,20 +32,6 @@ export class AudioSystem {
     this.master = context.createGain();
     this.master.gain.value = this.muted ? 0 : config.audio.master;
     this.master.connect(compressor);
-
-    const random = createRandom(11);
-    const noise = createNoiseBuffer(context, random);
-    const crackle = createCrackleBuffer(context, random);
-
-    this.layers = {
-      hum: this.createHum(),
-      hiss: this.createNoiseLayer(noise, 0, [
-        { type: 'highpass', frequency: 1500 },
-        { type: 'peaking', frequency: 4200, Q: 0.9, gain: 5 },
-      ]),
-      impact: this.createNoiseLayer(noise, 0.7, [{ type: 'bandpass', frequency: 650, Q: 0.7 }]),
-      strip: this.createNoiseLayer(crackle, 0, [{ type: 'bandpass', frequency: 2800, Q: 0.8 }]),
-    };
   }
 
   toggleMute() {
@@ -69,105 +46,7 @@ export class AudioSystem {
     this.master.gain.setTargetAtTime(volume, this.context.currentTime, FADE_TIME);
   }
 
-  /**
-   * @param {number} dt Seconds since the previous frame.
-   * @param {import('../pressure-washer/PressureWasher.js').PressureWasher} washer
-   */
-  update(dt, washer) {
-    if (!this.context || !this.layers) return;
-    this.dirtRate = smoothTowards(this.dirtRate, washer.dirtRate, dt, 12);
-    const volumes = audioMix(
-      {
-        equipped: washer.isEquipped,
-        spraying: washer.isSpraying,
-        hitting: washer.isHitting,
-        strength: washer.sprayStrength,
-        dirtRate: this.dirtRate,
-      },
-      config.audio,
-    );
-    const now = this.context.currentTime;
-    for (const [name, gain] of Object.entries(this.layers)) {
-      gain.gain.setTargetAtTime(
-        volumes[/** @type {keyof typeof volumes} */ (name)],
-        now,
-        FADE_TIME,
-      );
-    }
-    if (washer.justEquipped) this.playClunk();
-  }
-
-  /**
-   * A looping noise source through a chain of filters, into its own volume control.
-   *
-   * @param {AudioBuffer} buffer
-   * @param {number} offset Seconds into the buffer to start (so layers don't sound identical).
-   * @param {{ type: BiquadFilterType, frequency: number, Q?: number, gain?: number }[]} filters
-   */
-  createNoiseLayer(buffer, offset, filters) {
-    const context = /** @type {AudioContext} */ (this.context);
-    const source = context.createBufferSource();
-    source.buffer = buffer;
-    source.loop = true;
-    /** @type {AudioNode} */
-    let node = source;
-    for (const settings of filters) {
-      const filter = context.createBiquadFilter();
-      filter.type = settings.type;
-      filter.frequency.value = settings.frequency;
-      if (settings.Q !== undefined) filter.Q.value = settings.Q;
-      if (settings.gain !== undefined) filter.gain.value = settings.gain;
-      node.connect(filter);
-      node = filter;
-    }
-    const volume = context.createGain();
-    volume.gain.value = 0;
-    node.connect(volume);
-    volume.connect(/** @type {GainNode} */ (this.master));
-    source.start(0, offset);
-    return volume;
-  }
-
-  /** The engine: two buzzy oscillators, muffled, with a slight wobble like a real motor. */
-  createHum() {
-    const context = /** @type {AudioContext} */ (this.context);
-    // Chain: oscillators → muffle (low-pass filter) → wobble → volume → master.
-    const muffle = context.createBiquadFilter();
-    muffle.type = 'lowpass';
-    muffle.frequency.value = 260;
-    const wobble = context.createGain();
-    const volume = context.createGain();
-    volume.gain.value = 0;
-    muffle.connect(wobble);
-    wobble.connect(volume);
-    volume.connect(/** @type {GainNode} */ (this.master));
-
-    for (const [type, frequency, level] of /** @type {const} */ ([
-      ['sawtooth', 55, 1],
-      ['square', 110, 0.35],
-    ])) {
-      const oscillator = context.createOscillator();
-      oscillator.type = type;
-      oscillator.frequency.value = frequency;
-      const gain = context.createGain();
-      gain.gain.value = level;
-      oscillator.connect(gain);
-      gain.connect(muffle);
-      oscillator.start();
-    }
-
-    // A slow (7 Hz) oscillator nudges the wobble's volume between 0.85 and 1.15.
-    const wobbleSpeed = context.createOscillator();
-    wobbleSpeed.frequency.value = 7;
-    const wobbleDepth = context.createGain();
-    wobbleDepth.gain.value = 0.15;
-    wobbleSpeed.connect(wobbleDepth);
-    wobbleDepth.connect(wobble.gain);
-    wobbleSpeed.start();
-    return volume;
-  }
-
-  /** A short mechanical "clunk" for picking up the gun (or a gate unlatching). */
+  /** A short mechanical "clunk", e.g. grabbing a handle. */
   playClunk() {
     if (!this.context || !this.master) return; // audio hasn't started yet (no click so far)
     const context = this.context;
@@ -211,39 +90,4 @@ export class AudioSystem {
       }
     });
   }
-}
-
-/**
- * Two seconds of white noise: the raw material for water sounds.
- *
- * @param {AudioContext} context
- * @param {() => number} random
- */
-function createNoiseBuffer(context, random) {
-  const buffer = context.createBuffer(1, context.sampleRate * 2, context.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < data.length; i++) data[i] = random() * 2 - 1;
-  return buffer;
-}
-
-/**
- * Two seconds of random tiny clicks: sounds like grit being blasted off.
- *
- * @param {AudioContext} context
- * @param {() => number} random
- */
-function createCrackleBuffer(context, random) {
-  const buffer = context.createBuffer(1, context.sampleRate * 2, context.sampleRate);
-  const data = buffer.getChannelData(0);
-  let envelope = 0;
-  let loudness = 0;
-  for (let i = 0; i < data.length; i++) {
-    if (random() < 0.002) {
-      envelope = 1; // start a new click
-      loudness = 0.4 + random() * 0.6;
-    }
-    data[i] = (random() * 2 - 1) * envelope * loudness;
-    envelope *= 0.93; // each click dies away in about a millisecond
-  }
-  return buffer;
 }

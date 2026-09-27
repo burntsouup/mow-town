@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { formatDuration, Job } from './job.js';
 
 describe('Job', () => {
-  it('waits, without timing, until you first spray', () => {
+  it('waits, without timing, until you first start working', () => {
     const job = new Job(0.98);
     job.update(5, 0, false);
     expect(job.status).toBe('waiting');
@@ -12,14 +12,14 @@ describe('Job', () => {
     expect(job.elapsed).toBe(1);
   });
 
-  it('keeps timing between sprays once started', () => {
+  it('keeps timing between bursts of work once started', () => {
     const job = new Job(0.98);
     job.update(1, 0, true);
     job.update(2, 0.3, false);
     expect(job.elapsed).toBe(3);
   });
 
-  it('completes exactly once when enough dirt is gone', () => {
+  it('completes exactly once when enough of the work is done', () => {
     const job = new Job(0.98);
     job.update(1, 0.5, true);
     expect(job.update(1, 0.979, true)).toBeNull();

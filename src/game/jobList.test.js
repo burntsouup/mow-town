@@ -2,14 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { JobList } from './jobList.js';
 
 const definitions = [
-  { id: 'driveway', title: 'Clean the driveway', doneTitle: 'Driveway clean!', summary: 'x' },
-  {
-    id: 'backyard',
-    title: 'Clean the backyard',
-    doneTitle: 'Backyard clean!',
-    summary: 'y',
-    unlocks: 'gate',
-  },
+  { id: 'front', title: 'Mow the front lawn', doneTitle: 'Front lawn mowed!', summary: 'x' },
+  { id: 'backyard', title: 'Mow the backyard', doneTitle: 'Backyard mowed!', summary: 'y' },
 ];
 
 /** Plays the current job until it completes. */
@@ -21,7 +15,7 @@ function finish(list) {
 describe('JobList', () => {
   it('starts with the first job', () => {
     const list = new JobList(definitions, 0.98);
-    expect(list.current.id).toBe('driveway');
+    expect(list.current.id).toBe('front');
     expect(list.upcoming.id).toBe('backyard');
     expect(list.allComplete).toBe(false);
   });
@@ -29,7 +23,7 @@ describe('JobList', () => {
   it('only moves on once the current job is complete', () => {
     const list = new JobList(definitions, 0.98);
     expect(list.next()).toBeNull();
-    expect(list.current.id).toBe('driveway');
+    expect(list.current.id).toBe('front');
     finish(list);
     expect(list.next().id).toBe('backyard');
     expect(list.current.id).toBe('backyard');
@@ -62,7 +56,7 @@ describe('JobList', () => {
     list.next();
     finish(list);
     list.resetAll();
-    expect(list.current.id).toBe('driveway');
+    expect(list.current.id).toBe('front');
     expect(list.jobs.every((job) => job.status === 'waiting')).toBe(true);
   });
 

@@ -1,14 +1,14 @@
 import { Color4, ParticleSystem, Vector3 } from '@babylonjs/core';
-import { createDropletTexture } from '../pressure-washer/effectTextures.js';
+import { createSoftDotTexture } from '../effects/effectTextures.js';
 
 /**
- * The "job complete" sparkle: a burst of glinting particles rising gently off a surface.
+ * The "job complete" sparkle: a burst of glinting particles rising gently off a mesh.
  */
 export class Celebration {
   /** @param {import('@babylonjs/core').Scene} scene */
   constructor(scene) {
     const sparkles = new ParticleSystem('celebrationSparkles', 600, scene);
-    sparkles.particleTexture = createDropletTexture(scene);
+    sparkles.particleTexture = createSoftDotTexture(scene);
     sparkles.blendMode = ParticleSystem.BLENDMODE_ADD; // glowing highlights
     sparkles.updateSpeed = 1 / 60; // one update step per frame = real seconds
     sparkles.color1 = new Color4(1, 0.95, 0.75, 1);

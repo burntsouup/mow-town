@@ -57,7 +57,7 @@ export class Player {
     visor.material = matte('playerVisorMat', '#23272e', scene);
 
     for (const mesh of [body, visor]) {
-      mesh.isPickable = false; // the camera and (later) the spray should ignore the player
+      mesh.isPickable = false; // the camera's view checks should ignore the player
       shadows.addShadowCaster(mesh);
     }
     this.meshes = [body, visor];
@@ -71,9 +71,8 @@ export class Player {
   /**
    * @param {number} dt Seconds since the previous frame.
    * @param {number} cameraYaw Which way the camera faces, so W always means "away from me".
-   * @param {boolean} isSpraying While spraying, face where the camera aims and move slower.
    */
-  update(dt, cameraYaw, isSpraying) {
+  update(dt, cameraYaw) {
     const settings = config.player;
 
     // Only take movement input while the mouse is captured (i.e. while playing).
@@ -82,8 +81,7 @@ export class Player {
       : { x: 0, z: 0 };
     const direction = cameraRelativeMove(input, cameraYaw);
     const running = this.input.isDown('ShiftLeft') || this.input.isDown('ShiftRight');
-    const speedFactor = isSpraying ? settings.sprayingSpeedFactor : 1;
-    const topSpeed = (running ? settings.runSpeed : settings.walkSpeed) * speedFactor;
+    const topSpeed = running ? settings.runSpeed : settings.walkSpeed;
     const isMoving = input.x !== 0 || input.z !== 0;
 
     // Accelerate toward the target velocity (or brake toward zero with no input).
@@ -97,15 +95,8 @@ export class Player {
     // stops round props (like bushes) from nudging the player upward.
     this.root.position.y = this.groundHeight;
 
-    // Face where you're spraying, or else the direction you're walking.
-    if (isSpraying) {
-      this.root.rotation.y = turnTowards(
-        this.root.rotation.y,
-        cameraYaw,
-        settings.aimTurnSpeed,
-        dt,
-      );
-    } else if (isMoving) {
+    // Face the direction you're walking.
+    if (isMoving) {
       this.root.rotation.y = turnTowards(
         this.root.rotation.y,
         yawFromDirection(direction),
