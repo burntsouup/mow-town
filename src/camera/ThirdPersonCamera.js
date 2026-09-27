@@ -55,7 +55,7 @@ export class ThirdPersonCamera {
   update(dt) {
     const settings = config.camera;
 
-    if (this.input.isPointerLocked) {
+    if (this.input.isPointerLocked && !this.input.blocked) {
       const { dx, dy } = this.input.mouseDelta;
       ({ yaw: this.yaw, pitch: this.pitch } = applyMouseLook(
         this.yaw,

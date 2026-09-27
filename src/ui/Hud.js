@@ -10,6 +10,7 @@ import './hud.css';
  *   progress: number,
  *   elapsed: number,
  *   nextJob: import('../game/jobList.js').JobDefinition | null,
+ *   revealing: boolean,
  * }} HudState hasMower: the player has grabbed the mower at least once; progress is 0..1 for display; elapsed is seconds on the job; nextJob is the one
  *   after this (null if this is the last).
  */
@@ -64,6 +65,7 @@ export class Hud {
         <dt>W / S</dt><dd>Push / pull the mower</dd>
         <dt>Mouse or A / D</dt><dd>Steer the mower</dd>
         <dt>Hold F</dt><dd>Highlight the grass that's left</dd>
+        <dt>V</dt><dd>View the lawn from above</dd>
         <dt>R</dt><dd>Mow it again (once it's done)</dd>
         <dt>M</dt><dd>Mute / unmute</dd>
         <dt>T</dt><dd>Tuning panel</dd>
@@ -113,11 +115,15 @@ export class Hud {
       this.objective.classList.toggle('is-complete', complete);
     });
 
+    this.set('revealing', state.revealing, () => {
+      this.completeCard.classList.toggle('is-revealing', state.revealing);
+    });
+
     this.set('complete', locked && complete ? job.id : null, (shownJob) => {
       this.completeCard.hidden = !shownJob;
       if (!shownJob) return;
       const next = state.nextJob;
-      this.completeTitle.textContent = next ? 'Job complete!' : 'All jobs done!';
+      this.completeTitle.textContent = next ? 'Job complete!' : 'Nice stripes!';
       this.jobSummary.textContent = job.summary;
       this.jobTime.textContent = formatDuration(state.elapsed);
       this.completeHint.textContent = next

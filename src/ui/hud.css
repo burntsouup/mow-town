@@ -79,6 +79,11 @@
   animation: pop-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
 
+.job-complete.is-revealing {
+  top: auto;
+  bottom: 8%; /* out of the way of the aerial view */
+}
+
 .job-complete h2 {
   margin: 0 0 6px;
   font-size: 32px;

@@ -17,6 +17,10 @@ export class Input {
     /** Mouse movement in pixels since the previous frame. */
     this.mouseDelta = { dx: 0, dy: 0 };
     this.isPointerLocked = false;
+    /** While true (e.g. during a cutscene), the game ignores keys, buttons and mouse look. */
+    this.blocked = false;
+    /** Whether any key or mouse button went down this frame, even while blocked. */
+    this.anyPressed = false;
 
     canvas.addEventListener('click', () => {
       if (!this.isPointerLocked) this.lockPointer();
@@ -32,12 +36,14 @@ export class Input {
     });
     canvas.addEventListener('mousedown', (event) => {
       if (this.isPointerLocked) this.mouseButtons.add(event.button);
+      this.anyPressed = true;
     });
     window.addEventListener('mouseup', (event) => this.mouseButtons.delete(event.button));
     window.addEventListener('keydown', (event) => {
       if (event.repeat) return;
       this.keysDown.add(event.code);
       this.keysPressed.add(event.code);
+      this.anyPressed = true;
     });
     window.addEventListener('keyup', (event) => this.keysDown.delete(event.code));
     // Switching windows mid-keypress would otherwise leave keys "stuck" down.
@@ -46,17 +52,17 @@ export class Input {
 
   /** @param {string} code KeyboardEvent.code, e.g. 'KeyW'. */
   isDown(code) {
-    return this.keysDown.has(code);
+    return !this.blocked && this.keysDown.has(code);
   }
 
   /** @param {string} code True only on the frame the key went down. */
   wasPressed(code) {
-    return this.keysPressed.has(code);
+    return !this.blocked && this.keysPressed.has(code);
   }
 
   /** @param {number} button 0 = left, 2 = right. */
   isMouseDown(button = 0) {
-    return this.mouseButtons.has(button);
+    return !this.blocked && this.mouseButtons.has(button);
   }
 
   async lockPointer() {
@@ -84,5 +90,6 @@ export class Input {
     this.mouseDelta.dx = 0;
     this.mouseDelta.dy = 0;
     this.keysPressed.clear();
+    this.anyPressed = false;
   }
 }

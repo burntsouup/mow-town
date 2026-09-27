@@ -1,6 +1,7 @@
 import { Engine, Scene } from '@babylonjs/core';
 import { smoothTowards } from '../audio/audioMix.js';
 import { AudioSystem } from '../audio/AudioSystem.js';
+import { RevealCamera } from '../camera/RevealCamera.js';
 import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { config } from '../config.js';
 import { Clippings } from '../effects/Clippings.js';
@@ -49,6 +50,8 @@ export class Game {
       this.camera,
       this.level.mowerSpot,
     );
+    const [centerX, centerZ] = this.level.lawn.center;
+    this.reveal = new RevealCamera(this.scene, this.camera, { x: centerX, z: centerZ });
     this.grassCut = 0; // grass cut this frame (see GrassGrid.cutDeck)
     this.cutRate = 0; // grass cut per second, smoothed so effects don't flicker
     this.clippings = new Clippings(this.scene, this.mower.model.chute);
@@ -84,6 +87,7 @@ export class Game {
     this.updateMowing(dt);
     this.camera.isMowing = this.mower.isHeld;
     this.camera.update(dt); // follow the player to their new position
+    this.updateReveal(dt);
     this.updateJob(dt);
     this.lawn.update(dt); // finish off leftovers and send cut grass to the GPU
     if (this.input.wasPressed(config.audio.muteKey)) this.audio.toggleMute();
@@ -103,8 +107,27 @@ export class Game {
       progress: job.displayProgress(this.lawn.progress),
       elapsed: job.elapsed,
       nextJob: this.jobs.upcoming,
+      revealing: this.reveal.isActive,
     });
     this.debugOverlay.update(dt);
+  }
+
+  /**
+   * The aerial view: V plays it any time. While it plays, the controls are paused; any key
+   * or click (after a moment) cuts it short.
+   *
+   * @param {number} dt
+   */
+  updateReveal(dt) {
+    const { reveal, input } = this;
+    if (!reveal.isActive && input.isPointerLocked && input.wasPressed(config.job.revealKey)) {
+      reveal.start();
+    }
+    if (reveal.isActive && reveal.time > config.job.reveal.skipAfter && input.anyPressed) {
+      reveal.skip();
+    }
+    reveal.update(dt);
+    input.blocked = reveal.isActive;
   }
 
   /**
@@ -120,6 +143,7 @@ export class Game {
       this.lawn.finish(); // leftover tufts shrink away
       this.celebration.play(this.lawn.field.mesh);
       this.audio.playChime();
+      this.reveal.start(); // and fly up to show off the stripes
     }
 
     // Hold the key to make uncut grass glow, pulsing gently so it catches the eye.
