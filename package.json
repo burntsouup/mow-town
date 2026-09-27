@@ -1,8 +1,8 @@
 {
-  "name": "p-washer",
-  "version": "0.2.0",
+  "name": "mow-town",
+  "version": "0.0.0",
   "private": true,
-  "description": "A small, satisfying 3D pressure-washing game.",
+  "description": "A small, satisfying 3D lawn-mowing game.",
   "license": "MIT",
   "type": "module",
   "engines": {
