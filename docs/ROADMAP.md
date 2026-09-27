@@ -34,13 +34,14 @@ per frame with 24 shells and ~2.6 ms with 48; the game holds 60 fps. Cut grass r
 fades into a solid carpet (by design, to avoid shimmer), so stripes will have to carry the
 look at a distance.
 
-### 3. GrassGrid core (pure JS, test-first)
+### 3. GrassGrid core (pure JS, test-first) ✅
 
-- [ ] Grass height per texel
-- [ ] The mower deck's footprint cuts along its path (stroke interpolation, no gaps at speed)
-- [ ] A mow-direction channel, for stripes
-- [ ] Weighted progress and changed rectangles (partial texture uploads)
-- [ ] Cutting runs in fixed 60 Hz steps (deterministic, ready for multiplayer later)
+- [x] Grass height per texel (plus a lawn mask and a density, for thick patches)
+- [x] The mower deck's footprint cuts along its path (stroke interpolation, no gaps at speed)
+- [x] A mow-direction channel, for stripes
+- [x] Weighted progress and changed rectangles (partial texture uploads)
+- [x] Cutting runs in fixed 60 Hz steps (deterministic, ready for multiplayer later)
+- [x] The HUD shows mowing progress; the job timer starts with the first cut
 
 ### 4. Push mower
 

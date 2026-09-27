@@ -7,7 +7,8 @@ watch the stripes appear. Built with [Babylon.js](https://www.babylonjs.com/) an
 JavaScript.
 
 **Status:** working toward v0.1, "Mowing feels satisfying". Right now you can walk around
-the front yard on real-looking grass and cut it with a test brush; the mower comes next. See [docs/ROADMAP.md](docs/ROADMAP.md)
+the front yard on real-looking grass and cut it with a test brush, and the HUD tracks your
+progress; the mower comes next. See [docs/ROADMAP.md](docs/ROADMAP.md)
 for what's done and next.
 
 mow-town started as a copy of [p-washer](https://github.com/burntsouup/p-washer) v0.2.0 (a
@@ -22,7 +23,7 @@ player movement, jobs, tuning panel, HUD, and synthesized audio.
 | Mouse         | Look around                                    |
 | WASD / arrows | Move                                           |
 | Shift         | Run                                            |
-| Hold C        | Cut the grass at your feet (test brush)        |
+| Hold C        | Cut a mower-wide strip at your feet (test)     |
 | M             | Mute / unmute                                  |
 | T             | Tuning panel (live sliders; "Copy changes")    |
 | Esc           | Release the mouse                              |
@@ -60,7 +61,7 @@ src/
   environment/         The level: layout (FrontYard.js), lighting + sky, greybox kit
   player/              The player character (movement.js is the tested, pure part)
   camera/              Third-person camera (cameraMath.js is the tested, pure part)
-  lawn/                The grass: GrassGrid (tested, pure heights) and the shell renderer
+  lawn/                The grass: GrassGrid + DeckCutter (tested, pure) and the renderer
   audio/               Synthesized sounds (audioMix.js is the tested, pure part)
   effects/             Particle textures drawn in code
   math/                Small pure helpers: seeded noise, rectangles
