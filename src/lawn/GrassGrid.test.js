@@ -130,6 +130,30 @@ describe('GrassGrid.cutDeck', () => {
   });
 });
 
+describe('GrassGrid.workAhead', () => {
+  it('is 1 in front of full, normal grass and 0 in front of cut grass', () => {
+    const grid = lawn({ depth: 4 });
+    expect(grid.workAhead({ x: 1, z: 1, yaw: 0 }, DECK, CUT)).toBeCloseTo(1);
+    grid.cutStroke({ x: 1, z: 1, yaw: 0 }, { x: 1, z: 3, yaw: 0 }, DECK, CUT);
+    expect(grid.workAhead({ x: 1, z: 1, yaw: 0 }, DECK, CUT)).toBeCloseTo(0);
+  });
+
+  it('only looks ahead of the deck, not under it', () => {
+    const grid = lawn({ heightAt: (x, z) => (z < 1.15 ? CUT : 1) }); // tall grass from 1.15 m
+    expect(grid.workAhead({ x: 1, z: 0.9, yaw: 0 }, DECK, CUT)).toBeCloseTo(0); // front at 1.0
+    expect(grid.workAhead({ x: 1, z: 1.05, yaw: 0 }, DECK, CUT)).toBeGreaterThan(0.9);
+    // Facing the other way, the tall grass is behind.
+    expect(grid.workAhead({ x: 1, z: 1.05, yaw: Math.PI }, DECK, CUT)).toBeCloseTo(0);
+  });
+
+  it('is more in thick grass, and nothing off the lawn', () => {
+    expect(lawn({ densityAt: () => 2 }).workAhead({ x: 1, z: 1, yaw: 0 }, DECK, CUT)).toBeCloseTo(
+      2,
+    );
+    expect(lawn().workAhead({ x: -3, z: -3, yaw: 0 }, DECK, CUT)).toBe(0);
+  });
+});
+
 describe('GrassGrid.cutStroke', () => {
   it('leaves no gaps along a long, fast stroke', () => {
     const grid = lawn({ width: 1, depth: 4 });
@@ -243,7 +267,18 @@ describe('GrassGrid.writeTexels', () => {
     grid.mowX[0] = 1; // as if mowed heading +x
     const bytes = new Uint8Array(2 * 4);
     grid.writeTexels(bytes, { minX: 0, minY: 0, maxX: 1, maxY: 0 });
-    expect(Array.from(bytes)).toEqual([255, 255, 128, 255, 0, 128, 128, 0]);
+    expect(Array.from(bytes)).toEqual([255, 255, 128, 128, 0, 128, 128, 0]);
+  });
+
+  it('stores thicker grass as a higher alpha, up to MAX_DENSITY', () => {
+    const grid = new GrassGrid({ width: 0.3, depth: 0.1, texelsPerMeter: 10, targetHeight: CUT });
+    grid.fill(
+      () => 1,
+      (x) => (x < 0.1 ? 1 : x < 0.2 ? 2 : 9),
+    );
+    const bytes = new Uint8Array(3 * 4);
+    grid.writeTexels(bytes, { minX: 0, minY: 0, maxX: 2, maxY: 0 });
+    expect([bytes[3], bytes[7], bytes[11]]).toEqual([128, 192, 255]);
   });
 
   it('exposes the tolerance used to decide what counts as mowed', () => {

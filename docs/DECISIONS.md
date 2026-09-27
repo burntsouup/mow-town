@@ -188,3 +188,28 @@ camera swings in behind it once the mouse is idle for 0.6 s. The playtest decide
 (`CollisionsEpsilon`), which is how far a mower rolls in its first frames, so tiny moves are
 applied directly. Low obstacles don't stop an ellipsoid (it slides up and over them, then
 we pin it back to the ground), so blockers must be taller than half the moving shape.
+
+## 19. Stripes are shading, not geometry
+
+**Why:** Real lawn stripes come from blades bent the way the mower went: bent away from you,
+you see their shiny sides (lighter); bent toward you, you look into the shaded tips (darker).
+The grid already stores each texel's mow direction, so the grass shader brightens or darkens
+mowed grass by how much its direction points away from the camera (`config.grass.stripes`),
+and leans the blade tips that way (`mowLean`). Opposite rows become stripes that swap as you
+walk around them, for free. Looking straight down you can't tell which way blades lean, so
+the effect fades out there.
+**Thick grass** lives in the same texture: its alpha is 0 off the lawn and 128..255 for
+density 1..3. `GrassGrid.workAhead` measures the grass just in front of the deck (1 = full,
+normal grass) and the mower slows by `grassSlowdown` (15%) per unit, so long grass is a
+little heavier and thick patches noticeably so, with no feedback loop through speed.
+**Revisit when:** mowed grass should spring back (regrowth) or stripes should fade over time.
+
+## 20. The engine sound follows a simulated engine speed
+
+**Why:** A mower that bogs down in thick grass tells you the grass is thick before you see it.
+`engineSound` (pure, tested) keeps an engine speed (0..1): it spins up when you grab the
+handle, drops quickly under load (grass cut per second ÷ `fullLoadCutRate`), recovers more
+slowly, and winds down when you let go. The synth follows it: a sawtooth + square buzz,
+"chugging" at the firing rate (half the pitch) through a low-pass that opens as it revs,
+over a low rattle, plus a blade layer (band-passed noise and a crackle) that follows the
+load. Clippings use the same smoothed cut rate, so sound and particles agree.

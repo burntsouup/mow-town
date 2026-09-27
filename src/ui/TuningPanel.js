@@ -46,6 +46,7 @@ export class TuningPanel {
     mower.add(config.mower, 'braking', 0.5, 15, 0.1).name('Braking');
     mower.add(config.mower, 'turnSpeed', 0.3, 4, 0.05).name('Turn speed (rad/s)');
     mower.add(config.mower, 'turnAcceleration', 1, 30, 0.5).name('Turn acceleration');
+    mower.add(config.mower, 'grassSlowdown', 0, 0.5, 0.01).name('Slowdown in long grass');
     mower.add(config.mower, 'mouseFullTurnAngle', 0.05, 1, 0.01).name('Mouse steer softness');
     mower.add(config.mower, 'cameraFollow', 0, 8, 0.1).name('Camera follow (keys)');
 
@@ -61,6 +62,8 @@ export class TuningPanel {
     grass.add(config.grass, 'maxHeight', 0.03, 0.3, 0.005).name('Uncut height (m)');
     grass.add(config.grass, 'bladesPerMeter', 10, 150, 1).name('Blades per meter');
     grass.add(config.grass, 'bladeThickness', 0.1, 1.5, 0.05).name('Blade thickness');
+    grass.add(config.grass, 'stripes', 0, 0.6, 0.01).name('Stripe strength');
+    grass.add(config.grass, 'mowLean', 0, 1, 0.05).name('Mowed blade lean');
     grass.addColor(config.grass.colors, 'root').name('Root color');
     grass.addColor(config.grass.colors, 'tip').name('Tip color (cut)');
     grass.addColor(config.grass.colors, 'longTip').name('Tip color (long)');
@@ -73,9 +76,19 @@ export class TuningPanel {
       .onChange((/** @type {number} */ value) => (game.jobs.completeAt = value));
     job.close();
 
+    const effects = gui.addFolder('Effects');
+    effects.add(config.effects, 'clippingsPerCut', 0, 3000, 10).name('Clippings amount');
+    effects.add(config.effects, 'maxClippingsRate', 0, 3000, 10).name('Clippings max / s');
+    effects.close();
+
     const audio = gui.addFolder('Sound');
     const applyVolume = () => game.audio.applyVolume();
     audio.add(config.audio, 'master', 0, 1, 0.01).name('Master volume').onChange(applyVolume);
+    audio.add(config.audio, 'engineFrequency', 20, 120, 1).name('Engine pitch (Hz)');
+    audio.add(config.audio, 'engineIdle', 0, 0.5, 0.01).name('Engine (free)');
+    audio.add(config.audio, 'engineWorking', 0, 0.5, 0.01).name('Engine (working)');
+    audio.add(config.audio, 'cutting', 0, 0.6, 0.01).name('Blades cutting');
+    audio.add(config.audio, 'bogDepth', 0, 0.8, 0.01).name('Engine bogging');
     audio.add(config.audio, 'chime', 0, 0.5, 0.01).name('Job complete chime');
     audio.close();
 

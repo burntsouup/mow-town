@@ -58,12 +58,17 @@ roll never got going until tiny moves skipped the collision check. Low obstacles
 the player (Babylon slides them up and over, then their feet get pinned back down), so the
 parked mower's invisible blocker is 1.6 m tall.
 
-### 5. Juice
+### 5. Juice ✅
 
-- [ ] View-dependent stripes from the mow direction
-- [ ] Clippings particles
-- [ ] Engine sound with load and bogging
-- [ ] Thick grass slows the mower
+- [x] View-dependent stripes from the mow direction (mowed blades also lean that way)
+- [x] Clippings particles, thrown from the side chute in proportion to the grass cut
+- [x] Engine sound with load and bogging, plus a blade-cutting layer and clunks
+- [x] Thick grass slows the mower (a few seeded thick patches: taller, darker, chunkier)
+
+**Findings:** stripes read well even as a first pass, and flip light/dark as you walk around
+them. Thick patches look a bit like shadows from some angles; revisit their look after the
+playtest. Can't judge the engine sound headlessly beyond levels (RMS ~0.03 idle, ~0.05
+cutting, peaks under 0.2): the playtest decides.
 
 ### 6. Lawn job
 

@@ -69,6 +69,8 @@ export const config = {
     bladeThickness: 0.6, // blade radius at the root, relative to its cell
     uncutHeight: [0.7, 1], // starting height range, as fractions of maxHeight
     cutHeight: 0.3, // height after mowing, as a fraction of maxHeight (~3.5 cm)
+    stripes: 0.2, // how much lighter/darker mowed grass looks leaning away/toward you
+    mowLean: 0.35, // how far mowed blade tips lean the way the mower went (in blade widths)
     colors: { root: '#23391a', tip: '#8dbb4c', longTip: '#5f8f35' },
   },
   mower: {
@@ -81,6 +83,10 @@ export const config = {
     braking: 4, // m/s²: how quickly it stops when you stop pushing
     turnSpeed: 1.5, // radians per second at full turn (~85°/s)
     turnAcceleration: 6, // radians per second²: turning takes a moment to build up, too
+    // Long grass slows you down: speed × (1 - grassSlowdown × work), where work is 1 for
+    // full-length normal grass and up to ~2.5 in thick patches. Never below minSpeedFactor.
+    grassSlowdown: 0.15,
+    minSpeedFactor: 0.45,
     mouseFullTurnAngle: 0.35, // mouse steering turns fully when this far (radians) off your view
     cameraFollow: 2.5, // key steering: how quickly the camera swings in behind the mower
     grabKey: 'KeyE',
@@ -92,8 +98,25 @@ export const config = {
     // The cutting area under the mower, in meters: a 21-inch deck, like a real push mower.
     deck: { width: 0.53, length: 0.45 },
   },
+  effects: {
+    clippingsPerCut: 900, // clippings per second, per unit of grass cut per second
+    maxClippingsRate: 1200, // clippings per second, at most
+    clippingColors: ['#86b84a', '#5b8a30'], // each clipping is somewhere between these
+  },
   audio: {
     master: 0.7,
+    // The mower engine (see audio/audioMix.js). Volumes are 0..1.
+    engineFrequency: 52, // Hz: the engine's buzz at full speed
+    engineIdle: 0.12, // blades spinning freely
+    engineWorking: 0.2, // blades working hard
+    cutting: 0.22, // blades whipping through grass
+    fullLoadCutRate: 0.9, // grass cut per second that counts as full load (thick grass)
+    bogDepth: 0.35, // how far a full load drags the engine speed down (0..1)
+    // How quickly the engine speed follows: starting up, recovering, bogging, stopping.
+    spinUp: 2.5,
+    recover: 1.8,
+    bog: 5,
+    spinDown: 1.5,
     chime: 0.22, // "job complete" jingle
     muteKey: 'KeyM',
   },

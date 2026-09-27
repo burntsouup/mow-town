@@ -1,6 +1,6 @@
 import { MeshBuilder } from '@babylonjs/core';
 import { config } from '../config.js';
-import { createValueNoise, fractalNoise } from '../math/noise.js';
+import { createValueNoise, fractalNoise, smoothstep } from '../math/noise.js';
 import { Greybox } from './greybox.js';
 
 // Units are meters. +x = right (toward the garage), +z = away from the street, y = up.
@@ -91,19 +91,24 @@ function frontLawn() {
   const width = LAWN.right - LAWN.left;
   const depth = LAWN.back - LAWN.front;
   const noise = createValueNoise(21);
+  const thickNoise = createValueNoise(7);
   const [shortest, tallest] = config.grass.uncutHeight;
+  /** Thick, lush patches: 0 in most of the lawn, up to 1 in a few blobs. */
+  const thickness = (/** @type {number} */ x, /** @type {number} */ z) =>
+    smoothstep(0.64, 0.78, fractalNoise(thickNoise, x * 0.3, z * 0.3, 2));
   /** @param {number} x @param {number} z */
   const heightAt = (x, z) => {
     const worldX = LAWN.left + x;
     if (Math.abs(worldX - WALKWAY.centerX) < WALKWAY.width / 2) return 0;
-    return shortest + (tallest - shortest) * fractalNoise(noise, x * 0.6, z * 0.6, 3);
+    const height = shortest + (tallest - shortest) * fractalNoise(noise, x * 0.6, z * 0.6, 3);
+    return height + (tallest - height) * thickness(x, z); // thick grass grows tall
   };
   return {
     center: [(LAWN.left + LAWN.right) / 2, (LAWN.front + LAWN.back) / 2],
     width,
     depth,
     heightAt,
-    densityAt: () => 1,
+    densityAt: (/** @type {number} */ x, /** @type {number} */ z) => 1 + 1.5 * thickness(x, z),
   };
 }
 

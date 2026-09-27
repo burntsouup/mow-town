@@ -11,6 +11,8 @@ import { strokePoses } from './deckPose.js';
 
 /** Grass within this much of the target height counts as mowed. */
 export const MOWED_TOLERANCE = 0.02;
+/** Density that shows as the thickest-looking grass (the texture can't store more). */
+export const MAX_DENSITY = 3;
 /** Strokes stamp the deck at least this often, as a fraction of its smaller side. */
 const STAMP_SPACING = 0.5;
 /** ...and at least every this many radians while turning. */
@@ -122,13 +124,69 @@ export class GrassGrid {
    *   grass (so 1 m² of full grass cut to 0.3 gives 0.7).
    */
   cutDeck(pose, deck, cutTo) {
-    const t = this.texelsPerMeter;
     const cutHeight = Math.fround(cutTo); // heights are stored as 32-bit floats
     const forwardX = Math.sin(pose.yaw);
     const forwardZ = Math.cos(pose.yaw);
+    let cut = 0;
+    const rect = this.forEachTexelIn(pose, deck.width, deck.length, (i) => {
+      if (!this.mask[i]) return;
+      const height = this.height[i];
+      if (height > cutHeight) {
+        const wasMowed = this.isMowed(i);
+        cut += (height - cutHeight) * this.density[i];
+        this.height[i] = cutHeight;
+        if (!wasMowed && this.isMowed(i)) this.remainingWeight -= this.weight[i];
+      }
+      this.mowX[i] = forwardX;
+      this.mowZ[i] = forwardZ;
+    });
+    if (rect) this.markChanged(rect);
+    return cut / (this.texelsPerMeter * this.texelsPerMeter);
+  }
+
+  /**
+   * How hard the grass just in front of the deck is to push through: the average grass there
+   * above `cutTo`, times its density, where full-length, normal grass is 1 and short (or no)
+   * grass is 0. Thick patches go above 1.
+   *
+   * @param {DeckPose} pose
+   * @param {Deck} deck
+   * @param {number} cutTo
+   */
+  workAhead(pose, deck, cutTo) {
+    const strip = 0.1; // meters in front of the deck
+    const reach = deck.length / 2 + strip / 2;
+    const ahead = {
+      x: pose.x + Math.sin(pose.yaw) * reach,
+      z: pose.z + Math.cos(pose.yaw) * reach,
+      yaw: pose.yaw,
+    };
+    let work = 0;
+    let count = 0;
+    this.forEachTexelIn(ahead, deck.width, strip, (i) => {
+      count++;
+      if (this.mask[i]) work += Math.max(0, this.height[i] - cutTo) * this.density[i];
+    });
+    return count > 0 ? work / count / Math.max(1 - cutTo, 0.01) : 0;
+  }
+
+  /**
+   * Calls `visit` with the index of every texel whose center is inside a rectangle centered
+   * on the pose (width across its heading, length along it).
+   *
+   * @param {DeckPose} pose
+   * @param {number} width
+   * @param {number} length
+   * @param {(i: number) => void} visit
+   * @returns {Rect | null} The texels that were checked, or null if none (off the grid).
+   */
+  forEachTexelIn(pose, width, length, visit) {
+    const t = this.texelsPerMeter;
+    const forwardX = Math.sin(pose.yaw);
+    const forwardZ = Math.cos(pose.yaw);
     // "right" = (forwardZ, -forwardX)
-    const halfWidth = deck.width / 2;
-    const halfLength = deck.length / 2;
+    const halfWidth = width / 2;
+    const halfLength = length / 2;
     // How far the rotated rectangle reaches along x and z.
     const reachX = Math.abs(forwardZ) * halfWidth + Math.abs(forwardX) * halfLength;
     const reachZ = Math.abs(forwardX) * halfWidth + Math.abs(forwardZ) * halfLength;
@@ -137,31 +195,19 @@ export class GrassGrid {
     const maxX = Math.min(this.columns - 1, Math.floor((pose.x + reachX) * t - 0.5));
     const minY = Math.max(0, Math.ceil((pose.z - reachZ) * t - 0.5));
     const maxY = Math.min(this.rows - 1, Math.floor((pose.z + reachZ) * t - 0.5));
-    if (minX > maxX || minY > maxY) return 0;
-
-    let cut = 0;
+    if (minX > maxX || minY > maxY) return null;
     for (let row = minY; row <= maxY; row++) {
       const dz = (row + 0.5) / t - pose.z;
       for (let column = minX; column <= maxX; column++) {
         const dx = (column + 0.5) / t - pose.x;
         const along = dx * forwardX + dz * forwardZ;
         const side = dx * forwardZ - dz * forwardX;
-        if (Math.abs(along) > halfLength || Math.abs(side) > halfWidth) continue;
-        const i = row * this.columns + column;
-        if (!this.mask[i]) continue;
-        const height = this.height[i];
-        if (height > cutHeight) {
-          const wasMowed = this.isMowed(i);
-          cut += (height - cutHeight) * this.density[i];
-          this.height[i] = cutHeight;
-          if (!wasMowed && this.isMowed(i)) this.remainingWeight -= this.weight[i];
+        if (Math.abs(along) <= halfLength && Math.abs(side) <= halfWidth) {
+          visit(row * this.columns + column);
         }
-        this.mowX[i] = forwardX;
-        this.mowZ[i] = forwardZ;
       }
     }
-    this.markChanged({ minX, minY, maxX, maxY });
-    return cut / (t * t);
+    return { minX, minY, maxX, maxY };
   }
 
   /**
@@ -224,7 +270,7 @@ export class GrassGrid {
   /**
    * Packs a rectangle of the grid into RGBA bytes for the GPU, row by row: red = height,
    * green and blue = mowing direction x and z (mapped from -1..1 to 0..255, so 128 = none),
-   * alpha = lawn mask.
+   * alpha = 0 where there's no lawn, else 128 (normal density) up to 255 (MAX_DENSITY).
    *
    * @param {Uint8Array} target At least (rect width × height × 4) bytes.
    * @param {Rect} rect
@@ -238,7 +284,8 @@ export class GrassGrid {
         target[o++] = (this.height[i] * 255 + 0.5) | 0;
         target[o++] = ((this.mowX[i] * 0.5 + 0.5) * 255 + 0.5) | 0;
         target[o++] = ((this.mowZ[i] * 0.5 + 0.5) * 255 + 0.5) | 0;
-        target[o++] = this.mask[i] ? 255 : 0;
+        const thick = Math.min(1, Math.max(0, (this.density[i] - 1) / (MAX_DENSITY - 1)));
+        target[o++] = this.mask[i] ? (128 + thick * 127 + 0.5) | 0 : 0;
       }
     }
   }

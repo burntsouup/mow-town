@@ -7,8 +7,15 @@ import { config } from '../config.js';
  * every shell, the shader asks "is there a blade here, at this height?" and throws the pixel
  * away if not. Blades get thinner toward the tip, so the stack reads as pointy grass.
  *
- * The grass map texture says how tall the grass is at each spot (red) and where the lawn is
- * at all (alpha), so cutting the grass is just writing smaller numbers into it.
+ * The grass map texture says how tall the grass is at each spot (red), which way the mower
+ * was heading when it cut it (green and blue), and where the lawn is at all (alpha), so
+ * cutting the grass is just writing new numbers into it. Alpha also says how thick the
+ * grass is: thick patches have chunkier, darker blades.
+ *
+ * Stripes: mowing bends the blades the way the mower was heading. Grass bent away from you
+ * shows the shiny sides of its blades and looks lighter; bent toward you, you look into the
+ * shaded tips and it looks darker. So rows mowed in opposite directions look like stripes,
+ * and they swap light and dark when you walk around to the other side.
  *
  * It's a plugin for Babylon's standard material, so the grass keeps normal lighting,
  * shadows and fog.
@@ -60,13 +67,17 @@ export class GrassMaterialPlugin extends MaterialPluginBase {
         { name: 'grassRootColor', size: 3, type: 'vec3' },
         { name: 'grassTipColor', size: 3, type: 'vec3' },
         { name: 'grassLongTipColor', size: 3, type: 'vec3' },
+        { name: 'grassStripes', size: 1, type: 'float' },
+        { name: 'grassMowLean', size: 1, type: 'float' },
       ],
       fragment: `
         uniform vec2 grassBlades;
         uniform float grassThickness;
         uniform vec3 grassRootColor;
         uniform vec3 grassTipColor;
-        uniform vec3 grassLongTipColor;`,
+        uniform vec3 grassLongTipColor;
+        uniform float grassStripes;
+        uniform float grassMowLean;`,
     };
   }
 
@@ -85,6 +96,8 @@ export class GrassMaterialPlugin extends MaterialPluginBase {
     const blades = settings.bladesPerMeter;
     uniformBuffer.updateFloat2('grassBlades', this.size.width * blades, this.size.depth * blades);
     uniformBuffer.updateFloat('grassThickness', settings.bladeThickness);
+    uniformBuffer.updateFloat('grassStripes', settings.stripes);
+    uniformBuffer.updateFloat('grassMowLean', settings.mowLean);
     const { colors } = settings;
     uniformBuffer.updateColor3('grassRootColor', this.colors.root.fromHexString(colors.root));
     uniformBuffer.updateColor3('grassTipColor', this.colors.tip.fromHexString(colors.tip));
@@ -131,6 +144,9 @@ export class GrassMaterialPlugin extends MaterialPluginBase {
         #ifdef GRASSFIELD
           vec4 grassData = texture2D(grassMap, vMainUV1);
           float grassHeight = grassData.r; // 0..1 of the tallest grass
+          // Which way the mower was heading here: a unit vector, or about zero if never mowed.
+          vec2 mowDirection = grassData.gb * 2.0 - 1.0;
+          float grassThick = clamp(grassData.a * 2.0 - 1.0, 0.0, 1.0); // 0 normal .. 1 thickest
           // The lawn is divided into a grid of cells, one blade per cell.
           vec2 bladeCell = vMainUV1 * grassBlades;
           vec2 bladeId = floor(bladeCell);
@@ -142,15 +158,18 @@ export class GrassMaterialPlugin extends MaterialPluginBase {
           float bladeHeight = grassHeight * mix(0.6 + 0.4 * bladeRandom, 0.8, grassFar);
           // 0 at the root, 1 at the tip of this blade.
           float bladeAlong = clamp(vShellHeight / max(bladeHeight, 0.001), 0.0, 1.0);
-          if (grassData.a < 0.5) discard; // not lawn (a path, a flower bed)
+          if (grassData.a < 0.25) discard; // not lawn (a path, a flower bed)
           if (vShellHeight > 0.0) { // the bottom shell is solid ground
             if (vShellHeight > bladeHeight) discard;
             // Each blade sits somewhere near the middle of its cell and tapers to a point.
             vec2 bladeJitter = vec2(grassHash(bladeId + 17.0), grassHash(bladeId + 43.0)) - 0.5;
             // Long blades flop over a little, each its own way, so uncut grass looks messy.
             vec2 bladeLean = bladeJitter.yx * grassHeight * bladeAlong * bladeAlong;
-            vec2 bladeOffset = fract(bladeCell) - 0.5 - 0.5 * bladeJitter - bladeLean;
-            float bladeRadius = mix(grassThickness * (1.0 - bladeAlong), 2.0, grassFar);
+            // Mowed blades all lean the way the mower went.
+            vec2 mowLean = mowDirection * grassMowLean * bladeAlong;
+            vec2 bladeOffset = fract(bladeCell) - 0.5 - 0.5 * bladeJitter - bladeLean - mowLean;
+            float bladeRoot = grassThickness * (1.0 + 0.4 * grassThick);
+            float bladeRadius = mix(bladeRoot * (1.0 - bladeAlong), 2.0, grassFar);
             if (length(bladeOffset) > bladeRadius) discard;
           }
         #endif
@@ -160,9 +179,15 @@ export class GrassMaterialPlugin extends MaterialPluginBase {
         #ifdef GRASSFIELD
           // Long grass has darker, bluer tips; freshly cut grass is brighter.
           vec3 grassTip = mix(grassTipColor, grassLongTipColor, smoothstep(0.3, 0.6, grassHeight));
+          grassTip *= 1.0 - 0.4 * grassThick * smoothstep(0.3, 0.6, grassHeight); // lush, dark
           // Dark at the roots, where the blades shade each other, bright at the tips.
           vec3 grassColor = mix(grassRootColor, grassTip, pow(bladeAlong, 0.8));
           diffuseColor = grassColor * mix(0.8 + 0.4 * bladeRandom, 1.0, grassFar);
+          // Stripes: lighter where the grass leans away from the camera, darker toward it.
+          // Looking straight down, you can't tell which way blades lean, so fade out there.
+          vec2 lookAcross = -viewDirectionW.xz;
+          float leanAway = dot(mowDirection, lookAcross) / max(length(lookAcross), 0.3);
+          diffuseColor *= 1.0 + grassStripes * clamp(leanAway, -1.0, 1.0);
         #endif
       `,
     };

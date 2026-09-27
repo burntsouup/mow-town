@@ -101,6 +101,7 @@ export class PushMower {
   update(dt) {
     this.time += dt;
     this.bumped = false;
+    this.justGrabbed = false;
     const grabPressed = this.input.isPointerLocked && this.input.wasPressed(config.mower.grabKey);
     if (grabPressed) {
       if (this.state === 'parked' && this.isPlayerNear()) this.startGrab();
@@ -118,6 +119,7 @@ export class PushMower {
   startGrab() {
     this.state = 'grabbing';
     this.everHeld = true;
+    this.justGrabbed = true;
     this.grabProgress = 0;
     this.blocker.checkCollisions = false; // we're about to move through where it was
     const feet = this.player.position;
