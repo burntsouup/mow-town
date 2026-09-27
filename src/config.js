@@ -83,6 +83,10 @@ export const config = {
     braking: 4, // m/s²: how quickly it stops when you stop pushing
     turnSpeed: 1.5, // radians per second at full turn (~85°/s)
     turnAcceleration: 6, // radians per second²: turning takes a moment to build up, too
+    // Long grass slows you down: speed × (1 - grassSlowdown × work), where work is 1 for
+    // full-length normal grass and up to ~2.5 in thick patches. Never below minSpeedFactor.
+    grassSlowdown: 0.15,
+    minSpeedFactor: 0.45,
     mouseFullTurnAngle: 0.35, // mouse steering turns fully when this far (radians) off your view
     cameraFollow: 2.5, // key steering: how quickly the camera swings in behind the mower
     grabKey: 'KeyE',

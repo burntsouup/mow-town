@@ -57,6 +57,19 @@ export function steerTowards(yaw, targetYaw, fullTurnAngle) {
 }
 
 /**
+ * Long grass is harder to push through, and thick patches much harder.
+ *
+ * @param {number} work Grass ahead of the deck: 0 = already short, 1 = full-length normal
+ *   grass, more for thick patches (see GrassGrid.workAhead).
+ * @param {{ grassSlowdown: number, minSpeedFactor: number }} settings grassSlowdown is how
+ *   much speed each unit of work takes away.
+ * @returns {number} Speed factor for updateMotion, minSpeedFactor..1.
+ */
+export function grassSpeedFactor(work, settings) {
+  return clamp(1 - settings.grassSlowdown * Math.max(0, work), settings.minSpeedFactor, 1);
+}
+
+/**
  * Moves `value` toward `target` by at most `maxChange`.
  *
  * @param {number} value

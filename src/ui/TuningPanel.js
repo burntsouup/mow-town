@@ -46,6 +46,7 @@ export class TuningPanel {
     mower.add(config.mower, 'braking', 0.5, 15, 0.1).name('Braking');
     mower.add(config.mower, 'turnSpeed', 0.3, 4, 0.05).name('Turn speed (rad/s)');
     mower.add(config.mower, 'turnAcceleration', 1, 30, 0.5).name('Turn acceleration');
+    mower.add(config.mower, 'grassSlowdown', 0, 0.5, 0.01).name('Slowdown in long grass');
     mower.add(config.mower, 'mouseFullTurnAngle', 0.05, 1, 0.01).name('Mouse steer softness');
     mower.add(config.mower, 'cameraFollow', 0, 8, 0.1).name('Camera follow (keys)');
 

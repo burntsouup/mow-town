@@ -5,6 +5,7 @@ import { config } from '../config.js';
 import { createFrontYard } from '../environment/FrontYard.js';
 import { createLighting, createSky } from '../environment/lighting.js';
 import { Lawn } from '../lawn/Lawn.js';
+import { grassSpeedFactor } from '../mower/mowerMath.js';
 import { PushMower } from '../mower/PushMower.js';
 import { Player } from '../player/Player.js';
 import { DebugOverlay } from '../ui/DebugOverlay.js';
@@ -101,6 +102,8 @@ export class Game {
    */
   updateMowing(dt) {
     const from = this.mower.deckPose;
+    // Long and thick grass ahead of the deck slows the mower down.
+    this.mower.speedFactor = grassSpeedFactor(this.lawn.workAhead(from), config.mower);
     this.mower.update(dt);
     if (this.mower.isCutting) {
       this.grassCut = this.lawn.cut(dt, from, this.mower.deckPose);

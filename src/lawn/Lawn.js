@@ -49,6 +49,16 @@ export class Lawn {
     );
   }
 
+  /**
+   * How hard the grass just ahead of a deck is to push through (see GrassGrid.workAhead).
+   *
+   * @param {{ x: number, z: number, yaw: number }} pose World pose.
+   */
+  workAhead(pose) {
+    const local = { ...this.field.toLocal(pose.x, pose.z), yaw: pose.yaw };
+    return this.grid.workAhead(local, config.mower.deck, config.grass.cutHeight);
+  }
+
   /** The deck stopped cutting: the next cut starts a new stroke. */
   lift() {
     this.cutter.lift();

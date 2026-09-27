@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { steerTowards, updateMotion } from './mowerMath.js';
+import { grassSpeedFactor, steerTowards, updateMotion } from './mowerMath.js';
 
 const SETTINGS = {
   pushSpeed: 1.4,
@@ -93,5 +93,22 @@ describe('steerTowards', () => {
     }
     expect(yaw).toBeCloseTo(1.5, 2);
     expect(furthest).toBeLessThan(1.5 + 0.1);
+  });
+});
+
+describe('grassSpeedFactor', () => {
+  const settings = { grassSlowdown: 0.15, minSpeedFactor: 0.45 };
+
+  it('is full speed over short grass', () => {
+    expect(grassSpeedFactor(0, settings)).toBe(1);
+  });
+
+  it('slows a little in long grass and more in thick grass', () => {
+    expect(grassSpeedFactor(1, settings)).toBeCloseTo(0.85);
+    expect(grassSpeedFactor(2.5, settings)).toBeCloseTo(0.625);
+  });
+
+  it('never stops the mower dead', () => {
+    expect(grassSpeedFactor(100, settings)).toBe(0.45);
   });
 });
