@@ -61,6 +61,8 @@ export class TuningPanel {
     grass.add(config.grass, 'maxHeight', 0.03, 0.3, 0.005).name('Uncut height (m)');
     grass.add(config.grass, 'bladesPerMeter', 10, 150, 1).name('Blades per meter');
     grass.add(config.grass, 'bladeThickness', 0.1, 1.5, 0.05).name('Blade thickness');
+    grass.add(config.grass, 'stripes', 0, 0.6, 0.01).name('Stripe strength');
+    grass.add(config.grass, 'mowLean', 0, 1, 0.05).name('Mowed blade lean');
     grass.addColor(config.grass.colors, 'root').name('Root color');
     grass.addColor(config.grass.colors, 'tip').name('Tip color (cut)');
     grass.addColor(config.grass.colors, 'longTip').name('Tip color (long)');
