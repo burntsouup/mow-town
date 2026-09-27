@@ -1,4 +1,6 @@
 import { MeshBuilder } from '@babylonjs/core';
+import { config } from '../config.js';
+import { createValueNoise, fractalNoise } from '../math/noise.js';
 import { Greybox } from './greybox.js';
 
 // Units are meters. +x = right (toward the garage), +z = away from the street, y = up.
@@ -31,6 +33,14 @@ const SEAM_OVERLAP = 0.1;
 const HOUSE = { left: -8, right: 8, front: 1.5, back: 11.5, wallHeight: 3.2 };
 const DRIVEWAY = { width: 5, length: 10, centerX: 4.5 };
 const SIDEWALK = { front: -10, back: -8.5 };
+const WALKWAY = { centerX: -2, width: 1.2 };
+/** The mowable front lawn: between the sidewalk and the bushes, left of the driveway. */
+const LAWN = {
+  left: -12,
+  right: DRIVEWAY.centerX - DRIVEWAY.width / 2,
+  front: SIDEWALK.back,
+  back: 0,
+};
 
 /**
  * Builds the greybox level: a house with a front lawn, a driveway, the street, trees and a
@@ -68,7 +78,30 @@ export function createFrontYard(scene, shadows) {
     },
   ];
 
-  return { ground, spawn, jobs };
+  return { ground, spawn, jobs, lawn: frontLawn() };
+}
+
+/**
+ * Where the lawn is and how long the grass starts out. `heightAt` takes lawn-local meters
+ * (from the lawn's front-left corner) and returns 0 where there's no lawn.
+ */
+function frontLawn() {
+  const width = LAWN.right - LAWN.left;
+  const depth = LAWN.back - LAWN.front;
+  const noise = createValueNoise(21);
+  const [shortest, tallest] = config.grass.uncutHeight;
+  /** @param {number} x @param {number} z */
+  const heightAt = (x, z) => {
+    const worldX = LAWN.left + x;
+    if (Math.abs(worldX - WALKWAY.centerX) < WALKWAY.width / 2) return 0;
+    return shortest + (tallest - shortest) * fractalNoise(noise, x * 0.6, z * 0.6, 3);
+  };
+  return {
+    center: [(LAWN.left + LAWN.right) / 2, (LAWN.front + LAWN.back) / 2],
+    width,
+    depth,
+    heightAt,
+  };
 }
 
 /** @param {Greybox} kit */
@@ -137,8 +170,8 @@ function buildHouse(kit) {
   kit.block('windowRight', { size: [1.3, 1.2, 0.1], at: [0.2, 1, faceZ], color: COLORS.window });
 
   kit.flat('walkway', {
-    size: [1.2, HOUSE.front - SIDEWALK.back],
-    at: [-2, LAYER.paving, (HOUSE.front + SIDEWALK.back) / 2],
+    size: [WALKWAY.width, HOUSE.front - SIDEWALK.back],
+    at: [WALKWAY.centerX, LAYER.paving, (HOUSE.front + SIDEWALK.back) / 2],
     color: COLORS.concrete,
   });
 }

@@ -4,6 +4,8 @@ import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { config } from '../config.js';
 import { createFrontYard } from '../environment/FrontYard.js';
 import { createLighting, createSky } from '../environment/lighting.js';
+import { GrassField } from '../lawn/GrassField.js';
+import { GrassGrid } from '../lawn/GrassGrid.js';
 import { Player } from '../player/Player.js';
 import { DebugOverlay } from '../ui/DebugOverlay.js';
 import { Hud } from '../ui/Hud.js';
@@ -32,6 +34,11 @@ export class Game {
     const { shadows } = createLighting(this.scene);
     createSky(this.scene);
     this.level = createFrontYard(this.scene, shadows);
+
+    const { lawn } = this.level;
+    this.grass = new GrassGrid({ ...lawn, texelsPerMeter: config.grass.texelsPerMeter });
+    this.grass.fill(lawn.heightAt);
+    this.grassField = new GrassField(this.scene, this.grass, lawn);
 
     this.player = new Player(this.scene, shadows, this.input, this.level.spawn);
     this.camera = new ThirdPersonCamera(this.scene, this.input, this.player, this.level.spawn.yaw);
@@ -62,6 +69,8 @@ export class Game {
   update(dt) {
     this.player.update(dt, this.camera.yaw); // move relative to where the camera looks
     this.camera.update(dt); // follow the player to their new position
+    this.updateDebugBrush();
+    this.grassField.update(); // send cut grass to the GPU
     if (this.input.wasPressed(config.audio.muteKey)) this.audio.toggleMute();
     if (this.input.wasPressed(config.debug.tuningKey)) this.tuning.toggle();
     const job = this.jobs.currentJob;
@@ -74,5 +83,12 @@ export class Game {
       nextJob: this.jobs.upcoming,
     });
     this.debugOverlay.update(dt);
+  }
+
+  /** Rendering test: hold C to cut the grass around your feet. */
+  updateDebugBrush() {
+    if (!this.input.isPointerLocked || !this.input.isDown(config.debug.cutKey)) return;
+    const feet = this.grassField.toLocal(this.player.position.x, this.player.position.z);
+    this.grass.cutCircle(feet.x, feet.z, config.debug.cutRadius, config.grass.cutHeight);
   }
 }

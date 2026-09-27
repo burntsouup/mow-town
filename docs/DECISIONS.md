@@ -127,3 +127,23 @@ Traps that cost real time in p-washer and will matter again for the grass:
 - `Math.max(...bigArray)` overflows the stack; use a loop or `reduce`.
 - Validate layout parameters in texture helpers: a misnamed parameter silently produced `NaN`
   sizes and a blank texture.
+
+## 16. Grass is drawn with shell texturing
+
+**Why:** Mowing needs thousands of blades whose height changes wherever the deck passes.
+Shell texturing draws the lawn as a stack of flat layers (24 by default); a material plugin
+decides per pixel whether a blade passes through that layer, from a hashed random per blade
+cell and a grass-height texture. Blades taper toward the tip and long ones lean a little.
+Cutting is then just writing smaller heights into the texture (uploaded in changed
+rectangles), with no geometry changes at all. It's one draw call of 48 triangles, and the
+cost is pixels, not blades: ~2 ms per frame at Retina resolution on an M3.
+**Alternative:** instanced blade meshes look better from the side but need per-blade updates
+when cut and cost far more vertices for a full lawn. Kept as the fallback.
+**Details:** the shell mesh's local y runs 0..1 and is scaled to `config.grass.maxHeight`, so
+the shader reads each shell's height from `position.y`. The bottom shell is solid ground. Far
+away, blades are smaller than a pixel and would shimmer, so the shader fades them into a solid
+carpet at their average height (using `fwidth` on the blade cells).
+**Revisit if:** the lawn looks too flat at low camera angles (add more shells near the camera)
+or slower GPUs struggle (fewer shells, or render at a lower pixel ratio).
+**Gotchas:** Babylon's front faces are clockwise seen from the front; the first shell mesh
+wound counter-clockwise was invisible from above. Compute `fwidth` before any `discard`.

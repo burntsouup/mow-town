@@ -22,6 +22,8 @@ export const config = {
     // KeyboardEvent.code that toggles the Babylon Inspector (the ` key, left of 1).
     inspectorKey: 'Backquote',
     tuningKey: 'KeyT', // toggles the live tuning panel
+    cutKey: 'KeyC', // hold to cut the grass around your feet (rendering test brush)
+    cutRadius: 0.35, // meters
   },
   camera: {
     fov: 1.0, // vertical field of view in radians (~57°)
@@ -49,6 +51,18 @@ export const config = {
     acceleration: 30, // m/s²: reaches walking speed in ~0.1 s. Lower feels heavier.
     deceleration: 40, // m/s²: how hard you brake when letting go of the keys
     turnSpeed: 14, // how quickly the body turns to face the direction of travel
+  },
+  grass: {
+    // The grass is drawn as a stack of see-through layers ("shells"); see
+    // lawn/GrassMaterialPlugin.js. More shells = smoother blades, but slower to draw.
+    shellCount: 24,
+    maxHeight: 0.12, // meters: how tall the tallest uncut grass is
+    texelsPerMeter: 32, // detail of the grass-height map: ~3 cm per texel
+    bladesPerMeter: 50, // blade density: one blade per 2 cm cell
+    bladeThickness: 0.6, // blade radius at the root, relative to its cell
+    uncutHeight: [0.7, 1], // starting height range, as fractions of maxHeight
+    cutHeight: 0.3, // height after mowing, as a fraction of maxHeight (~3.5 cm)
+    colors: { root: '#23391a', tip: '#8dbb4c', longTip: '#5f8f35' },
   },
   audio: {
     master: 0.7,
