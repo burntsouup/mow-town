@@ -36,6 +36,16 @@ export class TuningPanel {
     camera.add(config.camera, 'shoulderOffset', -1.5, 1.5, 0.05).name('Shoulder offset');
     camera.add(config.camera, 'pivotHeight', 1, 2.5, 0.05).name('Height');
 
+    const grass = gui.addFolder('Grass');
+    grass.add(config.grass, 'shellCount', 4, 64, 1).name('Shells (layers)');
+    grass.add(config.grass, 'maxHeight', 0.03, 0.3, 0.005).name('Uncut height (m)');
+    grass.add(config.grass, 'bladesPerMeter', 10, 150, 1).name('Blades per meter');
+    grass.add(config.grass, 'bladeThickness', 0.1, 1.5, 0.05).name('Blade thickness');
+    grass.addColor(config.grass.colors, 'root').name('Root color');
+    grass.addColor(config.grass.colors, 'tip').name('Tip color (cut)');
+    grass.addColor(config.grass.colors, 'longTip').name('Tip color (long)');
+    grass.close();
+
     const job = gui.addFolder('Job');
     job
       .add(config.job, 'completeAt', 0.9, 1, 0.005)
