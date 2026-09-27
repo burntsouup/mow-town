@@ -36,6 +36,26 @@ export class TuningPanel {
     camera.add(config.camera, 'shoulderOffset', -1.5, 1.5, 0.05).name('Shoulder offset');
     camera.add(config.camera, 'pivotHeight', 1, 2.5, 0.05).name('Height');
 
+    const mower = gui.addFolder('Mower');
+    mower
+      .add(config.mower, 'steering', { 'Mouse (look to steer)': 'mouse', 'A / D keys': 'keys' })
+      .name('Steering');
+    mower.add(config.mower, 'pushSpeed', 0.5, 3, 0.05).name('Push speed (m/s)');
+    mower.add(config.mower, 'pullSpeed', 0.2, 2, 0.05).name('Pull speed (m/s)');
+    mower.add(config.mower, 'acceleration', 0.5, 10, 0.1).name('Acceleration');
+    mower.add(config.mower, 'braking', 0.5, 15, 0.1).name('Braking');
+    mower.add(config.mower, 'turnSpeed', 0.3, 4, 0.05).name('Turn speed (rad/s)');
+    mower.add(config.mower, 'turnAcceleration', 1, 30, 0.5).name('Turn acceleration');
+    mower.add(config.mower, 'mouseFullTurnAngle', 0.05, 1, 0.01).name('Mouse steer softness');
+    mower.add(config.mower, 'cameraFollow', 0, 8, 0.1).name('Camera follow (keys)');
+
+    const mowingView = camera.addFolder('While mowing');
+    mowingView.add(config.camera.mowing, 'distance', 2, 9, 0.1).name('Distance behind');
+    mowingView.add(config.camera.mowing, 'shoulderOffset', -2, 2, 0.05).name('Shoulder offset');
+    mowingView.add(config.camera.mowing, 'pivotHeight', 1, 3, 0.05).name('Height');
+    mowingView.add(config.camera.mowing, 'playerOpacity', 0, 1, 0.05).name('Player opacity');
+    mowingView.close();
+
     const grass = gui.addFolder('Grass');
     grass.add(config.grass, 'shellCount', 4, 64, 1).name('Shells (layers)');
     grass.add(config.grass, 'maxHeight', 0.03, 0.3, 0.005).name('Uncut height (m)');
