@@ -75,6 +75,7 @@ export class Game {
     // Walk relative to where the camera looks, unless you're pushing the mower.
     if (!this.mower.isHeld) this.player.update(dt, this.camera.yaw);
     this.updateMowing(dt);
+    this.camera.isMowing = this.mower.isHeld;
     this.camera.update(dt); // follow the player to their new position
     this.lawn.update(); // send cut grass to the GPU
     const job = this.jobs.currentJob;

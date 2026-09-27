@@ -31,6 +31,9 @@ export class ThirdPersonCamera {
     this.pitch = config.camera.initialPitch;
     // Current distance from the pivot. Infinity makes the first update snap into place.
     this.currentDistance = Number.POSITIVE_INFINITY;
+    /** Set while pushing the mower: the camera eases out to its mowing position. */
+    this.isMowing = false;
+    this.mowingBlend = 0; // 0 = walking view, 1 = mowing view
 
     this.babylonCamera = new FreeCamera('playerCamera', Vector3.Zero(), scene);
     this.babylonCamera.fov = config.camera.fov;
@@ -63,10 +66,23 @@ export class ThirdPersonCamera {
       ));
     }
 
-    this.pivot.copyFrom(this.target.position);
-    this.pivot.y += settings.pivotHeight;
+    // Blend smoothly between the walking and mowing views.
+    const mowingTarget = this.isMowing ? 1 : 0;
+    this.mowingBlend += (mowingTarget - this.mowingBlend) * (1 - Math.exp(-5 * dt));
+    const blend = this.mowingBlend;
+    const { mowing } = settings;
+    /** @param {number} walking @param {number} whileMowing */
+    const mix = (walking, whileMowing) => walking + (whileMowing - walking) * blend;
 
-    const offset = cameraOffset(this.yaw, this.pitch, settings.distance, settings.shoulderOffset);
+    this.pivot.copyFrom(this.target.position);
+    this.pivot.y += mix(settings.pivotHeight, mowing.pivotHeight);
+
+    const offset = cameraOffset(
+      this.yaw,
+      this.pitch,
+      mix(settings.distance, mowing.distance),
+      mix(settings.shoulderOffset, mowing.shoulderOffset),
+    );
     const fullDistance = Math.hypot(offset.x, offset.y, offset.z);
     this.direction.set(offset.x, offset.y, offset.z).scaleInPlace(1 / fullDistance);
 
@@ -89,12 +105,13 @@ export class ThirdPersonCamera {
     camera.position.y = Math.max(camera.position.y, settings.minHeight); // stay above the ground
     camera.rotation.set(this.pitch, this.yaw, 0);
 
-    this.target.setOpacity(
-      playerOpacityForDistance(
-        this.currentDistance,
-        settings.playerHiddenBelow,
-        settings.playerSolidAbove,
-      ),
+    // Fade the player out when the camera is squeezed in close, and partly while mowing so
+    // you can see the mower through them.
+    const closeOpacity = playerOpacityForDistance(
+      this.currentDistance,
+      settings.playerHiddenBelow,
+      settings.playerSolidAbove,
     );
+    this.target.setOpacity(Math.min(closeOpacity, mix(1, mowing.playerOpacity)));
   }
 }

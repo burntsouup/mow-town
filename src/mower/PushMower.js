@@ -153,9 +153,11 @@ export class PushMower {
     const t = this.grabProgress * this.grabProgress * (3 - 2 * this.grabProgress); // ease in-out
     const pose = lerpPose(this.grabFrom, this.handlePose(), t);
     this.player.placeAt(pose.x, pose.z, pose.yaw);
-    // Swing the camera in behind the mower.
+    // Swing the camera in behind the mower, looking down at it a little if it wasn't already.
     const from = this.grabFromCamera;
     this.camera.yaw = wrapAngle(from.yaw + wrapAngle(this.yaw - from.yaw) * t);
+    const pitch = Math.max(from.pitch, config.camera.mowing.pitch);
+    this.camera.pitch = from.pitch + (pitch - from.pitch) * t;
     if (this.grabProgress >= 1) this.state = 'held';
   }
 

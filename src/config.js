@@ -40,6 +40,15 @@ export const config = {
     // When pushed in close, fade the player out so they don't fill the screen (meters).
     playerHiddenBelow: 0.7,
     playerSolidAbove: 1.4,
+    // While pushing the mower: further back and higher, so you can see the mower ahead, with
+    // the player see-through (the mower would otherwise hide right behind them).
+    mowing: {
+      distance: 4.6,
+      shoulderOffset: 0.9,
+      pivotHeight: 1.7,
+      pitch: 0.42,
+      playerOpacity: 0.45,
+    },
   },
   player: {
     height: 1.8,
