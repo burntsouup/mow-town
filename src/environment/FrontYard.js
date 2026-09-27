@@ -65,6 +65,8 @@ export function createFrontYard(scene, shadows) {
 
   // Start at the street end of the driveway, facing the house (yaw 0 = toward +z).
   const spawn = { position: [DRIVEWAY.centerX, 0, SIDEWALK.back + 1], yaw: 0 };
+  // The mower waits on the driveway, pointing at the lawn (yaw -π/2 = toward -x).
+  const mowerSpot = { position: [DRIVEWAY.centerX - 1.3, 0, SIDEWALK.back + 3], yaw: -Math.PI / 2 };
 
   // The jobs, in order (see game/jobList.js).
   /** @type {import('../game/jobList.js').JobDefinition[]} */
@@ -78,7 +80,7 @@ export function createFrontYard(scene, shadows) {
     },
   ];
 
-  return { ground, spawn, jobs, lawn: frontLawn() };
+  return { ground, spawn, mowerSpot, jobs, lawn: frontLawn() };
 }
 
 /**
