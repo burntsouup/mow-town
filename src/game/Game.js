@@ -69,6 +69,7 @@ export class Game {
   update(dt) {
     this.player.update(dt, this.camera.yaw); // move relative to where the camera looks
     this.camera.update(dt); // follow the player to their new position
+    this.updateDebugBrush();
     this.grassField.update(); // send cut grass to the GPU
     if (this.input.wasPressed(config.audio.muteKey)) this.audio.toggleMute();
     if (this.input.wasPressed(config.debug.tuningKey)) this.tuning.toggle();
@@ -82,5 +83,12 @@ export class Game {
       nextJob: this.jobs.upcoming,
     });
     this.debugOverlay.update(dt);
+  }
+
+  /** Rendering test: hold C to cut the grass around your feet. */
+  updateDebugBrush() {
+    if (!this.input.isPointerLocked || !this.input.isDown(config.debug.cutKey)) return;
+    const feet = this.grassField.toLocal(this.player.position.x, this.player.position.z);
+    this.grass.cutCircle(feet.x, feet.z, config.debug.cutRadius, config.grass.cutHeight);
   }
 }

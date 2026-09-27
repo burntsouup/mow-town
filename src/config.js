@@ -22,6 +22,8 @@ export const config = {
     // KeyboardEvent.code that toggles the Babylon Inspector (the ` key, left of 1).
     inspectorKey: 'Backquote',
     tuningKey: 'KeyT', // toggles the live tuning panel
+    cutKey: 'KeyC', // hold to cut the grass around your feet (rendering test brush)
+    cutRadius: 0.35, // meters
   },
   camera: {
     fov: 1.0, // vertical field of view in radians (~57°)
