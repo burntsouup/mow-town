@@ -43,12 +43,20 @@ look at a distance.
 - [x] Cutting runs in fixed 60 Hz steps (deterministic, ready for multiplayer later)
 - [x] The HUD shows mowing progress; the job timer starts with the first cut
 
-### 4. Push mower
+### 4. Push mower ✅
 
-- [ ] `E` to grab and let go; heavy handling with momentum
-- [ ] The deck cuts the grass beneath it
-- [ ] Collisions with the house, trees and props
-- [ ] Two steering schemes, selectable in the tuning panel: mouse-steer vs `A`/`D` turn
+- [x] `E` to grab and let go; heavy handling with momentum
+- [x] The deck cuts the grass beneath it
+- [x] Collisions with the house, trees and props
+- [x] Two steering schemes, selectable in the tuning panel: mouse-steer vs `A`/`D` turn
+- [x] A mowing camera: further back and higher, with the player see-through
+
+**Findings:** right behind the player, the mower hid completely behind their body (the
+camera, player and mower line up, and no reasonable camera height fixes that), so the player
+fades to 45% while mowing. Babylon ignores collision moves under 1 mm, so a mower starting to
+roll never got going until tiny moves skipped the collision check. Low obstacles don't stop
+the player (Babylon slides them up and over, then their feet get pinned back down), so the
+parked mower's invisible blocker is 1.6 m tall.
 
 ### 5. Juice
 

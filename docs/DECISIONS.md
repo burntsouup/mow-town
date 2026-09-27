@@ -166,3 +166,25 @@ within `MOWED_TOLERANCE` (0.02) of the target height.
 **Gotcha:** heights are stored as 32-bit floats, so `0.3` is stored as `0.30000001`, which is
 "taller than 0.3" and got cut again (by nothing) every frame. Compare against
 `Math.fround(cutTo)`.
+
+## 18. The push mower: one rigid unit, two steering schemes
+
+**Why:** Pushing should feel heavy but never fight you. `mowerMath.js` (pure, tested) gives
+speed and turning momentum: ~0.8 s to get rolling at 1.4 m/s, a short coast when you stop,
+slower pulling (0.8 m/s), and turning that builds up to ~85°/s. Turning swings the deck
+around your hands, so you stay put and the camera doesn't lurch.
+**Collisions:** the mower is a round puck (`moveWithCollisions`) around the deck, and the
+player holds it one handle-length behind. Pushing moves the deck first, then the player
+follows; pulling moves the player first. Whatever the deck hits soaks up speed, and the
+heading always follows the line from your hands to the deck, so pushing into a wall at an
+angle turns the mower to run alongside it instead of sticking.
+**Steering:** two schemes, picked in the tuning panel. _Mouse_ (default): the mower heads
+where you look, easing in so it doesn't overshoot; `A`/`D` swing the view too. It's the most
+direct, but you can't look around without steering. _Keys_: `A`/`D` turn the mower and the
+camera swings in behind it once the mouse is idle for 0.6 s. The playtest decides.
+**Camera:** while mowing, the camera eases further back and higher, and the player fades to
+45%, because the player's body otherwise hides the mower (see the roadmap findings).
+**Gotchas:** Babylon ignores `moveWithCollisions` moves shorter than 1 mm
+(`CollisionsEpsilon`), which is how far a mower rolls in its first frames, so tiny moves are
+applied directly. Low obstacles don't stop an ellipsoid (it slides up and over them, then
+we pin it back to the ground), so blockers must be taller than half the moving shape.

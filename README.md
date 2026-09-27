@@ -6,9 +6,9 @@ A small, satisfying 3D lawn-mowing game. Grab the mower, push it across a shaggy
 watch the stripes appear. Built with [Babylon.js](https://www.babylonjs.com/) and plain
 JavaScript.
 
-**Status:** working toward v0.1, "Mowing feels satisfying". Right now you can walk around
-the front yard on real-looking grass and cut it with a test brush, and the HUD tracks your
-progress; the mower comes next. See [docs/ROADMAP.md](docs/ROADMAP.md)
+**Status:** working toward v0.1, "Mowing feels satisfying". Right now you can grab the push
+mower on the driveway and mow the front lawn, and the HUD tracks your progress. Next: juice
+(stripes, clippings, engine sound), then the lawn job itself. See [docs/ROADMAP.md](docs/ROADMAP.md)
 for what's done and next.
 
 mow-town started as a copy of [p-washer](https://github.com/burntsouup/p-washer) v0.2.0 (a
@@ -17,17 +17,20 @@ player movement, jobs, tuning panel, HUD, and synthesized audio.
 
 ## Controls (current)
 
-| Input         | Action                                         |
-| ------------- | ---------------------------------------------- |
-| Click         | Capture the mouse and play                     |
-| Mouse         | Look around                                    |
-| WASD / arrows | Move                                           |
-| Shift         | Run                                            |
-| Hold C        | Cut a mower-wide strip at your feet (test)     |
-| M             | Mute / unmute                                  |
-| T             | Tuning panel (live sliders; "Copy changes")    |
-| Esc           | Release the mouse                              |
-| `` ` `` (key) | Toggle the Babylon Inspector (dev builds only) |
+| Input         | Action                                             |
+| ------------- | -------------------------------------------------- |
+| Click         | Capture the mouse and play                         |
+| Mouse         | Look around                                        |
+| WASD / arrows | Move                                               |
+| Shift         | Run                                                |
+| E             | Grab the mower / let go                            |
+| W / S         | Push / pull the mower                              |
+| Mouse         | Steer the mower (default: it heads where you look) |
+| A / D         | Steer the mower (with "A / D keys" steering)       |
+| M             | Mute / unmute                                      |
+| T             | Tuning panel (live sliders; "Copy changes")        |
+| Esc           | Release the mouse                                  |
+| `` ` `` (key) | Toggle the Babylon Inspector (dev builds only)     |
 
 **Dev tip:** in dev builds, type `game` in the browser console to inspect the running game,
 e.g. `game.scene.meshes` or `game.camera.yaw`.
@@ -62,6 +65,7 @@ src/
   player/              The player character (movement.js is the tested, pure part)
   camera/              Third-person camera (cameraMath.js is the tested, pure part)
   lawn/                The grass: GrassGrid + DeckCutter (tested, pure) and the renderer
+  mower/               The push mower (mowerMath.js is the tested, pure handling)
   audio/               Synthesized sounds (audioMix.js is the tested, pure part)
   effects/             Particle textures drawn in code
   math/                Small pure helpers: seeded noise, rectangles
