@@ -122,6 +122,9 @@ export const config = {
   },
   job: {
     completeAt: 0.98, // fraction of the lawn that counts as done; the rest is finished for you
+    finishFadeTime: 1.2, // seconds for the leftover tufts to shrink away once it's done
+    highlightKey: 'KeyF', // hold to highlight the grass that's left
+    highlightColor: '#ff3df2', // bright magenta: stands out against every green
     resetKey: 'KeyR', // after completion: redo the job (or, after the last one, start over)
     nextKey: 'KeyN', // after completion: move on to the next job
   },

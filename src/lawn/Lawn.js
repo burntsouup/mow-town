@@ -1,7 +1,7 @@
 import { config } from '../config.js';
 import { DeckCutter } from './DeckCutter.js';
 import { GrassField } from './GrassField.js';
-import { GrassGrid } from './GrassGrid.js';
+import { GrassGrid, MOWED_TOLERANCE } from './GrassGrid.js';
 
 /**
  * The mowable lawn: its grass data (GrassGrid), how it's drawn (GrassField), and the cutter
@@ -24,6 +24,26 @@ export class Lawn {
     this.grid.fill(area.heightAt, area.densityAt);
     this.field = new GrassField(scene, this.grid, area);
     this.cutter = new DeckCutter(this.grid);
+    // Anything taller than this in the grass map (half a byte of slack) still needs mowing.
+    this.field.plugin.uncutAbove = config.grass.cutHeight + MOWED_TOLERANCE + 0.5 / 255;
+    this.finishing = false;
+  }
+
+  /** @param {number} amount 0..1: how strongly to highlight grass that still needs mowing. */
+  setHighlight(amount) {
+    this.field.plugin.highlight = amount;
+  }
+
+  /** The job is done: over the next moment, whatever is left shrinks down as if mowed. */
+  finish() {
+    this.finishing = true;
+  }
+
+  /** Grows all the grass back, ready to mow again. */
+  reset() {
+    this.grid.reset();
+    this.cutter.lift();
+    this.finishing = false;
   }
 
   /** Fraction of the lawn mowed (weighted), 0..1. */
@@ -64,8 +84,15 @@ export class Lawn {
     this.cutter.lift();
   }
 
-  /** Call once per frame, after cutting: sends changed grass to the GPU. */
-  update() {
+  /**
+   * Call once per frame, after cutting: finishes off leftovers and sends changes to the GPU.
+   *
+   * @param {number} dt
+   */
+  update(dt) {
+    if (this.finishing) {
+      this.finishing = this.grid.shrinkRemaining(dt / config.job.finishFadeTime);
+    }
     this.field.update();
   }
 }

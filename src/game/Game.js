@@ -55,6 +55,8 @@ export class Game {
     this.audio = new AudioSystem();
     this.jobs = new JobList(this.level.jobs, config.job.completeAt);
     this.celebration = new Celebration(this.scene);
+    this.highlight = 0; // 0..1, eases in and out while the highlight key is held
+    this.time = 0;
     this.hud = new Hud(hudRoot, this.input);
     this.debugOverlay = new DebugOverlay(this.engine, this.scene, hudRoot);
     this.tuning = new TuningPanel(this);
@@ -82,9 +84,8 @@ export class Game {
     this.updateMowing(dt);
     this.camera.isMowing = this.mower.isHeld;
     this.camera.update(dt); // follow the player to their new position
-    this.lawn.update(); // send cut grass to the GPU
-    const job = this.jobs.currentJob;
-    job.update(dt, this.lawn.progress, this.grassCut > 0);
+    this.updateJob(dt);
+    this.lawn.update(dt); // finish off leftovers and send cut grass to the GPU
     if (this.input.wasPressed(config.audio.muteKey)) this.audio.toggleMute();
     this.audio.update(dt, {
       running: this.mower.isHeld,
@@ -93,6 +94,7 @@ export class Game {
       grabbed: this.mower.justGrabbed,
     });
     if (this.input.wasPressed(config.debug.tuningKey)) this.tuning.toggle();
+    const job = this.jobs.currentJob;
     this.hud.update({
       prompt: this.mower.prompt,
       hasMower: this.mower.everHeld,
@@ -103,6 +105,36 @@ export class Game {
       nextJob: this.jobs.upcoming,
     });
     this.debugOverlay.update(dt);
+  }
+
+  /**
+   * Progress, completion, the "show what's left" highlight, and mowing again.
+   *
+   * @param {number} dt
+   */
+  updateJob(dt) {
+    this.time += dt;
+    const job = this.jobs.currentJob;
+    const event = job.update(dt, this.lawn.progress, this.grassCut > 0);
+    if (event === 'completed') {
+      this.lawn.finish(); // leftover tufts shrink away
+      this.celebration.play(this.lawn.field.mesh);
+      this.audio.playChime();
+    }
+
+    // Hold the key to make uncut grass glow, pulsing gently so it catches the eye.
+    const held = this.input.isPointerLocked && this.input.isDown(config.job.highlightKey);
+    this.highlight = smoothTowards(this.highlight, held ? 1 : 0, dt, 12);
+    this.lawn.setHighlight(this.highlight * (0.75 + 0.25 * Math.sin(this.time * 6)));
+
+    if (!job.isComplete) return;
+    if (this.input.wasPressed(config.job.nextKey)) {
+      this.jobs.next();
+    } else if (this.input.wasPressed(config.job.resetKey)) {
+      if (this.jobs.allComplete) this.jobs.resetAll();
+      else this.jobs.redoCurrent();
+      this.lawn.reset(); // the grass grows back
+    }
   }
 
   /**

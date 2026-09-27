@@ -63,6 +63,8 @@ export class Hud {
         <dt>E</dt><dd>Grab the mower / let go</dd>
         <dt>W / S</dt><dd>Push / pull the mower</dd>
         <dt>Mouse or A / D</dt><dd>Steer the mower</dd>
+        <dt>Hold F</dt><dd>Highlight the grass that's left</dd>
+        <dt>R</dt><dd>Mow it again (once it's done)</dd>
         <dt>M</dt><dd>Mute / unmute</dd>
         <dt>T</dt><dd>Tuning panel</dd>
         <dt>Esc</dt><dd>Release the mouse</dd>
@@ -120,7 +122,7 @@ export class Hud {
       this.jobTime.textContent = formatDuration(state.elapsed);
       this.completeHint.textContent = next
         ? `Press N for the next job: ${next.name ?? next.title}. R to redo this one.`
-        : 'Press R to start over from the beginning.';
+        : 'Press R to mow it again.';
     });
   }
 
