@@ -86,6 +86,12 @@ export class Game {
     const job = this.jobs.currentJob;
     job.update(dt, this.lawn.progress, this.grassCut > 0);
     if (this.input.wasPressed(config.audio.muteKey)) this.audio.toggleMute();
+    this.audio.update(dt, {
+      running: this.mower.isHeld,
+      load: this.cutRate / config.audio.fullLoadCutRate,
+      bumped: this.mower.bumped,
+      grabbed: this.mower.justGrabbed,
+    });
     if (this.input.wasPressed(config.debug.tuningKey)) this.tuning.toggle();
     this.hud.update({
       prompt: this.mower.prompt,

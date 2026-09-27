@@ -105,6 +105,18 @@ export const config = {
   },
   audio: {
     master: 0.7,
+    // The mower engine (see audio/audioMix.js). Volumes are 0..1.
+    engineFrequency: 52, // Hz: the engine's buzz at full speed
+    engineIdle: 0.12, // blades spinning freely
+    engineWorking: 0.2, // blades working hard
+    cutting: 0.22, // blades whipping through grass
+    fullLoadCutRate: 0.9, // grass cut per second that counts as full load (thick grass)
+    bogDepth: 0.35, // how far a full load drags the engine speed down (0..1)
+    // How quickly the engine speed follows: starting up, recovering, bogging, stopping.
+    spinUp: 2.5,
+    recover: 1.8,
+    bog: 5,
+    spinDown: 1.5,
     chime: 0.22, // "job complete" jingle
     muteKey: 'KeyM',
   },

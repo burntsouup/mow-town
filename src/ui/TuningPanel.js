@@ -84,6 +84,11 @@ export class TuningPanel {
     const audio = gui.addFolder('Sound');
     const applyVolume = () => game.audio.applyVolume();
     audio.add(config.audio, 'master', 0, 1, 0.01).name('Master volume').onChange(applyVolume);
+    audio.add(config.audio, 'engineFrequency', 20, 120, 1).name('Engine pitch (Hz)');
+    audio.add(config.audio, 'engineIdle', 0, 0.5, 0.01).name('Engine (free)');
+    audio.add(config.audio, 'engineWorking', 0, 0.5, 0.01).name('Engine (working)');
+    audio.add(config.audio, 'cutting', 0, 0.6, 0.01).name('Blades cutting');
+    audio.add(config.audio, 'bogDepth', 0, 0.8, 0.01).name('Engine bogging');
     audio.add(config.audio, 'chime', 0, 0.5, 0.01).name('Job complete chime');
     audio.close();
 
