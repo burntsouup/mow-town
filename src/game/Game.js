@@ -81,14 +81,15 @@ export class Game {
     this.camera.update(dt); // follow the player to their new position
     this.updateDebugBrush(dt);
     this.grassField.update(); // send cut grass to the GPU
+    const job = this.jobs.currentJob;
+    job.update(dt, this.grass.progress, this.brush.active);
     if (this.input.wasPressed(config.audio.muteKey)) this.audio.toggleMute();
     if (this.input.wasPressed(config.debug.tuningKey)) this.tuning.toggle();
-    const job = this.jobs.currentJob;
     this.hud.update({
       prompt: null,
       job: this.jobs.current,
       jobStatus: job.status,
-      progress: job.displayProgress(0),
+      progress: job.displayProgress(this.grass.progress),
       elapsed: job.elapsed,
       nextJob: this.jobs.upcoming,
     });
