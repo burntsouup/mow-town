@@ -7,8 +7,8 @@ watch the stripes appear. Built with [Babylon.js](https://www.babylonjs.com/) an
 JavaScript.
 
 **Status:** working toward v0.1, "Mowing feels satisfying". Right now you can grab the push
-mower on the driveway and mow the front lawn, and the HUD tracks your progress. Next: juice
-(stripes, clippings, engine sound), then the lawn job itself. See [docs/ROADMAP.md](docs/ROADMAP.md)
+mower on the driveway and mow the front lawn: stripes, flying clippings, and an engine that
+bogs down in thick grass. Next: the lawn job itself (obstacles, completion, a reveal). See [docs/ROADMAP.md](docs/ROADMAP.md)
 for what's done and next.
 
 mow-town started as a copy of [p-washer](https://github.com/burntsouup/p-washer) v0.2.0 (a
@@ -67,7 +67,7 @@ src/
   lawn/                The grass: GrassGrid + DeckCutter (tested, pure) and the renderer
   mower/               The push mower (mowerMath.js is the tested, pure handling)
   audio/               Synthesized sounds (audioMix.js is the tested, pure part)
-  effects/             Particle textures drawn in code
+  effects/             Grass clippings and particle textures drawn in code
   math/                Small pure helpers: seeded noise, rectangles
   ui/                  HTML overlay: HUD, prompts, "click to play", tuning panel
 docs/
