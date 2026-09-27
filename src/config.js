@@ -22,8 +22,7 @@ export const config = {
     // KeyboardEvent.code that toggles the Babylon Inspector (the ` key, left of 1).
     inspectorKey: 'Backquote',
     tuningKey: 'KeyT', // toggles the live tuning panel
-    cutKey: 'KeyC', // hold to cut the grass around your feet (rendering test brush)
-    cutRadius: 0.35, // meters
+    cutKey: 'KeyC', // hold to cut a mower-deck-sized strip at your feet (test brush)
   },
   camera: {
     fov: 1.0, // vertical field of view in radians (~57°)
@@ -63,6 +62,10 @@ export const config = {
     uncutHeight: [0.7, 1], // starting height range, as fractions of maxHeight
     cutHeight: 0.3, // height after mowing, as a fraction of maxHeight (~3.5 cm)
     colors: { root: '#23391a', tip: '#8dbb4c', longTip: '#5f8f35' },
+  },
+  mower: {
+    // The cutting area under the mower, in meters: a 21-inch deck, like a real push mower.
+    deck: { width: 0.53, length: 0.45 },
   },
   audio: {
     master: 0.7,
