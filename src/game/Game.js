@@ -4,6 +4,7 @@ import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { config } from '../config.js';
 import { createFrontYard } from '../environment/FrontYard.js';
 import { createLighting, createSky } from '../environment/lighting.js';
+import { DeckCutter } from '../lawn/DeckCutter.js';
 import { GrassField } from '../lawn/GrassField.js';
 import { GrassGrid } from '../lawn/GrassGrid.js';
 import { Player } from '../player/Player.js';
@@ -36,9 +37,18 @@ export class Game {
     this.level = createFrontYard(this.scene, shadows);
 
     const { lawn } = this.level;
-    this.grass = new GrassGrid({ ...lawn, texelsPerMeter: config.grass.texelsPerMeter });
-    this.grass.fill(lawn.heightAt);
+    this.grass = new GrassGrid({
+      ...lawn,
+      texelsPerMeter: config.grass.texelsPerMeter,
+      targetHeight: config.grass.cutHeight,
+    });
+    this.grass.fill(lawn.heightAt, lawn.densityAt);
     this.grassField = new GrassField(this.scene, this.grass, lawn);
+    this.brush = {
+      cutter: new DeckCutter(this.grass),
+      from: { x: 0, z: 0, yaw: 0 },
+      active: false,
+    };
 
     this.player = new Player(this.scene, shadows, this.input, this.level.spawn);
     this.camera = new ThirdPersonCamera(this.scene, this.input, this.player, this.level.spawn.yaw);
@@ -69,26 +79,38 @@ export class Game {
   update(dt) {
     this.player.update(dt, this.camera.yaw); // move relative to where the camera looks
     this.camera.update(dt); // follow the player to their new position
-    this.updateDebugBrush();
+    this.updateDebugBrush(dt);
     this.grassField.update(); // send cut grass to the GPU
+    const job = this.jobs.currentJob;
+    job.update(dt, this.grass.progress, this.brush.active);
     if (this.input.wasPressed(config.audio.muteKey)) this.audio.toggleMute();
     if (this.input.wasPressed(config.debug.tuningKey)) this.tuning.toggle();
-    const job = this.jobs.currentJob;
     this.hud.update({
       prompt: null,
       job: this.jobs.current,
       jobStatus: job.status,
-      progress: job.displayProgress(0), // the lawn arrives in the next milestones
+      progress: job.displayProgress(this.grass.progress),
       elapsed: job.elapsed,
       nextJob: this.jobs.upcoming,
     });
     this.debugOverlay.update(dt);
   }
 
-  /** Rendering test: hold C to cut the grass around your feet. */
-  updateDebugBrush() {
-    if (!this.input.isPointerLocked || !this.input.isDown(config.debug.cutKey)) return;
+  /**
+   * Test brush until the mower arrives: hold C to cut a deck-sized strip at your feet.
+   *
+   * @param {number} dt
+   */
+  updateDebugBrush(dt) {
+    const { brush } = this;
     const feet = this.grassField.toLocal(this.player.position.x, this.player.position.z);
-    this.grass.cutCircle(feet.x, feet.z, config.debug.cutRadius, config.grass.cutHeight);
+    const to = { ...feet, yaw: this.player.root.rotation.y };
+    brush.active = this.input.isPointerLocked && this.input.isDown(config.debug.cutKey);
+    if (brush.active) {
+      brush.cutter.update(dt, brush.from, to, config.mower.deck, config.grass.cutHeight);
+    } else {
+      brush.cutter.lift();
+    }
+    brush.from = to;
   }
 }

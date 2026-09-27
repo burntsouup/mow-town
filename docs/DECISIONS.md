@@ -147,3 +147,22 @@ carpet at their average height (using `fwidth` on the blade cells).
 or slower GPUs struggle (fewer shells, or render at a lower pixel ratio).
 **Gotchas:** Babylon's front faces are clockwise seen from the front; the first shell mesh
 wound counter-clockwise was invisible from above. Compute `fwidth` before any `discard`.
+
+## 17. The lawn is a CPU grid, cut at fixed 60 Hz ticks
+
+**Why:** Like p-washer's dirt, the grass lives in a plain array (`GrassGrid`, ~3 cm per texel)
+that the renderer uploads as a texture. Progress is exact and cheap, and the core is pure JS
+we can unit-test. Per texel: height, a lawn mask, density (thick grass), and the direction
+the deck was facing when it last passed over (for stripes, packed into the texture's green
+and blue channels).
+**Cutting:** the deck is a 53 × 45 cm rectangle (a 21-inch push mower). `DeckCutter` works
+out where the deck was at each fixed 60 Hz tick (`FixedTicker`) inside the frame and cuts a
+stroke from the previous tick's pose, stamping the rectangle at least every half deck and
+every ~5° of turning. So a fast or spinning mower leaves no gaps, and the lawn comes out
+identical at 30, 60 or 144 fps. For multiplayer later, clients only need to share tick poses.
+**Progress is weighted** by the grass each texel had to lose (starting height above the
+target, times density), kept as a running total as texels get mowed. A texel counts as mowed
+within `MOWED_TOLERANCE` (0.02) of the target height.
+**Gotcha:** heights are stored as 32-bit floats, so `0.3` is stored as `0.30000001`, which is
+"taller than 0.3" and got cut again (by nothing) every frame. Compare against
+`Math.fround(cutTo)`.

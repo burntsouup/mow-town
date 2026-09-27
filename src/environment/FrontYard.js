@@ -101,6 +101,7 @@ function frontLawn() {
     width,
     depth,
     heightAt,
+    densityAt: () => 1,
   };
 }
 
