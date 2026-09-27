@@ -213,3 +213,18 @@ slowly, and winds down when you let go. The synth follows it: a sawtooth + squar
 "chugging" at the firing rate (half the pitch) through a low-pass that opens as it revs,
 over a low rattle, plus a blade layer (band-passed noise and a crackle) that follows the
 load. Clippings use the same smoothed cut rate, so sound and particles agree.
+
+## 21. The lawn job: one layout, shapes for everything, and an aerial reveal
+
+**Why:** The lawn's layout lives in one table of shapes (`SPOTS` in `FrontYard.js`, using
+`math/shapes.js`): the same rectangle or ellipse builds a flower bed's mulch and decides that
+no grass grows there, so the grass and the props can't drift apart. Everything the mower can
+bump into gets a tall invisible collider (see #18's gotcha), including the fence, whose rails
+have gaps. The lawn is ~142 m², which a pacing check in Milestone 7 turns into minutes.
+**Completion** reuses #12: at 98% the last tufts shrink away over 1.2 s, sparkles rise off the
+lawn, and the chime plays. `F` paints every uncut texel magenta; `R` grows the grass back.
+**The reveal:** finishing a lawn should end on the payoff, so `RevealCamera` flies up from
+the player's view to above the street, swings slowly across the lawn, and flies back. Its
+timing is a small pure timeline (`revealMath.js`). While it plays, `Input.blocked` makes the
+game ignore keys, buttons and mouse look (so mouse steering can't swing the mower), and any
+key or click after a second cuts it short. `V` plays it any time, which also helps to plan.
