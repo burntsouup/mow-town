@@ -7,7 +7,7 @@ import { createSoftDotTexture } from '../effects/effectTextures.js';
 export class Celebration {
   /** @param {import('@babylonjs/core').Scene} scene */
   constructor(scene) {
-    const sparkles = new ParticleSystem('celebrationSparkles', 600, scene);
+    const sparkles = new ParticleSystem('celebrationSparkles', 1000, scene);
     sparkles.particleTexture = createSoftDotTexture(scene);
     sparkles.blendMode = ParticleSystem.BLENDMODE_ADD; // glowing highlights
     sparkles.updateSpeed = 1 / 60; // one update step per frame = real seconds
@@ -36,7 +36,7 @@ export class Celebration {
     sparkles.emitter = box.centerWorld.clone();
     sparkles.minEmitBox = box.extendSizeWorld.scale(-1);
     sparkles.maxEmitBox = box.extendSizeWorld.clone();
-    sparkles.manualEmitCount = 350; // one burst, then stop
+    sparkles.manualEmitCount = 700; // one burst, then stop
     sparkles.start();
   }
 }

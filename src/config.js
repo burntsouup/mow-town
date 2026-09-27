@@ -122,6 +122,13 @@ export const config = {
   },
   job: {
     completeAt: 0.98, // fraction of the lawn that counts as done; the rest is finished for you
+    finishFadeTime: 1.2, // seconds for the leftover tufts to shrink away once it's done
+    highlightKey: 'KeyF', // hold to highlight the grass that's left
+    highlightColor: '#ff3df2', // bright magenta: stands out against every green
+    revealKey: 'KeyV', // view the lawn from above (it also plays when the job is done)
+    // The aerial shot: seconds to fly up (and back), seconds to hold, meters up and back
+    // from the lawn's middle, and how far (radians) it swings across the lawn meanwhile.
+    reveal: { flyTime: 2.2, holdTime: 4, height: 14, distance: 11, swing: 0.3, skipAfter: 1 },
     resetKey: 'KeyR', // after completion: redo the job (or, after the last one, start over)
     nextKey: 'KeyN', // after completion: move on to the next job
   },

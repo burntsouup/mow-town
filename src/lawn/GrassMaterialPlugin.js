@@ -30,7 +30,16 @@ export class GrassMaterialPlugin extends MaterialPluginBase {
     super(material, 'GrassShells', 200, { GRASSFIELD: false });
     this.grassMap = grassMap;
     this.size = size;
-    this.colors = { root: new Color3(), tip: new Color3(), longTip: new Color3() };
+    this.colors = {
+      root: new Color3(),
+      tip: new Color3(),
+      longTip: new Color3(),
+      highlight: new Color3(),
+    };
+    /** 0..1: how strongly to highlight grass that still needs mowing. Changes every frame. */
+    this.highlight = 0;
+    /** Grass taller than this (0..1) still counts as uncut. */
+    this.uncutAbove = 1;
     // Opt in to hardBindForSubMesh (below), which Babylon only calls for plugins that ask.
     // Must be set before the plugin is enabled.
     this.registerForExtraEvents = true;
@@ -69,6 +78,9 @@ export class GrassMaterialPlugin extends MaterialPluginBase {
         { name: 'grassLongTipColor', size: 3, type: 'vec3' },
         { name: 'grassStripes', size: 1, type: 'float' },
         { name: 'grassMowLean', size: 1, type: 'float' },
+        { name: 'grassHighlightColor', size: 3, type: 'vec3' },
+        { name: 'grassHighlight', size: 1, type: 'float' },
+        { name: 'grassUncutAbove', size: 1, type: 'float' },
       ],
       fragment: `
         uniform vec2 grassBlades;
@@ -77,7 +89,10 @@ export class GrassMaterialPlugin extends MaterialPluginBase {
         uniform vec3 grassTipColor;
         uniform vec3 grassLongTipColor;
         uniform float grassStripes;
-        uniform float grassMowLean;`,
+        uniform float grassMowLean;
+        uniform vec3 grassHighlightColor;
+        uniform float grassHighlight;
+        uniform float grassUncutAbove;`,
     };
   }
 
@@ -98,6 +113,12 @@ export class GrassMaterialPlugin extends MaterialPluginBase {
     uniformBuffer.updateFloat('grassThickness', settings.bladeThickness);
     uniformBuffer.updateFloat('grassStripes', settings.stripes);
     uniformBuffer.updateFloat('grassMowLean', settings.mowLean);
+    uniformBuffer.updateColor3(
+      'grassHighlightColor',
+      this.colors.highlight.fromHexString(config.job.highlightColor),
+    );
+    uniformBuffer.updateFloat('grassHighlight', this.highlight);
+    uniformBuffer.updateFloat('grassUncutAbove', this.uncutAbove);
     const { colors } = settings;
     uniformBuffer.updateColor3('grassRootColor', this.colors.root.fromHexString(colors.root));
     uniformBuffer.updateColor3('grassTipColor', this.colors.tip.fromHexString(colors.tip));
@@ -188,6 +209,13 @@ export class GrassMaterialPlugin extends MaterialPluginBase {
           vec2 lookAcross = -viewDirectionW.xz;
           float leanAway = dot(mowDirection, lookAcross) / max(length(lookAcross), 0.3);
           diffuseColor *= 1.0 + grassStripes * clamp(leanAway, -1.0, 1.0);
+        #endif
+      `,
+      // Runs after lighting: "show what's left" paints every uncut spot, however small.
+      CUSTOM_FRAGMENT_BEFORE_FOG: `
+        #ifdef GRASSFIELD
+          float grassUncut = step(grassUncutAbove, grassHeight);
+          color.rgb = mix(color.rgb, grassHighlightColor, grassHighlight * grassUncut);
         #endif
       `,
     };

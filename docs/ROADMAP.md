@@ -70,12 +70,19 @@ them. Thick patches look a bit like shadows from some angles; revisit their look
 playtest. Can't judge the engine sound headlessly beyond levels (RMS ~0.03 idle, ~0.05
 cutting, peaks under 0.2): the playtest decides.
 
-### 6. Lawn job
+### 6. Lawn job ✅
 
-- [ ] A bounded front lawn (~140 m²) with a tree, a flower bed and toy obstacles
-- [ ] Progress, completion at 98%, hold `F` to highlight what's left
-- [ ] An aerial reveal camera that shows off the stripes
-- [ ] `R` to mow it again
+- [x] A bounded front lawn (~142 m²) with a tree, a flower bed and toy obstacles (a ball, a
+      toy truck, the mailbox), fenced on the left and edged by a bed along the house
+- [x] Progress, completion at 98%, hold `F` to highlight what's left
+- [x] An aerial reveal camera that shows off the stripes (also on `V` any time)
+- [x] `R` to mow it again
+
+**Findings:** from the aerial view the stripes are the star: bold and clean. Straight rows at
+0.5 m spacing across the whole lawn reach 100%, and 31 rows left the 24 cm strip along the
+driveway uncut (97%), so edges matter. The toys, the mailbox post and the tree leave small
+uncut rings the deck can't reach, well inside the 2% slack (and a reason for a string trimmer
+in v0.2).
 
 ### 7. Tuning + playtest pass
 

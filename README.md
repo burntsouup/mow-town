@@ -6,9 +6,9 @@ A small, satisfying 3D lawn-mowing game. Grab the mower, push it across a shaggy
 watch the stripes appear. Built with [Babylon.js](https://www.babylonjs.com/) and plain
 JavaScript.
 
-**Status:** working toward v0.1, "Mowing feels satisfying". Right now you can grab the push
-mower on the driveway and mow the front lawn: stripes, flying clippings, and an engine that
-bogs down in thick grass. Next: the lawn job itself (obstacles, completion, a reveal). See [docs/ROADMAP.md](docs/ROADMAP.md)
+**Status:** working toward v0.1, "Mowing feels satisfying". The whole loop is in: grab the push
+mower on the driveway, mow the fenced front lawn around a tree, a flower bed and some toys,
+and finish with an aerial view of your stripes. Next: a tuning and playtest pass. See [docs/ROADMAP.md](docs/ROADMAP.md)
 for what's done and next.
 
 mow-town started as a copy of [p-washer](https://github.com/burntsouup/p-washer) v0.2.0 (a
@@ -27,6 +27,9 @@ player movement, jobs, tuning panel, HUD, and synthesized audio.
 | W / S         | Push / pull the mower                              |
 | Mouse         | Steer the mower (default: it heads where you look) |
 | A / D         | Steer the mower (with "A / D keys" steering)       |
+| Hold F        | Highlight the grass that's left                    |
+| V             | View the lawn from above                           |
+| R             | Mow it again (once it's done)                      |
 | M             | Mute / unmute                                      |
 | T             | Tuning panel (live sliders; "Copy changes")        |
 | Esc           | Release the mouse                                  |
@@ -63,12 +66,12 @@ src/
   game/                Game loop, keyboard/mouse input, jobs, tuning helpers
   environment/         The level: layout (FrontYard.js), lighting + sky, greybox kit
   player/              The player character (movement.js is the tested, pure part)
-  camera/              Third-person camera (cameraMath.js is the tested, pure part)
+  camera/              Third-person camera and the aerial reveal (*Math.js: tested, pure)
   lawn/                The grass: GrassGrid + DeckCutter (tested, pure) and the renderer
   mower/               The push mower (mowerMath.js is the tested, pure handling)
   audio/               Synthesized sounds (audioMix.js is the tested, pure part)
   effects/             Grass clippings and particle textures drawn in code
-  math/                Small pure helpers: seeded noise, rectangles
+  math/                Small pure helpers: seeded noise, rectangles, ground shapes
   ui/                  HTML overlay: HUD, prompts, "click to play", tuning panel
 docs/
   ROADMAP.md           Milestones and checklists (our plan)

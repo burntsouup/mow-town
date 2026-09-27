@@ -192,7 +192,8 @@ export class PushMower {
    */
   followWithCamera(dt) {
     const { dx, dy } = this.input.mouseDelta;
-    this.mouseIdle = dx !== 0 || dy !== 0 ? 0 : (this.mouseIdle ?? 0) + dt;
+    const looking = !this.input.blocked && (dx !== 0 || dy !== 0);
+    this.mouseIdle = looking ? 0 : (this.mouseIdle ?? 0) + dt;
     const moving = Math.abs(this.motion.speed) > 0.05 || Math.abs(this.motion.yawRate) > 0.05;
     if (this.mouseIdle > 0.6 && moving) {
       this.camera.yaw = turnTowards(this.camera.yaw, this.yaw, config.mower.cameraFollow, dt);
