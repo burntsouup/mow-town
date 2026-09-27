@@ -20,13 +20,19 @@ feature count.
 - [x] Fresh roadmap and decisions log (base decisions carried over)
 - [x] `.github/copilot-instructions.md` with the project conventions
 
-### 2. Grass rendering spike
+### 2. Grass rendering spike ✅
 
 Biggest risk first: can we draw a lawn that looks cuttable, at a good frame rate?
 
-- [ ] Shell texturing: ~16–32 alpha-tested layers over the lawn, driven by a height texture
-- [ ] A debug brush that cuts the grass where you walk
-- [ ] FPS check on the dev machine. Fallback if too slow: instanced blades
+- [x] Shell texturing: 24 alpha-tested layers over the lawn, driven by a height texture
+- [x] A debug brush that cuts the grass where you walk (hold `C`)
+- [x] FPS check on the dev machine. Fallback if too slow: instanced blades (not needed)
+
+**Findings:** on an M3 MacBook at Retina resolution (2880 × 1800), the grass costs about 2 ms
+per frame with 24 shells and ~2.6 ms with 48; the game holds 60 fps. Cut grass reads clearly
+(shorter, brighter). Individual blades are visible within a few meters; farther away the lawn
+fades into a solid carpet (by design, to avoid shimmer), so stripes will have to carry the
+look at a distance.
 
 ### 3. GrassGrid core (pure JS, test-first)
 
