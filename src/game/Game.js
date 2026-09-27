@@ -4,6 +4,8 @@ import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { config } from '../config.js';
 import { createFrontYard } from '../environment/FrontYard.js';
 import { createLighting, createSky } from '../environment/lighting.js';
+import { GrassField } from '../lawn/GrassField.js';
+import { GrassGrid } from '../lawn/GrassGrid.js';
 import { Player } from '../player/Player.js';
 import { DebugOverlay } from '../ui/DebugOverlay.js';
 import { Hud } from '../ui/Hud.js';
@@ -32,6 +34,11 @@ export class Game {
     const { shadows } = createLighting(this.scene);
     createSky(this.scene);
     this.level = createFrontYard(this.scene, shadows);
+
+    const { lawn } = this.level;
+    this.grass = new GrassGrid({ ...lawn, texelsPerMeter: config.grass.texelsPerMeter });
+    this.grass.fill(lawn.heightAt);
+    this.grassField = new GrassField(this.scene, this.grass, lawn);
 
     this.player = new Player(this.scene, shadows, this.input, this.level.spawn);
     this.camera = new ThirdPersonCamera(this.scene, this.input, this.player, this.level.spawn.yaw);
@@ -62,6 +69,7 @@ export class Game {
   update(dt) {
     this.player.update(dt, this.camera.yaw); // move relative to where the camera looks
     this.camera.update(dt); // follow the player to their new position
+    this.grassField.update(); // send cut grass to the GPU
     if (this.input.wasPressed(config.audio.muteKey)) this.audio.toggleMute();
     if (this.input.wasPressed(config.debug.tuningKey)) this.tuning.toggle();
     const job = this.jobs.currentJob;
