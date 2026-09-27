@@ -1,0 +1,181 @@
+/* Without this, elements with their own `display` would ignore the `hidden` attribute. */
+[hidden] {
+  display: none !important;
+}
+
+.crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #fff;
+  /* Dark outline keeps it visible on light concrete and bright sky. */
+  box-shadow: 0 0 0 1.5px rgb(0 0 0 / 0.55);
+}
+
+/* Which way the fan of water is turned: a thin bar through the crosshair. */
+.fan-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 26px;
+  height: 2px;
+  margin: -1px 0 0 -13px;
+  border-radius: 1px;
+  background: rgb(255 255 255 / 0.8);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35);
+  transition: transform 0.15s ease-out;
+}
+
+.fan-indicator.is-upright {
+  transform: rotate(90deg);
+}
+
+.interaction-prompt {
+  position: absolute;
+  bottom: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: rgb(20 24 30 / 0.7);
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Job objective and progress bar, top center. */
+.objective {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  padding: 8px 14px 10px;
+  border-radius: 10px;
+  background: rgb(20 24 30 / 0.6);
+  text-align: center;
+}
+
+.objective-title {
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.objective-hint {
+  margin: -3px 0 6px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.progress-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.18);
+  overflow: hidden;
+}
+
+.progress-fill {
+  width: 0;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #6ec6ff, #b8f0ff);
+  transition: width 0.25s ease-out;
+}
+
+.progress-label {
+  margin-top: 4px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.objective.is-complete .progress-fill {
+  background: linear-gradient(90deg, #7be495, #d4ffb0);
+}
+
+/* "Job complete!" card. It pops in, and clicks pass through so you can keep playing. */
+.job-complete {
+  position: absolute;
+  top: 26%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 18px 32px;
+  border-radius: 14px;
+  background: rgb(20 24 30 / 0.75);
+  text-align: center;
+  animation: pop-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.job-complete h2 {
+  margin: 0 0 6px;
+  font-size: 32px;
+  color: #b8f7c6;
+}
+
+.job-complete p {
+  margin: 4px 0;
+  font-size: 16px;
+}
+
+.job-complete-hint {
+  opacity: 0.75;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+.play-prompt {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 260px;
+  padding: 20px 28px;
+  border-radius: 12px;
+  background: rgb(20 24 30 / 0.72);
+  text-align: center;
+  backdrop-filter: blur(4px);
+}
+
+.play-prompt h1 {
+  margin: 0 0 4px;
+  font-size: 28px;
+  letter-spacing: 0.02em;
+}
+
+.play-prompt-action {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #9fd4ff;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  margin: 0;
+  text-align: left;
+}
+
+.controls dt {
+  font-weight: 600;
+  text-align: right;
+  opacity: 0.85;
+}
+
+.controls dd {
+  margin: 0;
+}

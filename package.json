@@ -1,0 +1,36 @@
+{
+  "name": "p-washer",
+  "version": "0.2.0",
+  "private": true,
+  "description": "A small, satisfying 3D pressure-washing game.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run lint && npm run format:check && npm test && npm run build"
+  },
+  "dependencies": {
+    "@babylonjs/core": "^9.28.0",
+    "lil-gui": "^0.21.0"
+  },
+  "devDependencies": {
+    "@babylonjs/inspector": "^9.28.0",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.9",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
+  }
+}
