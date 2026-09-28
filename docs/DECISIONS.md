@@ -155,7 +155,8 @@ that the renderer uploads as a texture. Progress is exact and cheap, and the cor
 we can unit-test. Per texel: height, a lawn mask, density (thick grass), and the direction
 the deck was facing when it last passed over (for stripes, packed into the texture's green
 and blue channels).
-**Cutting:** the deck is a 53 × 45 cm rectangle (a 21-inch push mower). `DeckCutter` works
+**Cutting:** the deck is a 56 × 45 cm rectangle (a 22-inch push mower; 53 cm until the
+Milestone 7 tuning). `DeckCutter` works
 out where the deck was at each fixed 60 Hz tick (`FixedTicker`) inside the frame and cuts a
 stroke from the previous tick's pose, stamping the rectangle at least every half deck and
 every ~5° of turning. So a fast or spinning mower leaves no gaps, and the lawn comes out
@@ -228,3 +229,13 @@ the player's view to above the street, swings slowly across the lawn, and flies 
 timing is a small pure timeline (`revealMath.js`). While it plays, `Input.blocked` makes the
 game ignore keys, buttons and mouse look (so mouse steering can't swing the mower), and any
 key or click after a second cuts it short. `V` plays it any time, which also helps to plan.
+
+## 22. Pacing is checked by a bot, not by feel alone
+
+**Why:** p-washer taught us that the first numbers can make a job take far longer than they
+feel on paper (there, ~7.5 minutes of perfect play). `pacing.js` runs a tidy bot through the
+real lawn with the real handling, grass and cutting, and `pacing.test.js` fails if the best
+case leaves a 3–5.5 minute band, so a tuning change that turns the lawn into a slog shows up
+in CI. It turns on the spot and ignores obstacles, so treat it as a lower bound; real players
+take about 1.5× as long. **Revisit when:** more lawns arrive (give each its own band) or the
+turn model matters (the real mower swings around your hands, which costs more at row ends).
