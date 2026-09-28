@@ -200,7 +200,7 @@ export class GrassMaterialPlugin extends MaterialPluginBase {
         #ifdef GRASSFIELD
           // Long grass has darker, bluer tips; freshly cut grass is brighter.
           vec3 grassTip = mix(grassTipColor, grassLongTipColor, smoothstep(0.3, 0.6, grassHeight));
-          grassTip *= 1.0 - 0.4 * grassThick * smoothstep(0.3, 0.6, grassHeight); // lush, dark
+          grassTip *= 1.0 - 0.28 * grassThick * smoothstep(0.3, 0.6, grassHeight); // lush, dark
           // Dark at the roots, where the blades shade each other, bright at the tips.
           vec3 grassColor = mix(grassRootColor, grassTip, pow(bladeAlong, 0.8));
           diffuseColor = grassColor * mix(0.8 + 0.4 * bladeRandom, 1.0, grassFar);

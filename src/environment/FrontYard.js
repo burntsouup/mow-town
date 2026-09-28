@@ -83,7 +83,7 @@ export function createFrontYard(scene, shadows) {
       id: 'frontLawn',
       name: 'the front lawn',
       title: 'Mow the front lawn',
-      hint: 'Overlap your rows a little. Hold F to see what you missed',
+      hint: 'Hold F to see what you missed',
       doneTitle: 'Lawn mowed!',
       summary: 'Front lawn mowed in',
     },

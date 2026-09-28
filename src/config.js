@@ -69,9 +69,9 @@ export const config = {
     bladeThickness: 0.6, // blade radius at the root, relative to its cell
     uncutHeight: [0.7, 1], // starting height range, as fractions of maxHeight
     cutHeight: 0.3, // height after mowing, as a fraction of maxHeight (~3.5 cm)
-    stripes: 0.2, // how much lighter/darker mowed grass looks leaning away/toward you
+    stripes: 0.18, // how much lighter/darker mowed grass looks leaning away/toward you
     mowLean: 0.35, // how far mowed blade tips lean the way the mower went (in blade widths)
-    colors: { root: '#23391a', tip: '#8dbb4c', longTip: '#5f8f35' },
+    colors: { root: '#23391a', tip: '#88b44b', longTip: '#5f8f35' },
   },
   mower: {
     // 'mouse': the mower turns toward where you look (A/D swing the view too).
