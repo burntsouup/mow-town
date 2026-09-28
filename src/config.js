@@ -77,15 +77,15 @@ export const config = {
     // 'mouse': the mower turns toward where you look (A/D swing the view too).
     // 'keys': A/D turn the mower, and the camera swings in behind it when the mouse is idle.
     steering: 'mouse',
-    pushSpeed: 1.4, // m/s: a brisk walk behind a mower
+    pushSpeed: 1.7, // m/s: a brisk walk behind a mower
     pullSpeed: 0.8, // m/s when pulling it back
-    acceleration: 1.8, // m/s²: heavy, so it takes most of a second to get rolling
+    acceleration: 2.2, // m/s²: heavy, so it takes most of a second to get rolling
     braking: 4, // m/s²: how quickly it stops when you stop pushing
-    turnSpeed: 1.5, // radians per second at full turn (~85°/s)
-    turnAcceleration: 6, // radians per second²: turning takes a moment to build up, too
+    turnSpeed: 1.9, // radians per second at full turn (~110°/s)
+    turnAcceleration: 8, // radians per second²: turning takes a moment to build up, too
     // Long grass slows you down: speed × (1 - grassSlowdown × work), where work is 1 for
     // full-length normal grass and up to ~2.5 in thick patches. Never below minSpeedFactor.
-    grassSlowdown: 0.15,
+    grassSlowdown: 0.1,
     minSpeedFactor: 0.45,
     mouseFullTurnAngle: 0.35, // mouse steering turns fully when this far (radians) off your view
     cameraFollow: 2.5, // key steering: how quickly the camera swings in behind the mower
@@ -95,8 +95,8 @@ export const config = {
     handleLength: 1.3, // meters from the middle of the deck to where you stand
     colliderRadius: 0.32, // meters: the round collision shape around the deck
     engineShake: 0.0025, // meters: how much the engine rattles the mower while running
-    // The cutting area under the mower, in meters: a 21-inch deck, like a real push mower.
-    deck: { width: 0.53, length: 0.45 },
+    // The cutting area under the mower, in meters: a 22-inch deck, like a real push mower.
+    deck: { width: 0.56, length: 0.45 },
   },
   effects: {
     clippingsPerCut: 900, // clippings per second, per unit of grass cut per second
