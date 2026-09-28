@@ -3,7 +3,7 @@
 Planning lives here instead of GitHub Issues: one list, versioned with the code.
 Check items off in the same PR that completes them.
 
-## v0.1 — "Mowing feels satisfying"
+## v0.1 — "Mowing feels satisfying" ✅ (released as 0.1.0)
 
 Goal: one front lawn, one push mower. After a few minutes of play, mowing the lawn should
 feel good: heavy push, crisp cut, stripes appearing behind you. See the success checklist at
@@ -84,11 +84,11 @@ driveway uncut (97%), so edges matter. The toys, the mailbox post and the tree l
 uncut rings the deck can't reach, well inside the 2% slack (and a reason for a string trimmer
 in v0.2).
 
-### 7. Tuning + playtest pass
+### 7. Tuning + playtest pass ✅
 
 - [x] Pacing simulation (how long does a good run take?)
 - [x] Tuning pass, findings recorded here
-- [ ] Playtest
+- [x] Playtest
 
 ### v0.1 pacing (simulated, after tuning)
 
@@ -119,13 +119,13 @@ obstacles, so it's a best case; expect a real run to take roughly 1.5× longer.
   the view. Fine at 60 Hz; on a 120 Hz display it may not hold 120 fps (a pixel-ratio cap would
   be the lever).
 
-### v0.1 success checklist
+### v0.1 success checklist ✅ (confirmed in playtest)
 
-- [ ] Pushing the mower feels heavy but responsive
-- [ ] It's instantly readable what's cut and what isn't
-- [ ] Stripes look good and reward neat rows
-- [ ] Sound and particles make cutting feel physical
-- [ ] Finishing the lawn feels like a reward
+- [x] Pushing the mower feels heavy but responsive
+- [x] It's instantly readable what's cut and what isn't
+- [x] Stripes look good and reward neat rows
+- [x] Sound and particles make cutting feel physical
+- [x] Finishing the lawn feels like a reward
 
 ## Deliberately not in v0.1
 
