@@ -86,9 +86,38 @@ in v0.2).
 
 ### 7. Tuning + playtest pass
 
-- [ ] Pacing simulation (how long does a good run take?)
-- [ ] Tuning pass, findings recorded here
+- [x] Pacing simulation (how long does a good run take?)
+- [x] Tuning pass, findings recorded here
 - [ ] Playtest
+
+### v0.1 pacing (simulated, after tuning)
+
+A tidy bot (`src/lawn/pacing.js`) mows the real 142 m² lawn in straight rows with 8 cm of
+overlap, using the real handling, grass and cutting. It turns on the spot and drives through
+obstacles, so it's a best case; expect a real run to take roughly 1.5× longer.
+
+| Handling                                | Long rows (22–23)      | Short rows (33–35) |
+| --------------------------------------- | ---------------------- | ------------------ |
+| First numbers (1.4 m/s, 21" deck)       | 5.8 min                | 6.4 min            |
+| Tuned (1.7 m/s, faster turns, 22" deck) | 4.3 min (0.75 turning) | 4.9 min            |
+
+`pacing.test.js` fails if the best case leaves the 3–5.5 minute band.
+
+### v0.1 tuning findings (Milestone 7)
+
+- The first handling took 5.8 minutes of perfect play, so a real player would have needed
+  9+ minutes to reach the reveal. Now: push 1.7 m/s (was 1.4), acceleration 2.2 (1.8),
+  turning 1.9 rad/s (1.5) with acceleration 8 (6), long grass slows 10% (15%), 22-inch deck.
+- Still the biggest open question: a real run is probably ~6 minutes. If that drags, the
+  quickest fixes are a smaller lawn (~110 m²) or a wider starting deck (and wider decks make
+  a natural first upgrade in v0.2). `V` shows the stripes from above at any time.
+- Stripes softened a touch (0.2 → 0.18) with a less neon cut-grass tip; thick patches darken
+  less (28%), since they read like shadows.
+- Uncut rings the deck can't reach (around the ball, the truck, the mailbox post and the
+  flower bed) add up to well under 1% of the lawn, inside the 2% slack.
+- Performance: at 2880 × 1800 on an M3, grass costs ~3.4 ms per frame with the lawn filling
+  the view. Fine at 60 Hz; on a 120 Hz display it may not hold 120 fps (a pixel-ratio cap would
+  be the lever).
 
 ### v0.1 success checklist
 
