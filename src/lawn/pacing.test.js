@@ -46,6 +46,21 @@ describe('pacing (front lawn, best case)', () => {
     }
   });
 
+  it('goes about 30% faster with the 30-inch deck from the sale stand', () => {
+    const { width, length } = config.shop.wideDeck;
+    const wide = mowFrontLawn({ deck: { width, length } });
+    const narrow = tidyRun('x');
+    console.info(
+      `Pacing: 30-inch deck ${minutes(wide.seconds)} min (${wide.rows} rows), ` +
+        `${Math.round((1 - wide.seconds / narrow.seconds) * 100)}% faster`,
+    );
+    expect(wide.progress).toBeGreaterThanOrEqual(0.98);
+    expect(wide.seconds).toBeLessThan(narrow.seconds * 0.8);
+    expect(stripeNeatness(wide.grid, config.money.neatnessPatch)).toBeGreaterThan(
+      config.money.tipFull,
+    );
+  });
+
   it('leaves gaps when rows do not overlap', () => {
     const sloppy = mowFrontLawn({ overlap: -0.1, maxSeconds: 600 });
     expect(sloppy.progress).toBeLessThan(0.98);

@@ -3,6 +3,8 @@ import { Color3, MeshBuilder, StandardMaterial, TransformNode, Vector3 } from '@
 const COLORS = { deck: '#c7372f', engine: '#4a4d52', dark: '#1f2023', hub: '#b9bcc2' };
 /** Wheel radius in meters (also used to spin the wheels at the right speed). */
 export const WHEEL_RADIUS = 0.09;
+/** The deck is built this wide (meters); setDeckWidth stretches it for bigger decks. */
+const DECK_WIDTH = 0.56;
 
 /**
  * Builds a greybox push mower: a red deck, an engine on top, four wheels, a side chute
@@ -48,14 +50,14 @@ export function createMowerModel(scene, shadows) {
   };
 
   const deck = add(
-    MeshBuilder.CreateBox('mowerDeck', { width: 0.56, height: 0.1, depth: 0.62 }, scene),
+    MeshBuilder.CreateBox('mowerDeck', { width: DECK_WIDTH, height: 0.1, depth: 0.62 }, scene),
     materials.deck,
   );
   deck.position.y = 0.11;
   const skirt = add(
     MeshBuilder.CreateCylinder(
       'mowerSkirt',
-      { diameter: 0.56, height: 0.1, tessellation: 20 },
+      { diameter: DECK_WIDTH, height: 0.1, tessellation: 20 },
       scene,
     ),
     materials.deck,
@@ -168,5 +170,21 @@ export function createMowerModel(scene, shadows) {
     wheels.push(axle);
   }
 
-  return { root, chassis, chute, wheels, parts };
+  return { root, chassis, deck, skirt, chute, wheels, parts };
+}
+
+/**
+ * Stretches the deck to a new cutting width (e.g. after an upgrade), moving the wheels and
+ * the side chute out to its sides.
+ *
+ * @param {ReturnType<typeof createMowerModel>} model
+ * @param {number} width Meters.
+ */
+export function setDeckWidth(model, width) {
+  const stretch = width / DECK_WIDTH;
+  model.deck.scaling.x = stretch;
+  model.skirt.scaling.x = stretch;
+  for (const axle of model.wheels)
+    axle.position.x = Math.sign(axle.position.x) * (width / 2 + 0.02);
+  model.chute.position.x = width / 2 + 0.04;
 }

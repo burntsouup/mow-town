@@ -77,14 +77,15 @@ export class Lawn {
    * @param {number} dt
    * @param {{ x: number, z: number, yaw: number }} from
    * @param {{ x: number, z: number, yaw: number }} to
+   * @param {import('./GrassGrid.js').Deck} deck
    * @returns {number} Grass cut this frame (see GrassGrid.cutDeck).
    */
-  cut(dt, from, to) {
+  cut(dt, from, to, deck) {
     return this.cutter.update(
       dt,
       { ...this.field.toLocal(from.x, from.z), yaw: from.yaw },
       { ...this.field.toLocal(to.x, to.z), yaw: to.yaw },
-      config.mower.deck,
+      deck,
       config.grass.cutHeight,
     );
   }
@@ -93,10 +94,11 @@ export class Lawn {
    * How hard the grass just ahead of a deck is to push through (see GrassGrid.workAhead).
    *
    * @param {{ x: number, z: number, yaw: number }} pose World pose.
+   * @param {import('./GrassGrid.js').Deck} deck
    */
-  workAhead(pose) {
+  workAhead(pose, deck) {
     const local = { ...this.field.toLocal(pose.x, pose.z), yaw: pose.yaw };
-    return this.grid.workAhead(local, config.mower.deck, config.grass.cutHeight);
+    return this.grid.workAhead(local, deck, config.grass.cutHeight);
   }
 
   /** The deck stopped cutting: the next cut starts a new stroke. */

@@ -12,6 +12,8 @@ import { stripeNeatness } from '../lawn/neatness.js';
 import { grassSpeedFactor } from '../mower/mowerMath.js';
 import { PushMower } from '../mower/PushMower.js';
 import { Player } from '../player/Player.js';
+import { SaleStand } from '../shop/SaleStand.js';
+import { buy } from '../shop/shop.js';
 import { StringTrimmer } from '../trimmer/StringTrimmer.js';
 import { DebugOverlay } from '../ui/DebugOverlay.js';
 import { Hud } from '../ui/Hud.js';
@@ -54,6 +56,14 @@ export class Game {
       this.level.mowerSpot,
     );
     this.trimmer = new StringTrimmer(this.scene, shadows, this.input, this.player, this.camera);
+    this.stand = new SaleStand(this.scene, shadows, this.level.standSpot, {
+      id: 'wideDeck',
+      name: '30-inch deck',
+      sign: '30" DECK',
+      get price() {
+        return config.shop.wideDeck.price; // read live, so the tuning slider works
+      },
+    });
     const [centerX, centerZ] = this.level.lawn.center;
     this.reveal = new RevealCamera(this.scene, this.camera, { x: centerX, z: centerZ });
     this.grassCut = 0; // grass cut this frame (see GrassGrid.cutDeck)
@@ -72,6 +82,8 @@ export class Game {
     this.neatness = 0; // how neat the stripes were when the current job was done (0..1)
     this.edgesDone = false; // the current job's edges are trimmed
     this.cardTime = 0; // seconds left to show the "Job complete" card
+    this.toastText = ''; // a short message, like "deck fitted"
+    this.toastTime = 0; // ...and how many seconds it has left
     this.time = 0;
     this.hud = new Hud(hudRoot, this.input);
     this.debugOverlay = new DebugOverlay(this.engine, this.scene, hudRoot);
@@ -98,6 +110,7 @@ export class Game {
     // Walk relative to where the camera looks, unless you're pushing the mower. While
     // trimming, you face the trimmer's head.
     if (!this.mower.isHeld) this.player.update(dt, this.camera.yaw, this.trimmer.faceYaw);
+    this.updateShop(); // before the mower, which would otherwise take the E key
     this.updateMowing(dt);
     this.camera.mode = this.mower.isHeld ? 'mowing' : this.trimmer.isOut ? 'trimming' : 'walking';
     this.camera.update(dt); // follow the player to their new position
@@ -121,13 +134,18 @@ export class Game {
       },
     );
     if (this.input.wasPressed(config.debug.tuningKey)) this.tuning.toggle();
+    this.toastTime = Math.max(0, this.toastTime - dt);
     this.moneyShown = countTowards(this.moneyShown, this.money, dt, {
       speed: config.money.countSpeed,
       minSpeed: config.money.countMinSpeed,
     });
     const job = this.jobs.currentJob;
     this.hud.update({
-      prompt: this.mower.prompt ?? this.trimmer.prompt,
+      prompt:
+        this.mower.prompt ??
+        this.stand.promptFor(this.player.position, this.money) ??
+        this.trimmer.prompt,
+      toast: this.toastTime > 0 ? this.toastText : null,
       hasMower: this.mower.everHeld,
       job: this.jobs.current,
       jobStatus: job.status,
@@ -229,6 +247,33 @@ export class Game {
   }
 
   /**
+   * The sale stand: walk up and press E to buy the 30-inch deck, which is fitted to your
+   * mower on the spot. (E grabs the mower instead if you're holding it or standing by it.)
+   */
+  updateShop() {
+    const { input, stand } = this;
+    const pressed = input.isPointerLocked && input.wasPressed(config.mower.grabKey);
+    const mowerBusy = this.mower.isHeld || this.mower.isPlayerNear();
+    if (!pressed || mowerBusy || !stand.isPlayerNear(this.player.position)) return;
+    const bought = buy(stand.item, this.money, stand.owned);
+    if (!bought) return;
+    this.money = bought.money;
+    stand.markSold();
+    const { wideDeck } = config.shop;
+    this.mower.fitDeck({ width: wideDeck.width, length: wideDeck.length }, wideDeck.colliderRadius);
+    this.celebration.play(this.mower.model.deck);
+    this.audio.playCoins();
+    this.audio.playClunk();
+    this.toast('30-inch deck fitted to your mower!');
+  }
+
+  /** @param {string} text Shown briefly under the objective. */
+  toast(text) {
+    this.toastText = text;
+    this.toastTime = config.shop.toastTime;
+  }
+
+  /**
    * Moves the mower (and the player holding it), then cuts the grass under its path.
    *
    * @param {number} dt
@@ -236,10 +281,11 @@ export class Game {
   updateMowing(dt) {
     const from = this.mower.deckPose;
     // Long and thick grass ahead of the deck slows the mower down.
-    this.mower.speedFactor = grassSpeedFactor(this.lawn.workAhead(from), config.mower);
+    const { deck } = this.mower;
+    this.mower.speedFactor = grassSpeedFactor(this.lawn.workAhead(from, deck), config.mower);
     this.mower.update(dt);
     if (this.mower.isCutting) {
-      this.grassCut = this.lawn.cut(dt, from, this.mower.deckPose);
+      this.grassCut = this.lawn.cut(dt, from, this.mower.deckPose, deck);
     } else {
       this.grassCut = 0;
       this.lawn.lift();

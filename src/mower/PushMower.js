@@ -4,7 +4,7 @@ import { config } from '../config.js';
 import { lerpPose } from '../lawn/deckPose.js';
 import { turnTowards } from '../player/movement.js';
 import { steerTowards, updateMotion } from './mowerMath.js';
-import { createMowerModel, WHEEL_RADIUS } from './mowerModel.js';
+import { createMowerModel, setDeckWidth, WHEEL_RADIUS } from './mowerModel.js';
 
 /**
  * The push mower. Walk up to it and press E to grab the handle; then W/S push and pull it,
@@ -54,7 +54,24 @@ export class PushMower {
     this.displacement = new Vector3(); // reused every frame
     this.time = 0;
     this.everHeld = false;
+    /** @type {import('../lawn/GrassGrid.js').Deck} The cutting area under this mower. */
+    this.deck = config.mower.deck;
     this.park(spot);
+  }
+
+  /**
+   * Swaps in a different deck (an upgrade): a new cutting area, and a collision shape to
+   * match, since a wider deck can't get as close to things.
+   *
+   * @param {import('../lawn/GrassGrid.js').Deck} deck
+   * @param {number} colliderRadius Meters.
+   */
+  fitDeck(deck, colliderRadius) {
+    this.deck = deck;
+    this.collider.ellipsoid.x = colliderRadius;
+    this.collider.ellipsoid.z = colliderRadius;
+    this.blocker.scaling.x = (deck.width + 0.06) / 0.62;
+    setDeckWidth(this.model, deck.width);
   }
 
   /** @param {{ position: number[], yaw: number }} spot */

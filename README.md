@@ -18,25 +18,25 @@ player movement, jobs, tuning panel, HUD, and synthesized audio.
 
 ## Controls (current)
 
-| Input         | Action                                             |
-| ------------- | -------------------------------------------------- |
-| Click         | Capture the mouse and play                         |
-| Mouse         | Look around                                        |
-| WASD / arrows | Move                                               |
-| Shift         | Run                                                |
-| E             | Grab the mower / let go                            |
-| W / S         | Push / pull the mower                              |
-| Mouse         | Steer the mower (default: it heads where you look) |
-| A / D         | Steer the mower (with "A / D keys" steering)       |
-| Q             | Take out / put away the string trimmer             |
-| Hold mouse    | Run the trimmer (its head goes where you look)     |
-| Hold F        | Highlight the grass that's left                    |
-| V             | View the lawn from above                           |
-| R             | Mow it again (once it's done)                      |
-| M             | Mute / unmute                                      |
-| T             | Tuning panel (live sliders; "Copy changes")        |
-| Esc           | Release the mouse                                  |
-| `` ` `` (key) | Toggle the Babylon Inspector (dev builds only)     |
+| Input         | Action                                              |
+| ------------- | --------------------------------------------------- |
+| Click         | Capture the mouse and play                          |
+| Mouse         | Look around                                         |
+| WASD / arrows | Move                                                |
+| Shift         | Run                                                 |
+| E             | Grab the mower / let go (or buy, at the sale stand) |
+| W / S         | Push / pull the mower                               |
+| Mouse         | Steer the mower (default: it heads where you look)  |
+| A / D         | Steer the mower (with "A / D keys" steering)        |
+| Q             | Take out / put away the string trimmer              |
+| Hold mouse    | Run the trimmer (its head goes where you look)      |
+| Hold F        | Highlight the grass that's left                     |
+| V             | View the lawn from above                            |
+| R             | Mow it again (once it's done)                       |
+| M             | Mute / unmute                                       |
+| T             | Tuning panel (live sliders; "Copy changes")         |
+| Esc           | Release the mouse                                   |
+| `` ` `` (key) | Toggle the Babylon Inspector (dev builds only)      |
 
 **Dev tip:** in dev builds, type `game` in the browser console to inspect the running game,
 e.g. `game.scene.meshes` or `game.camera.yaw`.
@@ -73,6 +73,7 @@ src/
   lawn/                The grass: GrassGrid + cutters and neatness (tested, pure), renderer
   mower/               The push mower (mowerMath.js is the tested, pure handling)
   trimmer/             The string trimmer (trimmerMath.js: tested, pure aiming)
+  shop/                The sale stand by the garage (shop.js: tested, pure rules)
   audio/               Synthesized sounds (audioMix.js is the tested, pure part)
   effects/             Grass clippings and particle textures drawn in code
   math/                Small pure helpers: seeded noise, rectangles, ground shapes

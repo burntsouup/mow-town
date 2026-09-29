@@ -16,6 +16,22 @@
   white-space: nowrap;
 }
 
+/* A short message under the objective, like "deck fitted". It pops in. */
+.toast {
+  position: absolute;
+  top: 118px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: rgb(20 24 30 / 0.7);
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffd76a;
+  white-space: nowrap;
+  animation: pop-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
 /* Job objective and progress bar, top center. */
 .objective {
   position: absolute;
