@@ -301,6 +301,62 @@ describe('GrassGrid.cutCircle (string trimmer)', () => {
   });
 });
 
+describe('GrassGrid edges', () => {
+  /** A 2 × 2 m lawn with a 0.4 m square hole (a flower bed) in the middle. */
+  function lawnWithBed() {
+    const grid = lawn({
+      heightAt: (x, z) => (Math.abs(x - 1) < 0.2 && Math.abs(z - 1) < 0.2 ? 0 : 1),
+    });
+    grid.markEdges(0.25);
+    return grid;
+  }
+  /** @param {GrassGrid} grid @param {number} x @param {number} z */
+  const isEdge = (grid, x, z) => grid.edge[Math.floor(z * 10) * grid.columns + Math.floor(x * 10)];
+
+  it('marks lawn near its border and around holes, and nothing else', () => {
+    const grid = lawnWithBed();
+    expect(isEdge(grid, 0.05, 1)).toBe(1); // along the border
+    expect(isEdge(grid, 1.95, 0.05)).toBe(1); // a corner
+    expect(isEdge(grid, 1.35, 1)).toBe(1); // just beside the bed
+    expect(isEdge(grid, 1, 1)).toBe(0); // in the bed: not lawn, so not an edge
+    expect(isEdge(grid, 0.5, 0.5)).toBe(0); // out in the open
+    expect(isEdge(grid, 1.55, 1)).toBe(0);
+  });
+
+  it('only marks edges along the things it is told to', () => {
+    const grid = lawn({
+      heightAt: (x, z) => (Math.abs(x - 1) < 0.2 && Math.abs(z - 1) < 0.2 ? 0 : 1),
+    });
+    grid.markEdges(0.25, (x) => x < 0); // just the left border, like a fence
+    expect(isEdge(grid, 0.05, 1)).toBe(1);
+    expect(isEdge(grid, 1.95, 1)).toBe(0);
+    expect(isEdge(grid, 1.35, 1)).toBe(0);
+  });
+
+  it('tracks edge progress separately, weighted like the rest', () => {
+    const grid = lawnWithBed();
+    expect(grid.edgeProgress).toBe(0);
+    grid.cutDeck({ x: 1, z: 1, yaw: 0 }, { width: 2, length: 2 }, CUT); // everything
+    expect(grid.edgeProgress).toBe(1);
+    expect(grid.progress).toBe(1);
+    grid.reset();
+    grid.cutCircle(0.5, 0.5, 0.2, CUT); // only open lawn
+    expect(grid.edgeProgress).toBe(0);
+    expect(grid.progress).toBeGreaterThan(0);
+  });
+
+  it('can shrink the leftovers away from the edges and leave the edges for later', () => {
+    const grid = lawnWithBed();
+    while (grid.shrinkRemaining(0.1, { inner: true, edges: false }));
+    expect(grid.edgeProgress).toBe(0);
+    expect(heightAt(grid, 0.5, 0.5)).toBeCloseTo(CUT);
+    expect(heightAt(grid, 0.05, 1)).toBe(1);
+    while (grid.shrinkRemaining(0.1, { inner: false, edges: true }));
+    expect(grid.edgeProgress).toBe(1);
+    expect(grid.progress).toBe(1);
+  });
+});
+
 describe('GrassGrid.writeTexels', () => {
   it('packs height, mowing direction and lawn mask into RGBA bytes', () => {
     const grid = new GrassGrid({ width: 0.2, depth: 0.1, texelsPerMeter: 10, targetHeight: CUT });

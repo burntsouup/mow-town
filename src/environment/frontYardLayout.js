@@ -50,7 +50,8 @@ export const SPOTS = {
 
 /**
  * Where the lawn is and how long the grass starts out. `heightAt` takes lawn-local meters
- * (from the lawn's front-left corner) and returns 0 where there's no lawn.
+ * (from the lawn's front-left corner) and returns 0 where there's no lawn; `edgeAt` says
+ * which of those spots are things to trim around (see GrassGrid.markEdges).
  */
 export function frontLawn() {
   const width = LAWN.right - LAWN.left;
@@ -59,14 +60,15 @@ export function frontLawn() {
   const thickNoise = createValueNoise(7);
   const [shortest, tallest] = config.grass.uncutHeight;
   // Grass stops a few centimeters short of beds and toys, so it doesn't poke through them.
-  const notLawn = [
-    SPOTS.walkway,
+  // Everything but the walkway (flat: the mower rolls right over it) is trimmed around.
+  const trimAround = [
     growShape(SPOTS.flowerBed, 0.04),
     SPOTS.tree,
     growShape(SPOTS.ball, 0.02),
     growShape(SPOTS.truck, 0.03),
     SPOTS.mailbox,
   ];
+  const notLawn = [SPOTS.walkway, ...trimAround];
   /** Thick, lush patches: 0 in most of the lawn, up to 1 in a few blobs. */
   const thickness = (/** @type {number} */ x, /** @type {number} */ z) =>
     smoothstep(0.64, 0.78, fractalNoise(thickNoise, x * 0.3, z * 0.3, 2));
@@ -84,5 +86,9 @@ export function frontLawn() {
     depth,
     heightAt,
     densityAt: (/** @type {number} */ x, /** @type {number} */ z) => 1 + 1.5 * thickness(x, z),
+    /** @param {number} x @param {number} z */
+    edgeAt: (x, z) =>
+      x < 0 || // the fence runs along the lawn's left side
+      trimAround.some((shape) => insideShape(shape, LAWN.left + x, LAWN.front + z)),
   };
 }
