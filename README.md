@@ -8,8 +8,8 @@ JavaScript.
 
 **Status:** v0.1, "Mowing feels satisfying": grab the push mower on the driveway, mow the
 fenced front lawn around a tree, a flower bed and some toys, and finish with an aerial view
-of your stripes. Next up (v0.2): money, a first upgrade, a bigger property and a string
-trimmer. See [docs/ROADMAP.md](docs/ROADMAP.md)
+of your stripes. In progress (v0.2, "A little mowing business"): money, a string trimmer, a
+first upgrade and a bigger lawn next door. See [docs/ROADMAP.md](docs/ROADMAP.md)
 for what's done and next.
 
 mow-town started as a copy of [p-washer](https://github.com/burntsouup/p-washer) v0.2.0 (a

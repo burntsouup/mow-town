@@ -132,8 +132,71 @@ obstacles, so it's a best case; expect a real run to take roughly 1.5× longer.
 Money, a shop, upgrades, riding mowers, multiple lawns, a string trimmer, bagging clippings,
 regrowth, multiplayer.
 
+## v0.2 — "A little mowing business"
+
+Goal: mow for money, spend it on a better mower, and take on a bigger yard. Earning,
+upgrading and then feeling the difference should be satisfying.
+
+The loop: mow your front lawn and get paid (plus a tip for neat stripes), trim the edges the
+mower can't reach (another tip), buy a wider deck, then push the mower next door and mow the
+neighbors' bigger lawn.
+
+### 1. Money
+
+- [ ] Each job pays a set price; the money shows on screen and counts up when you're paid
+- [ ] A tip for neat stripes: how parallel your rows are, patch by patch (a row and the next
+      one mowed the other way count as parallel), so tidy rows pay in any direction
+- [ ] The "Job complete" card becomes a receipt; redoing a lawn (`R`) pays again
+
+### 2. String trimmer
+
+The biggest open question about feel, so it comes early.
+
+- [ ] `Q` takes it out or puts it away; hold the mouse button to run it
+- [ ] Aim by looking (like p-washer's nozzle), within about an arm's length
+- [ ] A small round cut that gets where the deck can't, in fixed 60 Hz ticks; trimmed grass
+      has no stripe lean
+- [ ] Its own buzz and flying grass bits
+
+### 3. Edges
+
+- [ ] A narrow strip along every border and obstacle counts as edges, with its own bar
+- [ ] At 98% the game still tidies up the middle, but leaves the edges for the trimmer
+- [ ] A "crisp edges" tip once the edges are done
+
+### 4. First upgrade
+
+- [ ] A sale stand by the garage sells a 30-inch deck; `E` to buy it
+- [ ] About 40% more lawn per pass and wider stripes, but bulkier: it can't get as close to
+      things, so the trimmer matters more
+- [ ] The pacing bot runs with both decks
+
+### 5. Next door
+
+- [ ] A second house with a bigger L-shaped lawn (~1.5× the front lawn) and more to mow
+      around; its long grass is visible from the start
+- [ ] The second job: push the mower over along the sidewalk
+- [ ] Sized so it takes about as long with the new deck as the front lawn did with the old
+
+### 6. Tuning + playtest
+
+- [ ] Prices and pay, pacing bands for each lawn and deck, findings recorded here
+- [ ] Frame rate with two lawns on screen; cap the resolution on high-refresh screens
+- [ ] Playtest
+
+### v0.2 success checklist
+
+- [ ] Getting paid feels good, and the tip makes neat stripes worth the effort
+- [ ] Trimming is quick and satisfying, not a chore
+- [ ] The wider deck feels like a clear upgrade
+- [ ] The neighbors' yard feels like a step up, not a slog
+
+## Deliberately not in v0.2
+
+Saving (money and the upgrade reset when you reload), more than one upgrade, a riding mower,
+regrowth, time pressure or client ratings, bagging clippings, multiplayer.
+
 ## Later (ideas, not commitments)
 
-- **v0.2:** money, a first upgrade, a bigger property, and a string trimmer for the edges
 - **v0.3:** a riding mower and large properties
 - **Later:** co-op multiplayer (why cutting runs in fixed, deterministic steps)
