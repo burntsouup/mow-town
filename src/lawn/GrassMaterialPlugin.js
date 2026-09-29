@@ -81,6 +81,7 @@ export class GrassMaterialPlugin extends MaterialPluginBase {
         { name: 'grassHighlightColor', size: 3, type: 'vec3' },
         { name: 'grassHighlight', size: 1, type: 'float' },
         { name: 'grassUncutAbove', size: 1, type: 'float' },
+        { name: 'grassShellStep', size: 1, type: 'float' },
       ],
       fragment: `
         uniform vec2 grassBlades;
@@ -92,7 +93,8 @@ export class GrassMaterialPlugin extends MaterialPluginBase {
         uniform float grassMowLean;
         uniform vec3 grassHighlightColor;
         uniform float grassHighlight;
-        uniform float grassUncutAbove;`,
+        uniform float grassUncutAbove;
+        uniform float grassShellStep;`,
     };
   }
 
@@ -119,6 +121,7 @@ export class GrassMaterialPlugin extends MaterialPluginBase {
     );
     uniformBuffer.updateFloat('grassHighlight', this.highlight);
     uniformBuffer.updateFloat('grassUncutAbove', this.uncutAbove);
+    uniformBuffer.updateFloat('grassShellStep', 1 / Math.max(1, settings.shellCount - 1));
     const { colors } = settings;
     uniformBuffer.updateColor3('grassRootColor', this.colors.root.fromHexString(colors.root));
     uniformBuffer.updateColor3('grassTipColor', this.colors.tip.fromHexString(colors.tip));
@@ -180,6 +183,10 @@ export class GrassMaterialPlugin extends MaterialPluginBase {
           // 0 at the root, 1 at the tip of this blade.
           float bladeAlong = clamp(vShellHeight / max(bladeHeight, 0.001), 0.0, 1.0);
           if (grassData.a < 0.25) discard; // not lawn (a path, a flower bed)
+          // Far away the carpet is solid, so only its top couple of layers can ever be seen.
+          // Skip the rest here, before any lighting: a big saving when the lawn fills the view
+          // at a low angle (otherwise each far pixel is lit a dozen times over).
+          if (grassFar > 0.98 && vShellHeight < bladeHeight - 2.0 * grassShellStep) discard;
           if (vShellHeight > 0.0) { // the bottom shell is solid ground
             if (vShellHeight > bladeHeight) discard;
             // Each blade sits somewhere near the middle of its cell and tapers to a point.
