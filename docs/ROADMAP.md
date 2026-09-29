@@ -154,15 +154,24 @@ lawn ~0.8, and a random scribble ~0.35–0.45. So the tip starts at 0.6 and is w
 The open question for the playtest: cleanup passes at odd angles overwrite the direction
 underneath, so a real, careful run may score lower than the bot.
 
-### 2. String trimmer
+### 2. String trimmer ✅
 
 The biggest open question about feel, so it comes early.
 
-- [ ] `Q` takes it out or puts it away; hold the mouse button to run it
-- [ ] Aim by looking (like p-washer's nozzle), within about an arm's length
-- [ ] A small round cut that gets where the deck can't, in fixed 60 Hz ticks; trimmed grass
+- [x] `Q` takes it out or puts it away; hold the mouse button to run it
+- [x] Aim by looking (like p-washer's nozzle), within about an arm's length
+- [x] A small round cut that gets where the deck can't, in fixed 60 Hz ticks; trimmed grass
       has no stripe lean
-- [ ] Its own buzz and flying grass bits
+- [x] Its own buzz and flying grass bits
+
+**Findings:** aiming by looking needed its own camera. From the walking view, the ground in
+the middle of the screen is 2.5 m or more away (out of reach), and a head straight in front
+of you hides behind your body. So carrying the trimmer switches to a higher, closer view with
+the player see-through, which tips down to the head when you take it out and won't look up
+past the horizon meanwhile. That higher camera ended up inside the tree's leaves when
+trimming around the trunk, so canopies now fade while they're in the way. The trimmer only
+cuts grass that still needs it, so waving it over neat stripes doesn't smudge them. The sound
+can only be judged in the playtest.
 
 ### 3. Edges
 

@@ -71,8 +71,10 @@ export class Player {
   /**
    * @param {number} dt Seconds since the previous frame.
    * @param {number} cameraYaw Which way the camera faces, so W always means "away from me".
+   * @param {number | null} [faceYaw] Face this way instead of the way you're walking (e.g.
+   *   toward the string trimmer's head). You walk carefully meanwhile: slower, no running.
    */
-  update(dt, cameraYaw) {
+  update(dt, cameraYaw, faceYaw = null) {
     const settings = config.player;
 
     // Only take movement input while the mouse is captured (i.e. while playing).
@@ -80,8 +82,10 @@ export class Player {
       ? moveInputFromKeys((code) => this.input.isDown(code))
       : { x: 0, z: 0 };
     const direction = cameraRelativeMove(input, cameraYaw);
+    const careful = faceYaw !== null;
     const running = this.input.isDown('ShiftLeft') || this.input.isDown('ShiftRight');
-    const topSpeed = running ? settings.runSpeed : settings.walkSpeed;
+    let topSpeed = running ? settings.runSpeed : settings.walkSpeed;
+    if (careful) topSpeed = config.trimmer.walkSpeed;
     const isMoving = input.x !== 0 || input.z !== 0;
 
     // Accelerate toward the target velocity (or brake toward zero with no input).
@@ -95,8 +99,10 @@ export class Player {
     // stops round props (like bushes) from nudging the player upward.
     this.root.position.y = this.groundHeight;
 
-    // Face the direction you're walking.
-    if (isMoving) {
+    // Face the direction you're walking (or where you're working).
+    if (careful) {
+      this.root.rotation.y = turnTowards(this.root.rotation.y, faceYaw, settings.turnSpeed, dt);
+    } else if (isMoving) {
       this.root.rotation.y = turnTowards(
         this.root.rotation.y,
         yawFromDirection(direction),

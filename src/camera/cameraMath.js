@@ -93,6 +93,36 @@ export function playerOpacityForDistance(distance, hiddenBelow, solidAbove) {
 }
 
 /**
+ * Whether the straight line from `a` to `b` passes through a sphere (or starts inside it).
+ * Used to fade out things like tree canopies that come between the camera and the player.
+ *
+ * @param {Vec3} a
+ * @param {Vec3} b
+ * @param {Vec3} center
+ * @param {number} radius
+ */
+export function segmentHitsSphere(a, b, center, radius) {
+  const abX = b.x - a.x;
+  const abY = b.y - a.y;
+  const abZ = b.z - a.z;
+  const lengthSquared = abX * abX + abY * abY + abZ * abZ;
+  // How far along the line (0 = a, 1 = b) the point closest to the center is.
+  const along =
+    lengthSquared > 0
+      ? clamp(
+          ((center.x - a.x) * abX + (center.y - a.y) * abY + (center.z - a.z) * abZ) /
+            lengthSquared,
+          0,
+          1,
+        )
+      : 0;
+  const dx = a.x + abX * along - center.x;
+  const dy = a.y + abY * along - center.y;
+  const dz = a.z + abZ * along - center.z;
+  return dx * dx + dy * dy + dz * dz <= radius * radius;
+}
+
+/**
  * @param {number} value
  * @param {number} min
  * @param {number} max

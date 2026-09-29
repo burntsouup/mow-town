@@ -12,6 +12,7 @@ import { stripeNeatness } from '../lawn/neatness.js';
 import { grassSpeedFactor } from '../mower/mowerMath.js';
 import { PushMower } from '../mower/PushMower.js';
 import { Player } from '../player/Player.js';
+import { StringTrimmer } from '../trimmer/StringTrimmer.js';
 import { DebugOverlay } from '../ui/DebugOverlay.js';
 import { Hud } from '../ui/Hud.js';
 import { TuningPanel } from '../ui/TuningPanel.js';
@@ -52,10 +53,13 @@ export class Game {
       this.camera,
       this.level.mowerSpot,
     );
+    this.trimmer = new StringTrimmer(this.scene, shadows, this.input, this.player, this.camera);
     const [centerX, centerZ] = this.level.lawn.center;
     this.reveal = new RevealCamera(this.scene, this.camera, { x: centerX, z: centerZ });
     this.grassCut = 0; // grass cut this frame (see GrassGrid.cutDeck)
     this.cutRate = 0; // grass cut per second, smoothed so effects don't flicker
+    this.grassTrimmed = 0; // grass cut by the string trimmer this frame
+    this.trimRate = 0; // ...per second, smoothed
     this.clippings = new Clippings(this.scene, this.mower.model.chute);
     this.audio = new AudioSystem();
     this.jobs = new JobList(this.level.jobs, config.job.completeAt);
@@ -88,21 +92,31 @@ export class Game {
    * @param {number} dt Seconds since the previous frame.
    */
   update(dt) {
-    // Walk relative to where the camera looks, unless you're pushing the mower.
-    if (!this.mower.isHeld) this.player.update(dt, this.camera.yaw);
+    // Walk relative to where the camera looks, unless you're pushing the mower. While
+    // trimming, you face the trimmer's head.
+    if (!this.mower.isHeld) this.player.update(dt, this.camera.yaw, this.trimmer.faceYaw);
     this.updateMowing(dt);
-    this.camera.isMowing = this.mower.isHeld;
+    this.camera.mode = this.mower.isHeld ? 'mowing' : this.trimmer.isOut ? 'trimming' : 'walking';
     this.camera.update(dt); // follow the player to their new position
+    this.updateTrimming(dt); // aims with the camera, so after it moves
     this.updateReveal(dt);
     this.updateJob(dt);
     this.lawn.update(dt); // finish off leftovers and send cut grass to the GPU
     if (this.input.wasPressed(config.audio.muteKey)) this.audio.toggleMute();
-    this.audio.update(dt, {
-      running: this.mower.isHeld,
-      load: this.cutRate / config.audio.fullLoadCutRate,
-      bumped: this.mower.bumped,
-      grabbed: this.mower.justGrabbed,
-    });
+    this.audio.update(
+      dt,
+      {
+        running: this.mower.isHeld,
+        load: this.cutRate / config.audio.fullLoadCutRate,
+        bumped: this.mower.bumped,
+        grabbed: this.mower.justGrabbed,
+      },
+      {
+        out: this.trimmer.isOut,
+        throttle: this.trimmer.isRunning,
+        load: this.trimRate / config.audio.trimmer.fullLoadCutRate,
+      },
+    );
     if (this.input.wasPressed(config.debug.tuningKey)) this.tuning.toggle();
     this.moneyShown = countTowards(this.moneyShown, this.money, dt, {
       speed: config.money.countSpeed,
@@ -110,7 +124,7 @@ export class Game {
     });
     const job = this.jobs.currentJob;
     this.hud.update({
-      prompt: this.mower.prompt,
+      prompt: this.mower.prompt ?? this.trimmer.prompt,
       hasMower: this.mower.everHeld,
       job: this.jobs.current,
       jobStatus: job.status,
@@ -151,7 +165,8 @@ export class Game {
   updateJob(dt) {
     this.time += dt;
     const job = this.jobs.currentJob;
-    const event = job.update(dt, this.lawn.progress, this.grassCut > 0);
+    const working = this.grassCut > 0 || this.grassTrimmed > 0;
+    const event = job.update(dt, this.lawn.progress, working);
     if (event === 'completed') {
       const neatness = stripeNeatness(this.lawn.grid, config.money.neatnessPatch);
       this.pay(jobReceipt(this.jobs.current, { neatness }, config.money));
@@ -206,5 +221,22 @@ export class Game {
     }
     if (dt > 0) this.cutRate = smoothTowards(this.cutRate, this.grassCut / dt, dt, 10);
     this.clippings.update(this.cutRate);
+  }
+
+  /**
+   * Takes out, aims and runs the string trimmer, and cuts the grass under its head.
+   *
+   * @param {number} dt
+   */
+  updateTrimming(dt) {
+    this.trimmer.update(dt, !this.mower.isHeld);
+    if (this.trimmer.isRunning) {
+      this.grassTrimmed = this.lawn.trim(dt, this.trimmer.from, this.trimmer.head);
+    } else {
+      this.grassTrimmed = 0;
+      this.lawn.liftTrimmer();
+    }
+    if (dt > 0) this.trimRate = smoothTowards(this.trimRate, this.grassTrimmed / dt, dt, 10);
+    this.trimmer.updateSpray(this.trimRate);
   }
 }

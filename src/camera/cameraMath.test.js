@@ -6,6 +6,7 @@ import {
   forwardFromYawPitch,
   playerOpacityForDistance,
   rightFromYaw,
+  segmentHitsSphere,
   wrapAngle,
 } from './cameraMath.js';
 
@@ -107,6 +108,26 @@ describe('playerOpacityForDistance', () => {
     expect(playerOpacityForDistance(3, 0.7, 1.4)).toBe(1);
     expect(playerOpacityForDistance(0.5, 0.7, 1.4)).toBe(0);
     expect(playerOpacityForDistance(1.05, 0.7, 1.4)).toBeCloseTo(0.5);
+  });
+});
+
+describe('segmentHitsSphere', () => {
+  const center = { x: 0, y: 3, z: 0 };
+
+  it('hits when the line passes through the sphere', () => {
+    expect(segmentHitsSphere({ x: -5, y: 3, z: 0.5 }, { x: 5, y: 3, z: 0.5 }, center, 1)).toBe(
+      true,
+    );
+  });
+
+  it('misses when the line passes by, or stops short', () => {
+    expect(segmentHitsSphere({ x: -5, y: 3, z: 2 }, { x: 5, y: 3, z: 2 }, center, 1)).toBe(false);
+    expect(segmentHitsSphere({ x: -5, y: 3, z: 0 }, { x: -2, y: 3, z: 0 }, center, 1)).toBe(false);
+  });
+
+  it('hits when one end is inside (the camera in the leaves)', () => {
+    expect(segmentHitsSphere({ x: 0.2, y: 3, z: 0 }, { x: 9, y: 0, z: 9 }, center, 1)).toBe(true);
+    expect(segmentHitsSphere(center, center, center, 1)).toBe(true);
   });
 });
 

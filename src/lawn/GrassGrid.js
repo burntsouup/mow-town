@@ -230,6 +230,69 @@ export class GrassGrid {
   }
 
   /**
+   * Cuts long grass inside a circle (the string trimmer's spinning line) down to `cutTo`.
+   * Grass that's already mowed is left alone, so trimming over neat stripes doesn't smudge
+   * them, and trimmed grass gets no mowing direction (no stripes).
+   *
+   * @param {number} x Center, in lawn-local meters.
+   * @param {number} z
+   * @param {number} radius Meters.
+   * @param {number} cutTo Height to cut down to (0..1).
+   * @returns {number} Grass cut (see cutDeck).
+   */
+  cutCircle(x, z, radius, cutTo) {
+    const cutHeight = Math.fround(cutTo);
+    const t = this.texelsPerMeter;
+    const minX = Math.max(0, Math.ceil((x - radius) * t - 0.5));
+    const maxX = Math.min(this.columns - 1, Math.floor((x + radius) * t - 0.5));
+    const minY = Math.max(0, Math.ceil((z - radius) * t - 0.5));
+    const maxY = Math.min(this.rows - 1, Math.floor((z + radius) * t - 0.5));
+    if (minX > maxX || minY > maxY) return 0;
+    const radiusSquared = radius * radius;
+    let cut = 0;
+    for (let row = minY; row <= maxY; row++) {
+      const dz = (row + 0.5) / t - z;
+      for (let column = minX; column <= maxX; column++) {
+        const dx = (column + 0.5) / t - x;
+        const i = row * this.columns + column;
+        if (dx * dx + dz * dz > radiusSquared || !this.mask[i] || this.isMowed(i)) continue;
+        if (this.height[i] <= cutHeight) continue;
+        cut += (this.height[i] - cutHeight) * this.density[i];
+        this.height[i] = cutHeight;
+        if (this.isMowed(i)) this.remainingWeight -= this.weight[i];
+      }
+    }
+    this.markChanged({ minX, minY, maxX, maxY });
+    return cut / (t * t);
+  }
+
+  /**
+   * Cuts along a line of circles from one point to the next, close enough together to leave
+   * no gaps. `from` itself was already cut.
+   *
+   * @param {{ x: number, z: number }} from
+   * @param {{ x: number, z: number }} to
+   * @param {number} radius
+   * @param {number} cutTo
+   * @returns {number} Grass cut (see cutDeck).
+   */
+  cutCircleStroke(from, to, radius, cutTo) {
+    const distance = Math.hypot(to.x - from.x, to.z - from.z);
+    const steps = Math.max(1, Math.ceil(distance / (radius * STAMP_SPACING)));
+    let cut = 0;
+    for (let step = 1; step <= steps; step++) {
+      const f = step / steps;
+      cut += this.cutCircle(
+        from.x + (to.x - from.x) * f,
+        from.z + (to.z - from.z) * f,
+        radius,
+        cutTo,
+      );
+    }
+    return cut;
+  }
+
+  /**
    * Shortens every uncut texel by up to `amount`, but never below the target height. Called
    * each frame for a moment when a job completes, so the last tufts shrink away.
    *

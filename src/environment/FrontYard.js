@@ -324,13 +324,14 @@ function buildPlants(kit) {
       at: [x, 0, z],
       color: COLORS.trunk,
     });
-    kit.blob('treeCanopy', {
+    const canopy = kit.blob('treeCanopy', {
       radius: 1.9 * size,
       at: [x, trunkHeight - 0.6 * size, z],
       color: COLORS.leaves,
       squash: 0.85,
       solid: false,
     });
+    canopy.metadata = { seeThrough: true }; // fades if it gets between the camera and you
   }
 
   // A row of bushes in the bed along the front of the house, skipping the door and garage.

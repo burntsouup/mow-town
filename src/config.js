@@ -38,6 +38,7 @@ export const config = {
     minHeight: 0.3, // never go lower than this above the ground
     nearClip: 0.05, // closest distance the camera can draw; small so walls don't clip
     // When pushed in close, fade the player out so they don't fill the screen (meters).
+    seeThroughOpacity: 0.25, // how faint a tree's leaves get when they're in the way
     playerHiddenBelow: 0.7,
     playerSolidAbove: 1.4,
     // While pushing the mower: further back and higher, so you can see the mower ahead, with
@@ -48,6 +49,16 @@ export const config = {
       pivotHeight: 1.7,
       pitch: 0.42,
       playerOpacity: 0.45,
+    },
+    // While carrying the string trimmer: higher and a little closer, looking down at the head
+    // in front of you (pitch: the least it tips down to when you take it out).
+    trimming: {
+      distance: 3.4,
+      shoulderOffset: 0.8,
+      pivotHeight: 1.9,
+      pitch: 0.8,
+      minPitch: 0.45, // ...and the least it looks down while you carry it
+      playerOpacity: 0.55,
     },
   },
   player: {
@@ -98,9 +109,20 @@ export const config = {
     // The cutting area under the mower, in meters: a 22-inch deck, like a real push mower.
     deck: { width: 0.56, length: 0.45 },
   },
+  trimmer: {
+    key: 'KeyQ', // takes the string trimmer out, or puts it away
+    radius: 0.17, // meters: how far the spinning line reaches (a 13-inch cut, like a real one)
+    reach: { min: 0.6, max: 1.3 }, // meters from your feet that the head can reach
+    follow: 14, // how snappily the head follows your aim
+    maxSpeed: 3.5, // m/s: the fastest you can swing it
+    walkSpeed: 2.2, // m/s: you walk carefully while carrying it (and can't run)
+    aimFar: 20, // meters: looking above the ground aims this far out (then reach limits it)
+  },
   effects: {
     clippingsPerCut: 900, // clippings per second, per unit of grass cut per second
     maxClippingsRate: 1200, // clippings per second, at most
+    trimmerSprayPerCut: 2500, // the same for the string trimmer's spray of grass bits
+    maxTrimmerSpray: 600,
     clippingColors: ['#86b84a', '#5b8a30'], // each clipping is somewhere between these
   },
   audio: {
@@ -117,6 +139,18 @@ export const config = {
     recover: 1.8,
     bog: 5,
     spinDown: 1.5,
+    // The string trimmer's two-stroke engine (see trimmerSound in audio/audioMix.js).
+    trimmer: {
+      frequency: 150, // Hz: its buzz at full revs
+      idleSpeed: 0.4, // engine speed (0..1) while carried with the trigger up
+      revUp: 7,
+      revDown: 3,
+      bogDepth: 0.2,
+      idle: 0.04,
+      full: 0.11,
+      cutting: 0.2,
+      fullLoadCutRate: 0.15, // grass trimmed per second that counts as full load
+    },
     chime: 0.22, // "job complete" jingle
     coins: 0.16, // "ka-ching" when you're paid
     muteKey: 'KeyM',
