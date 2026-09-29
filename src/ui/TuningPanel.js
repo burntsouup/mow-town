@@ -102,6 +102,10 @@ export class TuningPanel {
     money.add(config.money, 'edgesTip', 0, 50, 1).name('Crisp edges tip ($)');
     money.close();
 
+    const shop = gui.addFolder('Shop');
+    shop.add(config.shop.wideDeck, 'price', 0, 200, 1).name('30-inch deck price ($)');
+    shop.close();
+
     const effects = gui.addFolder('Effects');
     effects.add(config.effects, 'clippingsPerCut', 0, 3000, 10).name('Clippings amount');
     effects.add(config.effects, 'maxClippingsRate', 0, 3000, 10).name('Clippings max / s');

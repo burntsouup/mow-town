@@ -6,6 +6,7 @@ import './hud.css';
 /**
  * @typedef {{
  *   prompt: string | null,
+ *   toast: string | null,
  *   hasMower: boolean,
  *   job: import('../game/jobList.js').JobDefinition,
  *   jobStatus: 'waiting' | 'active' | 'complete',
@@ -41,6 +42,7 @@ export class Hud {
     this.input = input;
 
     this.prompt = element('div', 'interaction-prompt');
+    this.toast = element('div', 'toast');
 
     this.objective = element('div', 'objective');
     this.objectiveTitle = element('div', 'objective-title');
@@ -91,7 +93,7 @@ export class Hud {
         <dt>Mouse</dt><dd>Look around</dd>
         <dt>WASD</dt><dd>Move</dd>
         <dt>Shift</dt><dd>Run</dd>
-        <dt>E</dt><dd>Grab the mower / let go</dd>
+        <dt>E</dt><dd>Grab the mower / let go (or buy, at the sale stand)</dd>
         <dt>W / S</dt><dd>Push / pull the mower</dd>
         <dt>Mouse or A / D</dt><dd>Steer the mower</dd>
         <dt>Q</dt><dd>Take out / put away the string trimmer</dd>
@@ -104,7 +106,14 @@ export class Hud {
         <dt>Esc</dt><dd>Release the mouse</dd>
       </dl>`;
 
-    root.append(this.objective, this.wallet, this.prompt, this.completeCard, this.playPrompt);
+    root.append(
+      this.objective,
+      this.wallet,
+      this.toast,
+      this.prompt,
+      this.completeCard,
+      this.playPrompt,
+    );
     /** What's currently on screen, so we only touch the page when something changes. */
     this.shown = /** @type {Record<string, unknown>} */ ({});
   }
@@ -126,6 +135,12 @@ export class Hud {
     });
     this.set('moneyCounting', state.moneyCounting, () => {
       this.wallet.classList.toggle('is-counting', state.moneyCounting);
+    });
+
+    const toastText = locked ? state.toast : null;
+    this.set('toast', toastText, () => {
+      this.toast.textContent = toastText ?? '';
+      this.toast.hidden = !toastText;
     });
 
     const promptText = locked ? state.prompt : null;
