@@ -32,6 +32,7 @@ player movement, jobs, tuning panel, HUD, and synthesized audio.
 | Hold mouse    | Run the trimmer (its head goes where you look)      |
 | Hold F        | Highlight the grass that's left                     |
 | V             | View the lawn from above                            |
+| N             | Next job (once this one's done)                     |
 | R             | Mow it again (once it's done)                       |
 | M             | Mute / unmute                                       |
 | T             | Tuning panel (live sliders; "Copy changes")         |
@@ -67,7 +68,7 @@ src/
   main.js              Entry point: creates the Game
   config.js            Every tunable number lives here
   game/                Game loop, keyboard/mouse input, jobs and pay, tuning helpers
-  environment/         The level: layout (FrontYard.js), lighting + sky, greybox kit
+  environment/         The level (level.js): our yard, next door, lighting + sky, greybox kit
   player/              The player character (movement.js is the tested, pure part)
   camera/              Third-person camera and the aerial reveal (*Math.js: tested, pure)
   lawn/                The grass: GrassGrid + cutters and neatness (tested, pure), renderer

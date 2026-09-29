@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { config } from '../config.js';
 import { frontLawn } from '../environment/frontYardLayout.js';
+import { nextDoorLawn } from '../environment/nextDoorLayout.js';
 import { stripeNeatness } from './neatness.js';
 import { simulateRows } from './pacing.js';
 
@@ -73,5 +74,41 @@ describe('pacing (front lawn, best case)', () => {
         config.money.tipFull,
       );
     }
+  });
+});
+
+describe("pacing (the Parkers' lawn next door, best case)", () => {
+  const { width, length } = config.shop.wideDeck;
+  /** @param {import('./GrassGrid.js').Deck} deck @param {'x' | 'z'} along */
+  const mowNextDoor = (deck, along) =>
+    simulateRows({
+      area: nextDoorLawn(),
+      texelsPerMeter: config.grass.texelsPerMeter,
+      cutHeight: config.grass.cutHeight,
+      mower: config.mower,
+      deck,
+      overlap: 0.08,
+      along,
+    });
+
+  // Sized so that, with the 30-inch deck, it takes about as long as the front lawn did with
+  // the 22-inch one: the upgrade lets you take on more in the same time.
+  it('takes a tidy player 3 to 5.5 minutes with the 30-inch deck, and longer without', () => {
+    const wideRows = mowNextDoor({ width, length }, 'x');
+    const wideColumns = mowNextDoor({ width, length }, 'z');
+    const narrow = mowNextDoor(config.mower.deck, 'x');
+    console.info(
+      `Pacing next door: 30-inch ${minutes(wideRows.seconds)} min across, ` +
+        `${minutes(wideColumns.seconds)} min up and down; 22-inch ${minutes(narrow.seconds)} min`,
+    );
+    for (const run of [wideRows, wideColumns]) {
+      expect(run.progress).toBeGreaterThanOrEqual(0.98);
+      expect(run.seconds).toBeGreaterThan(180);
+      expect(run.seconds).toBeLessThan(330);
+      expect(stripeNeatness(run.grid, config.money.neatnessPatch)).toBeGreaterThan(
+        config.money.tipFull,
+      );
+    }
+    expect(narrow.seconds).toBeGreaterThan(wideRows.seconds * 1.25);
   });
 });

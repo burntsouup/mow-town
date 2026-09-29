@@ -10,6 +10,10 @@ import { GrassGrid } from './GrassGrid.js';
  * real cutting, and we time how long it takes to finish. It drives straight through
  * obstacles and turns on the spot, so it's a best case: real players take longer.
  *
+ * Each row only runs as far as there's lawn under it, so an L-shaped lawn gets short rows
+ * where it narrows (the bot then drives across the gap to the next row's far end, like you
+ * would). That works as long as the rows only get shorter as it goes, as they do here.
+ *
  * @typedef {import('./GrassGrid.js').Deck} Deck
  * @typedef {import('../mower/mowerMath.js').HandlingSettings & {
  *   grassSlowdown: number, minSpeedFactor: number, mouseFullTurnAngle: number,
@@ -47,8 +51,10 @@ export function simulateRows(options) {
   const rows = Math.max(1, Math.ceil((crossLength - deck.width) / spacing) + 1);
   const rowAt = (/** @type {number} */ row) =>
     Math.min(deck.width / 2 + row * spacing, crossLength - deck.width / 2);
-  const start = deck.length / 2;
-  const end = rowLength - deck.length / 2;
+  // Where each row's lawn starts and ends, as positions for the middle of the deck.
+  const spans = Array.from({ length: rows }, (_, row) =>
+    rowSpan(grid, along, rowAt(row), deck, rowLength),
+  );
   /** Heading for travelling +along (row 0) or -along (row 1). */
   const headingFor = (/** @type {number} */ row) => {
     const forward = row % 2 === 0 ? 0 : Math.PI; // +z : -z
@@ -59,7 +65,7 @@ export function simulateRows(options) {
     along === 'x' ? { x: position, z: cross, yaw } : { x: cross, z: position, yaw };
 
   let row = 0;
-  let position = start;
+  let position = spans[0].start;
   let cross = rowAt(0);
   let yaw = headingFor(0);
   let motion = { speed: 0, yawRate: 0 };
@@ -75,6 +81,7 @@ export function simulateRows(options) {
     /** @type {{ throttle: number, turn: number }} */
     let controls;
     if (phase === 'push') {
+      const { start, end } = spans[row];
       const remaining = direction > 0 ? end - position : position - start;
       const brakingDistance = (motion.speed * motion.speed) / (2 * mower.braking);
       controls = { throttle: remaining > brakingDistance + 0.02 ? 1 : 0, turn: 0 };
@@ -104,4 +111,37 @@ export function simulateRows(options) {
     time += DT;
   }
   return { seconds: time, progress: grid.progress, rows, turningSeconds, grid };
+}
+
+/**
+ * How far along a row there's lawn under the deck's swath, as the positions the middle of the
+ * deck has to reach to cut it all.
+ *
+ * @param {GrassGrid} grid
+ * @param {'x' | 'z'} along
+ * @param {number} cross Where the row is, across (meters).
+ * @param {Deck} deck
+ * @param {number} rowLength
+ */
+function rowSpan(grid, along, cross, deck, rowLength) {
+  const t = grid.texelsPerMeter;
+  const [crossCount, alongCount] =
+    along === 'x' ? [grid.rows, grid.columns] : [grid.columns, grid.rows];
+  const from = Math.max(0, Math.floor((cross - deck.width / 2) * t));
+  const to = Math.min(crossCount - 1, Math.ceil((cross + deck.width / 2) * t) - 1);
+  let first = alongCount;
+  let last = -1;
+  for (let c = from; c <= to; c++) {
+    for (let a = 0; a < alongCount; a++) {
+      const i = along === 'x' ? c * grid.columns + a : a * grid.columns + c;
+      if (!grid.mask[i]) continue;
+      first = Math.min(first, a);
+      last = Math.max(last, a);
+    }
+  }
+  const half = deck.length / 2;
+  if (last < 0) return { start: half, end: half };
+  const start = Math.max(half, first / t + half);
+  const end = Math.min(rowLength - half, (last + 1) / t - half);
+  return { start, end: Math.max(start, end) };
 }

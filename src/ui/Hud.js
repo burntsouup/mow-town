@@ -100,6 +100,7 @@ export class Hud {
         <dt>Hold mouse</dt><dd>Run the trimmer (it cuts where you look)</dd>
         <dt>Hold F</dt><dd>Highlight the grass that's left</dd>
         <dt>V</dt><dd>View the lawn from above</dd>
+        <dt>N</dt><dd>Next job (once this one's done)</dd>
         <dt>R</dt><dd>Mow it again (once it's done)</dd>
         <dt>M</dt><dd>Mute / unmute</dd>
         <dt>T</dt><dd>Tuning panel</dd>

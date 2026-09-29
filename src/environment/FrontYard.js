@@ -1,174 +1,65 @@
-import { MeshBuilder, Vector3 } from '@babylonjs/core';
-import { createRandom } from '../math/noise.js';
-import {
-  DRIVEWAY,
-  FENCE,
-  frontLawn,
-  HOUSE,
-  LAWN,
-  SIDEWALK,
-  SPOTS,
-  WALKWAY,
-} from './frontYardLayout.js';
-import { Greybox } from './greybox.js';
+import { DRIVEWAY, FENCE, HOUSE, LAWN, SIDEWALK, SPOTS, WALKWAY } from './frontYardLayout.js';
+import { buildFlowerBed, buildHouse, buildMailbox, buildTree } from './props.js';
+import { COLLIDER_HEIGHT, COLORS, LAYER } from './style.js';
 
-// Units are meters (see frontYardLayout.js for the layout itself).
-
-const COLORS = {
-  ground: '#5b8a3c', // the neighbors' lawns
-  street: '#3a3b3f',
-  streetLine: '#d9b64a',
-  sidewalk: '#b9b6ad',
-  concrete: '#c4c0b6',
-  walls: '#e3dccd',
-  roof: '#5a5552',
-  garageDoor: '#f1efe9',
-  frontDoor: '#8c3b2e',
-  window: '#3f4f5f',
-  trunk: '#6b4a32',
-  leaves: '#4a7a34',
-  bush: '#3f6e2e',
-  bin: '#35524a',
-  mailbox: '#2f3136',
-  mulch: '#5b4331',
-  edging: '#9a8f82',
-  fence: '#a0876a',
-  ball: '#d63b3b',
-  truck: '#f2b632',
-  tire: '#26272b',
-};
-const FLOWER_COLORS = ['#e84a5f', '#f7c948', '#f4f1ea', '#b565d9', '#ff8f3d'];
-
-// Flat surfaces are stacked a few millimeters apart so they don't flicker ("z-fighting").
-const LAYER = { mulch: 0.008, street: 0.01, marking: 0.02, sidewalk: 0.02, paving: 0.03 };
-// Where two flat surfaces meet at different heights, the lower one extends this far under
-// the higher one. Otherwise, at low camera angles, you can see the lawn through the seam.
-const SEAM_OVERLAP = 0.1;
-/** Invisible colliders are this tall: low ones would let the player slide over them. */
-const COLLIDER_HEIGHT = 1.6;
+// Our place: the house, the driveway, and the fenced front lawn with a tree, a flower bed and
+// a couple of toys in the way. Units are meters (see frontYardLayout.js for the layout).
 
 /**
- * Builds the greybox level: a house with a fenced front lawn to mow (with a tree, a flower
- * bed and a couple of toys in the way), a driveway, the street and a few props.
- *
- * @param {import('@babylonjs/core').Scene} scene
- * @param {import('@babylonjs/core').ShadowGenerator} shadows
+ * @param {import('./greybox.js').Greybox} kit
  */
-export function createFrontYard(scene, shadows) {
-  const kit = new Greybox(scene, shadows);
-
-  const ground = MeshBuilder.CreateGround('ground', { width: 400, height: 400 }, scene);
-  ground.material = kit.material(COLORS.ground);
-  ground.receiveShadows = true;
-
-  buildStreet(kit);
+export function buildFrontYard(kit) {
   buildDriveway(kit);
-  buildHouse(kit);
+  buildHouse(kit, HOUSE, {
+    walls: COLORS.walls,
+    roof: COLORS.roof,
+    garageX: DRIVEWAY.centerX,
+    door: { x: WALKWAY.centerX, color: COLORS.frontDoor },
+    windows: [
+      [-5.5, 1.6],
+      [0.2, 1.3],
+    ],
+  });
+  const walkway = SPOTS.walkway;
+  kit.flat('walkway', {
+    size: [walkway.maxX - walkway.minX, walkway.maxZ - walkway.minZ],
+    at: [WALKWAY.centerX, LAYER.paving, (walkway.minZ + walkway.maxZ) / 2],
+    color: COLORS.concrete,
+  });
   buildFence(kit);
-  buildBeds(kit);
-  buildPlants(kit);
+  kit.flat('houseBed', {
+    size: [LAWN.right - FENCE.x, FENCE.back - LAWN.back],
+    at: [(FENCE.x + LAWN.right) / 2, LAYER.mulch, (LAWN.back + FENCE.back) / 2],
+    color: COLORS.mulch,
+  });
+  buildTree(kit, SPOTS.tree, 1);
+  buildFlowerBed(kit, 'flowerBed', SPOTS.flowerBed, { seed: 5, flowers: 26 });
+  // A row of bushes in the bed along the front of the house, skipping the door and garage.
+  for (const x of [-12.9, -11.5, -10.1, -7.4, -6.2, -5, -3.7, -0.4, 0.8]) {
+    kit.blob('bush', {
+      radius: 0.6,
+      at: [x, 0, HOUSE.front - 0.7],
+      color: COLORS.bush,
+      squash: 0.8,
+    });
+  }
   buildToys(kit);
-  buildProps(kit);
-  buildBounds(kit);
-
-  // Start at the street end of the driveway, facing the house (yaw 0 = toward +z).
-  const spawn = { position: [DRIVEWAY.centerX, 0, SIDEWALK.back + 1], yaw: 0 };
-  // The mower waits on the driveway, pointing at the lawn (yaw -π/2 = toward -x).
-  const mowerSpot = { position: [DRIVEWAY.centerX - 1.3, 0, SIDEWALK.back + 3], yaw: -Math.PI / 2 };
-  // A garage-sale table at the top of the driveway, beside the garage, facing the driveway.
-  const standSpot = { position: [DRIVEWAY.centerX + 1.8, 0, HOUSE.front - 2.4], yaw: -Math.PI / 2 };
-
-  // The jobs, in order (see game/jobList.js).
-  /** @type {import('../game/jobList.js').JobDefinition[]} */
-  const jobs = [
-    {
-      id: 'frontLawn',
-      name: 'the front lawn',
-      shortName: 'Front lawn',
-      title: 'Mow the front lawn',
-      hint: 'Hold F to see what you missed',
-      doneTitle: 'Lawn mowed!',
-      summary: 'Front lawn mowed in',
-    },
-  ];
-
-  return { ground, spawn, mowerSpot, standSpot, jobs, lawn: frontLawn() };
-}
-
-/** @param {Greybox} kit */
-function buildStreet(kit) {
-  const streetWidth = 7;
-  const streetZ = SIDEWALK.front - streetWidth / 2;
-  kit.flat('street', {
-    size: [400, streetWidth + SEAM_OVERLAP],
-    at: [0, LAYER.street, streetZ + SEAM_OVERLAP / 2],
-    color: COLORS.street,
-  });
-  kit.flat('streetLine', {
-    size: [400, 0.12],
-    at: [0, LAYER.marking, streetZ],
-    color: COLORS.streetLine,
-  });
-  const sidewalkWidth = SIDEWALK.back - SIDEWALK.front;
-  kit.flat('sidewalk', {
-    size: [400, sidewalkWidth + SEAM_OVERLAP],
-    at: [0, LAYER.sidewalk, SIDEWALK.front + (sidewalkWidth + SEAM_OVERLAP) / 2],
-    color: COLORS.sidewalk,
-  });
+  // Trash bins beside the garage.
+  kit.block('trashBin', { size: [0.6, 1.05, 0.7], at: [7.5, 0, 0.8], color: COLORS.bin });
+  kit.block('trashBin', { size: [0.6, 1.05, 0.7], at: [7.5, 0, 0], color: COLORS.bin });
+  buildMailbox(kit, SPOTS.mailbox);
 }
 
 /**
  * The driveway runs from the sidewalk to the garage door.
  *
- * @param {Greybox} kit
+ * @param {import('./greybox.js').Greybox} kit
  */
 function buildDriveway(kit) {
   const length = HOUSE.front - SIDEWALK.back;
-  return kit.flat('driveway', {
+  kit.flat('driveway', {
     size: [DRIVEWAY.width, length],
     at: [DRIVEWAY.centerX, LAYER.paving, HOUSE.front - length / 2],
-    color: COLORS.concrete,
-  });
-}
-
-/** @param {Greybox} kit */
-function buildHouse(kit) {
-  const width = HOUSE.right - HOUSE.left;
-  const depth = HOUSE.back - HOUSE.front;
-  const centerX = (HOUSE.left + HOUSE.right) / 2;
-  const centerZ = (HOUSE.front + HOUSE.back) / 2;
-
-  kit.block('house', {
-    size: [width, HOUSE.wallHeight, depth],
-    at: [centerX, 0, centerZ],
-    color: COLORS.walls,
-  });
-  const overhang = 0.5;
-  kit.pyramid('roof', {
-    size: [width + overhang * 2, 2.4, depth + overhang * 2],
-    at: [centerX, HOUSE.wallHeight, centerZ],
-    color: COLORS.roof,
-  });
-
-  // Doors and windows are thin slabs poking 3 cm out of the front wall.
-  const faceZ = HOUSE.front - 0.03;
-  kit.block('garageDoor', {
-    size: [4.2, 2.3, 0.1],
-    at: [DRIVEWAY.centerX, 0, faceZ],
-    color: COLORS.garageDoor,
-  });
-  kit.block('frontDoor', {
-    size: [1, 2.1, 0.1],
-    at: [WALKWAY.centerX, 0, faceZ],
-    color: COLORS.frontDoor,
-  });
-  kit.block('windowLeft', { size: [1.6, 1.2, 0.1], at: [-5.5, 1, faceZ], color: COLORS.window });
-  kit.block('windowRight', { size: [1.3, 1.2, 0.1], at: [0.2, 1, faceZ], color: COLORS.window });
-
-  const walkway = SPOTS.walkway;
-  kit.flat('walkway', {
-    size: [walkway.maxX - walkway.minX, walkway.maxZ - walkway.minZ],
-    at: [WALKWAY.centerX, LAYER.paving, (walkway.minZ + walkway.maxZ) / 2],
     color: COLORS.concrete,
   });
 }
@@ -176,7 +67,7 @@ function buildHouse(kit) {
 /**
  * A low wooden fence down the left side of the lot, then across to the house.
  *
- * @param {Greybox} kit
+ * @param {import('./greybox.js').Greybox} kit
  */
 function buildFence(kit) {
   /** @type {[number, number, number, number][]} Axis-aligned [x1, z1, x2, z2] runs. */
@@ -223,135 +114,10 @@ function buildFence(kit) {
 }
 
 /**
- * Mulch beds: along the front of the house, a ring around the tree, and a flower bed out in
- * the lawn with a stone edging and flowers.
- *
- * @param {Greybox} kit
- */
-function buildBeds(kit) {
-  const scene = kit.scene;
-  kit.flat('houseBed', {
-    size: [LAWN.right - FENCE.x, FENCE.back - LAWN.back],
-    at: [(FENCE.x + LAWN.right) / 2, LAYER.mulch, (LAWN.back + FENCE.back) / 2],
-    color: COLORS.mulch,
-  });
-
-  const { tree, flowerBed } = SPOTS;
-  for (const [name, shape] of /** @type {const} */ ([
-    ['treeRing', tree],
-    ['flowerBed', flowerBed],
-  ])) {
-    const disc = MeshBuilder.CreateDisc(name, { radius: 1, tessellation: 40 }, scene);
-    disc.rotation.x = Math.PI / 2; // lie flat, facing up
-    disc.scaling.set(shape.radiusX, shape.radiusZ, 1);
-    disc.position.set(shape.x, LAYER.mulch, shape.z);
-    disc.material = kit.material(COLORS.mulch);
-    disc.receiveShadows = true;
-  }
-
-  // Stone edging around the flower bed.
-  const outline = [];
-  for (let i = 0; i <= 48; i++) {
-    const angle = (i / 48) * Math.PI * 2;
-    outline.push(
-      new Vector3(
-        flowerBed.x + Math.cos(angle) * flowerBed.radiusX,
-        0.03,
-        flowerBed.z + Math.sin(angle) * flowerBed.radiusZ,
-      ),
-    );
-  }
-  const edging = MeshBuilder.CreateTube('bedEdging', { path: outline, radius: 0.05 }, scene);
-  kit.addSolid(edging, COLORS.edging, false);
-
-  // Flowers: little colored balls on leafy clumps, scattered inside the bed.
-  const random = createRandom(5);
-  const flowers = [];
-  const leaves = [];
-  for (let i = 0; i < 26; i++) {
-    const angle = random() * Math.PI * 2;
-    const reach = Math.sqrt(random()) * 0.8; // spread evenly over the ellipse
-    const x = flowerBed.x + Math.cos(angle) * flowerBed.radiusX * reach;
-    const z = flowerBed.z + Math.sin(angle) * flowerBed.radiusZ * reach;
-    leaves.push(
-      kit.blob('flowerLeaves', {
-        radius: 0.13 + random() * 0.06,
-        at: [x, 0, z],
-        color: COLORS.bush,
-        squash: 0.7,
-        solid: false,
-      }),
-    );
-    flowers.push(
-      kit.blob('flower', {
-        radius: 0.05 + random() * 0.03,
-        at: [x + (random() - 0.5) * 0.1, 0.16 + random() * 0.06, z + (random() - 0.5) * 0.1],
-        color: FLOWER_COLORS[Math.floor(random() * FLOWER_COLORS.length)],
-        solid: false,
-      }),
-    );
-  }
-  kit.merge('flowerLeaves', leaves).checkCollisions = false;
-  // Flowers keep their own colors, so they're merged per color by the material.
-  for (const color of FLOWER_COLORS) {
-    const same = flowers.filter((flower) => flower.material === kit.material(color));
-    if (same.length > 0) kit.merge(`flowers${color}`, same).checkCollisions = false;
-  }
-
-  // An invisible, tall collider keeps the mower (and you) out of the flowers.
-  const fence = MeshBuilder.CreateCylinder(
-    'flowerBedCollider',
-    { diameter: 2, height: COLLIDER_HEIGHT, tessellation: 24 },
-    scene,
-  );
-  fence.scaling.set(flowerBed.radiusX, 1, flowerBed.radiusZ);
-  fence.position.set(flowerBed.x, COLLIDER_HEIGHT / 2, flowerBed.z);
-  fence.isVisible = false;
-  fence.isPickable = false;
-  fence.checkCollisions = true;
-}
-
-/** @param {Greybox} kit */
-function buildPlants(kit) {
-  /** @type {[number, number, number][]} [x, z, size] */
-  const trees = [
-    [SPOTS.tree.x, SPOTS.tree.z, 1],
-    [11, -7, 0.8], // the neighbor's, across the driveway
-  ];
-  for (const [x, z, size] of trees) {
-    const trunkHeight = 2.4 * size;
-    kit.cylinder('treeTrunk', {
-      diameter: 0.35 * size,
-      height: trunkHeight,
-      at: [x, 0, z],
-      color: COLORS.trunk,
-    });
-    const canopy = kit.blob('treeCanopy', {
-      radius: 1.9 * size,
-      at: [x, trunkHeight - 0.6 * size, z],
-      color: COLORS.leaves,
-      squash: 0.85,
-      solid: false,
-    });
-    canopy.metadata = { seeThrough: true }; // fades if it gets between the camera and you
-  }
-
-  // A row of bushes in the bed along the front of the house, skipping the door and garage.
-  for (const x of [-12.9, -11.5, -10.1, -7.4, -6.2, -5, -3.7, -0.4, 0.8]) {
-    kit.blob('bush', {
-      radius: 0.6,
-      at: [x, 0, HOUSE.front - 0.7],
-      color: COLORS.bush,
-      squash: 0.8,
-    });
-  }
-}
-
-/**
  * Toys left out on the lawn: a ball and a toy dump truck, each with a tall invisible
  * collider, since Babylon would slide the mower up and over something this low.
  *
- * @param {Greybox} kit
+ * @param {import('./greybox.js').Greybox} kit
  */
 function buildToys(kit) {
   const { ball, truck } = SPOTS;
@@ -403,44 +169,4 @@ function buildToys(kit) {
     size: [length, COLLIDER_HEIGHT, width],
     at: [x, 0, z],
   });
-}
-
-/** @param {Greybox} kit */
-function buildProps(kit) {
-  // Trash bins beside the garage.
-  kit.block('trashBin', { size: [0.6, 1.05, 0.7], at: [7.5, 0, 0.8], color: COLORS.bin });
-  kit.block('trashBin', { size: [0.6, 1.05, 0.7], at: [7.5, 0, 0], color: COLORS.bin });
-
-  // Mailbox at the end of the driveway, out on the lawn.
-  const { mailbox } = SPOTS;
-  kit.cylinder('mailboxPost', {
-    diameter: mailbox.radiusX,
-    height: 1.05,
-    at: [mailbox.x, 0, mailbox.z],
-    color: COLORS.mailbox,
-  });
-  kit.block('mailbox', {
-    size: [0.25, 0.28, 0.5],
-    at: [mailbox.x, 1.05, mailbox.z],
-    color: COLORS.mailbox,
-  });
-}
-
-/**
- * Invisible walls around the playable area, so the player can't wander off into the fog.
- * You can step onto the street, but not past the far side of it.
- *
- * @param {Greybox} kit
- */
-function buildBounds(kit) {
-  const bounds = { left: -16, right: 16, front: SIDEWALK.front - 6.5, back: HOUSE.back + 2 };
-  const height = 4;
-  const width = bounds.right - bounds.left;
-  const depth = bounds.back - bounds.front;
-  const centerX = (bounds.left + bounds.right) / 2;
-  const centerZ = (bounds.front + bounds.back) / 2;
-  kit.invisibleWall('boundsFront', { size: [width, height, 1], at: [centerX, 0, bounds.front] });
-  kit.invisibleWall('boundsBack', { size: [width, height, 1], at: [centerX, 0, bounds.back] });
-  kit.invisibleWall('boundsLeft', { size: [1, height, depth], at: [bounds.left, 0, centerZ] });
-  kit.invisibleWall('boundsRight', { size: [1, height, depth], at: [bounds.right, 0, centerZ] });
 }

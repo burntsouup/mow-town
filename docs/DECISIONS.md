@@ -306,3 +306,24 @@ upgrades need saving.
 **Gotcha:** `E` means both "grab the mower" and "buy". The shop runs before the mower each
 frame and backs off whenever the mower would take the key (you're holding it or standing by
 it), so one press never does both.
+
+## 27. Next door: a second, bigger lawn on the same street
+
+**Why:** The upgrade needs somewhere to prove itself, and "mow-town" wants a street of
+clients, not separate levels. So the Parkers' lawn is next door, in the same scene: you push
+the mower down the driveway, along the sidewalk and past their hedge. It's an L (a wide front
+yard plus a side yard between the houses), so you choose which way to run your rows (and
+stripe neatness is judged in patches, #23, so running each part its own way still pays). It's
+sized so the 30-inch deck mows it in about the time the 22-inch deck took on the front lawn:
+the upgrade lets you take on more in the same time.
+**How:** the level is built from shared pieces (`props.js`: houses, trees in mulch rings,
+flower beds, mailboxes), with each yard's layout as pure data (`frontYardLayout.js`,
+`nextDoorLayout.js`). Each job names its lawn; the Game keeps every lawn live, so the mower
+and the trimmer cut whichever one they're on, while progress, the highlight and the aerial
+view (zoomed out a bit for bigger lawns, `revealScale`) follow the current job. After the
+last job, `R` regrows everything and starts over; money and upgrades stay yours.
+**Revisit when:** a street has many lawns (only build the shells near you), or jobs need to
+be offered rather than played in order.
+**Gotcha:** a lawn's grass grid covers its bounding box, so an L-shaped lawn's grid (and its
+shells) also covers the house beside it. The mask keeps grass out of it, and the house hides
+the shells, but the empty part still costs a little memory and drawing.

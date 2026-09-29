@@ -12,12 +12,12 @@ export class RevealCamera {
   /**
    * @param {import('@babylonjs/core').Scene} scene
    * @param {import('./ThirdPersonCamera.js').ThirdPersonCamera} playerCamera
-   * @param {{ x: number, z: number }} center Middle of the lawn.
    */
-  constructor(scene, playerCamera, center) {
+  constructor(scene, playerCamera) {
     this.scene = scene;
     this.playerCamera = playerCamera;
-    this.center = center;
+    this.center = { x: 0, z: 0 }; // middle of the lawn to show off
+    this.scale = 1; // how much further up and back than usual, for bigger lawns
     this.camera = new FreeCamera('revealCamera', new Vector3(), scene);
     this.camera.fov = config.camera.fov;
     this.camera.minZ = 0.1;
@@ -33,6 +33,16 @@ export class RevealCamera {
   /** How long it's been playing, in seconds. */
   get time() {
     return this.timeline.time;
+  }
+
+  /**
+   * Picks the lawn the next aerial view shows.
+   *
+   * @param {{ center: { x: number, z: number }, revealScale: number }} lawn
+   */
+  frame(lawn) {
+    this.center = lawn.center;
+    this.scale = lawn.revealScale;
   }
 
   start() {
@@ -64,7 +74,12 @@ export class RevealCamera {
         z: player.position.z + look.z * 10,
       },
     };
-    const view = blendViews(from, aerialView(this.center, settings, swing), blend);
+    const aerial = {
+      ...settings,
+      height: settings.height * this.scale,
+      distance: settings.distance * this.scale,
+    };
+    const view = blendViews(from, aerialView(this.center, aerial, swing), blend);
     this.camera.position.set(view.position.x, view.position.y, view.position.z);
     this.camera.setTarget(this.target.set(view.target.x, view.target.y, view.target.z));
     this.scene.activeCamera = this.camera;

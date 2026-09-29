@@ -96,6 +96,7 @@ export class TuningPanel {
 
     const money = gui.addFolder('Money');
     money.add(config.money.jobPay, 'frontLawn', 0, 200, 1).name('Front lawn pays ($)');
+    money.add(config.money.jobPay, 'nextDoor', 0, 300, 1).name("Parkers' lawn pays ($)");
     money.add(config.money, 'stripesTip', 0, 50, 1).name('Neat stripes tip ($)');
     money.add(config.money, 'tipFrom', 0, 1, 0.01).name('Tip starts at (neatness)');
     money.add(config.money, 'tipFull', 0, 1, 0.01).name('Full tip at (neatness)');
