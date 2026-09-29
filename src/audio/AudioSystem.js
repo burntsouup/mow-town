@@ -1,6 +1,6 @@
 import { config } from '../config.js';
 import { createRandom } from '../math/noise.js';
-import { engineSound } from './audioMix.js';
+import { engineSound, trimmerSound } from './audioMix.js';
 
 /** How quickly volumes follow the game (seconds). Short enough to feel instant, long enough
  * to avoid clicks when a sound starts or stops. */
@@ -15,6 +15,9 @@ const FADE_TIME = 0.04;
  * - cutting: the blades whipping through grass (filtered noise and a crackle), louder the
  *   more they're cutting
  *
+ * The string trimmer has its own, higher buzz, with the whirr of its line and a snipping
+ * layer while it cuts.
+ *
  * Browsers only allow audio after the player interacts with the page, so nothing is created
  * until the first click.
  */
@@ -26,6 +29,7 @@ export class AudioSystem {
     this.noise = null;
     this.muted = false;
     this.rpm = 0; // mower engine speed, 0 (stopped) .. 1 (full speed)
+    this.trimmerRpm = 0; // the same for the string trimmer
     window.addEventListener('pointerdown', () => this.start());
   }
 
@@ -52,9 +56,11 @@ export class AudioSystem {
       { type: 'bandpass', frequency: 1300, Q: 0.6 },
       { type: 'highshelf', frequency: 3000, gain: -6 },
     ]);
-    this.crackle = this.createNoiseLayer(createCrackleBuffer(context, random), 0, [
+    const crackle = createCrackleBuffer(context, random);
+    this.crackle = this.createNoiseLayer(crackle, 0, [
       { type: 'bandpass', frequency: 2600, Q: 0.8 },
     ]);
+    this.trimmer = this.createTrimmer(noise, crackle);
   }
 
   /**
@@ -62,18 +68,83 @@ export class AudioSystem {
    * @param {{ running: boolean, load: number, bumped: boolean, grabbed: boolean }} mower
    *   load: how hard the blades are working (0..1); bumped/grabbed: just ran into something /
    *   just grabbed the handle, this frame.
+   * @param {{ out: boolean, throttle: boolean, load: number }} trimmer See trimmerSound.
    */
-  update(dt, mower) {
+  update(dt, mower, trimmer) {
     if (mower.grabbed || mower.bumped) this.playClunk();
     const sound = engineSound(this.rpm, mower, config.audio, dt);
     this.rpm = sound.rpm;
-    if (!this.context || !this.engine || !this.cutting || !this.crackle) return;
+    const trimmed = trimmerSound(this.trimmerRpm, trimmer, config.audio.trimmer, dt);
+    this.trimmerRpm = trimmed.rpm;
+    if (!this.context || !this.engine || !this.cutting || !this.crackle || !this.trimmer) return;
     const now = this.context.currentTime;
     const frequency = config.audio.engineFrequency * (0.3 + 0.7 * this.rpm);
     this.engine.setFrequency(frequency, now);
     this.engine.volume.gain.setTargetAtTime(sound.engine, now, FADE_TIME);
     this.cutting.gain.setTargetAtTime(sound.cutting, now, FADE_TIME);
     this.crackle.gain.setTargetAtTime(sound.cutting * 0.6, now, FADE_TIME);
+
+    this.trimmer.setFrequency(
+      config.audio.trimmer.frequency * (0.35 + 0.65 * this.trimmerRpm),
+      now,
+    );
+    this.trimmer.volume.gain.setTargetAtTime(trimmed.engine, now, FADE_TIME);
+    // The line whirs louder the faster it spins.
+    const whirr = trimmed.engine * Math.max(0, this.trimmerRpm - 0.4) * 1.5;
+    this.trimmer.whirr.gain.setTargetAtTime(whirr, now, FADE_TIME);
+    this.trimmer.cutting.gain.setTargetAtTime(trimmed.cutting, now, FADE_TIME);
+  }
+
+  /**
+   * The string trimmer: a raspy sawtooth buzz (a small two-stroke engine revs much higher
+   * than the mower), the line whirring through the air, and grass snipping as it cuts.
+   *
+   * @param {AudioBuffer} noise
+   * @param {AudioBuffer} crackle
+   */
+  createTrimmer(noise, crackle) {
+    const context = /** @type {AudioContext} */ (this.context);
+    const volume = context.createGain();
+    volume.gain.value = 0;
+    volume.connect(/** @type {GainNode} */ (this.master));
+    const muffle = context.createBiquadFilter();
+    muffle.type = 'lowpass';
+    muffle.Q.value = 3;
+    muffle.connect(volume);
+    /** @type {[OscillatorType, number, number][]} */
+    const voices = [
+      ['sawtooth', 1, 1],
+      ['square', 2, 0.25],
+      ['sawtooth', 1.007, 0.5], // slightly off-pitch: a rough, beating rasp
+    ];
+    const oscillators = voices.map(([type, multiple, level]) => {
+      const oscillator = context.createOscillator();
+      oscillator.type = type;
+      const gain = context.createGain();
+      gain.gain.value = level;
+      oscillator.connect(gain);
+      gain.connect(muffle);
+      oscillator.start();
+      return { oscillator, multiple };
+    });
+    const whirr = this.createNoiseLayer(noise, 1.1, [
+      { type: 'bandpass', frequency: 3200, Q: 1.5 },
+    ]);
+    const cutting = this.createNoiseLayer(crackle, 0.7, [
+      { type: 'bandpass', frequency: 2200, Q: 0.7 },
+    ]);
+    return {
+      volume,
+      whirr,
+      cutting,
+      /** @param {number} frequency @param {number} at */
+      setFrequency(frequency, at) {
+        for (const { oscillator, multiple } of oscillators) {
+          oscillator.frequency.setTargetAtTime(frequency * multiple, at, 0.03);
+        }
+        muffle.frequency.setTargetAtTime(500 + frequency * 10, at, 0.05);
+      },
+    };
   }
 
   /**

@@ -50,12 +50,29 @@ export class TuningPanel {
     mower.add(config.mower, 'mouseFullTurnAngle', 0.05, 1, 0.01).name('Mouse steer softness');
     mower.add(config.mower, 'cameraFollow', 0, 8, 0.1).name('Camera follow (keys)');
 
+    const trimmer = gui.addFolder('String trimmer');
+    trimmer.add(config.trimmer, 'radius', 0.05, 0.4, 0.01).name('Cutting radius (m)');
+    trimmer.add(config.trimmer.reach, 'min', 0.2, 1.5, 0.05).name('Closest reach (m)');
+    trimmer.add(config.trimmer.reach, 'max', 0.5, 2.5, 0.05).name('Furthest reach (m)');
+    trimmer.add(config.trimmer, 'follow', 1, 40, 0.5).name('Head follow');
+    trimmer.add(config.trimmer, 'maxSpeed', 0.5, 10, 0.1).name('Swing speed (m/s)');
+    trimmer.add(config.trimmer, 'walkSpeed', 0.5, 5, 0.1).name('Walk speed (m/s)');
+    trimmer.close();
+
     const mowingView = camera.addFolder('While mowing');
     mowingView.add(config.camera.mowing, 'distance', 2, 9, 0.1).name('Distance behind');
     mowingView.add(config.camera.mowing, 'shoulderOffset', -2, 2, 0.05).name('Shoulder offset');
     mowingView.add(config.camera.mowing, 'pivotHeight', 1, 3, 0.05).name('Height');
     mowingView.add(config.camera.mowing, 'playerOpacity', 0, 1, 0.05).name('Player opacity');
     mowingView.close();
+
+    const trimmingView = camera.addFolder('While trimming');
+    trimmingView.add(config.camera.trimming, 'distance', 1.5, 8, 0.1).name('Distance behind');
+    trimmingView.add(config.camera.trimming, 'shoulderOffset', -2, 2, 0.05).name('Shoulder offset');
+    trimmingView.add(config.camera.trimming, 'pivotHeight', 1, 3, 0.05).name('Height');
+    trimmingView.add(config.camera.trimming, 'pitch', 0, 1.2, 0.01).name('Look down (rad)');
+    trimmingView.add(config.camera.trimming, 'playerOpacity', 0, 1, 0.05).name('Player opacity');
+    trimmingView.close();
 
     const grass = gui.addFolder('Grass');
     grass.add(config.grass, 'shellCount', 4, 64, 1).name('Shells (layers)');
@@ -86,6 +103,7 @@ export class TuningPanel {
     const effects = gui.addFolder('Effects');
     effects.add(config.effects, 'clippingsPerCut', 0, 3000, 10).name('Clippings amount');
     effects.add(config.effects, 'maxClippingsRate', 0, 3000, 10).name('Clippings max / s');
+    effects.add(config.effects, 'trimmerSprayPerCut', 0, 8000, 50).name('Trimmer spray amount');
     effects.close();
 
     const audio = gui.addFolder('Sound');
@@ -96,6 +114,9 @@ export class TuningPanel {
     audio.add(config.audio, 'engineWorking', 0, 0.5, 0.01).name('Engine (working)');
     audio.add(config.audio, 'cutting', 0, 0.6, 0.01).name('Blades cutting');
     audio.add(config.audio, 'bogDepth', 0, 0.8, 0.01).name('Engine bogging');
+    audio.add(config.audio.trimmer, 'frequency', 60, 300, 1).name('Trimmer pitch (Hz)');
+    audio.add(config.audio.trimmer, 'full', 0, 0.4, 0.01).name('Trimmer (revving)');
+    audio.add(config.audio.trimmer, 'cutting', 0, 0.6, 0.01).name('Trimmer cutting');
     audio.add(config.audio, 'chime', 0, 0.5, 0.01).name('Job complete chime');
     audio.add(config.audio, 'coins', 0, 0.5, 0.01).name('Ka-ching');
     audio.close();

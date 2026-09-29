@@ -32,9 +32,15 @@ export class ThirdPersonCamera {
     this.pitch = config.camera.initialPitch;
     // Current distance from the pivot. Infinity makes the first update snap into place.
     this.currentDistance = Number.POSITIVE_INFINITY;
-    /** Set while pushing the mower: the camera eases out to its mowing position. */
-    this.isMowing = false;
-    this.mowingBlend = 0; // 0 = walking view, 1 = mowing view
+    /**
+     * Which view to ease toward: 'mowing' while pushing the mower (further back and higher),
+     * 'trimming' while carrying the string trimmer (higher, looking down at its head).
+     *
+     * @type {'walking' | 'mowing' | 'trimming'}
+     */
+    this.mode = 'walking';
+    /** How far (0..1) the view has blended into each special view. */
+    this.blends = { mowing: 0, trimming: 0 };
 
     this.babylonCamera = new FreeCamera('playerCamera', Vector3.Zero(), scene);
     this.babylonCamera.fov = config.camera.fov;
@@ -70,22 +76,25 @@ export class ThirdPersonCamera {
       ));
     }
 
-    // Blend smoothly between the walking and mowing views.
-    const mowingTarget = this.isMowing ? 1 : 0;
-    this.mowingBlend += (mowingTarget - this.mowingBlend) * (1 - Math.exp(-5 * dt));
-    const blend = this.mowingBlend;
-    const { mowing } = settings;
-    /** @param {number} walking @param {number} whileMowing */
-    const mix = (walking, whileMowing) => walking + (whileMowing - walking) * blend;
+    // Blend smoothly between the walking view and the special ones.
+    for (const view of /** @type {const} */ (['mowing', 'trimming'])) {
+      const target = this.mode === view ? 1 : 0;
+      this.blends[view] += (target - this.blends[view]) * (1 - Math.exp(-5 * dt));
+    }
+    /** @param {'distance' | 'shoulderOffset' | 'pivotHeight'} key @param {number} walking */
+    const mix = (key, walking) =>
+      walking +
+      (settings.mowing[key] - walking) * this.blends.mowing +
+      (settings.trimming[key] - walking) * this.blends.trimming;
 
     this.pivot.copyFrom(this.target.position);
-    this.pivot.y += mix(settings.pivotHeight, mowing.pivotHeight);
+    this.pivot.y += mix('pivotHeight', settings.pivotHeight);
 
     const offset = cameraOffset(
       this.yaw,
       this.pitch,
-      mix(settings.distance, mowing.distance),
-      mix(settings.shoulderOffset, mowing.shoulderOffset),
+      mix('distance', settings.distance),
+      mix('shoulderOffset', settings.shoulderOffset),
     );
     const fullDistance = Math.hypot(offset.x, offset.y, offset.z);
     this.direction.set(offset.x, offset.y, offset.z).scaleInPlace(1 / fullDistance);
@@ -109,16 +118,20 @@ export class ThirdPersonCamera {
     camera.position.y = Math.max(camera.position.y, settings.minHeight); // stay above the ground
     camera.rotation.set(this.pitch, this.yaw, 0);
 
-    // Fade the player out when the camera is squeezed in close, and partly while mowing so
-    // you can see the mower through them.
-    this.fadeSeeThrough(dt);
-
+    // Fade the player out when the camera is squeezed in close, and partly while mowing or
+    // trimming so you can see the mower (or the trimmer's head) through them.
     const closeOpacity = playerOpacityForDistance(
       this.currentDistance,
       settings.playerHiddenBelow,
       settings.playerSolidAbove,
     );
-    this.target.setOpacity(Math.min(closeOpacity, mix(1, mowing.playerOpacity)));
+    this.fadeSeeThrough(dt);
+
+    const workingOpacity =
+      1 +
+      (settings.mowing.playerOpacity - 1) * this.blends.mowing +
+      (settings.trimming.playerOpacity - 1) * this.blends.trimming;
+    this.target.setOpacity(Math.min(closeOpacity, workingOpacity));
   }
 
   /**

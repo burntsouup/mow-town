@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { engineSound, smoothTowards } from './audioMix.js';
+import { engineSound, smoothTowards, trimmerSound } from './audioMix.js';
 
 describe('smoothTowards', () => {
   it('moves part of the way toward the target', () => {
@@ -73,5 +73,60 @@ describe('engineSound', () => {
 
   it('clamps loads beyond full', () => {
     expect(run(1, { running: true, load: 7 }, 3).rpm).toBeCloseTo(0.65, 2);
+  });
+});
+
+describe('trimmerSound', () => {
+  const settings = {
+    idleSpeed: 0.4,
+    revUp: 6,
+    revDown: 3,
+    bogDepth: 0.2,
+    idle: 0.05,
+    full: 0.15,
+    cutting: 0.2,
+  };
+  const DT = 1 / 60;
+  /** Runs the trimmer for a while. */
+  const run = (rpm, state, seconds) => {
+    let result = { rpm, engine: 0, cutting: 0 };
+    for (let t = 0; t < seconds - 1e-9; t += DT)
+      result = trimmerSound(result.rpm, state, settings, DT);
+    return result;
+  };
+  const carried = { out: true, throttle: false, load: 0 };
+
+  it('is silent while put away', () => {
+    expect(run(0, { out: false, throttle: true, load: 1 }, 1)).toEqual({
+      rpm: 0,
+      engine: 0,
+      cutting: 0,
+    });
+  });
+
+  it('idles quietly while carried', () => {
+    const idle = run(0, carried, 3);
+    expect(idle.rpm).toBeCloseTo(0.4, 2);
+    expect(idle.engine).toBeCloseTo(0.05, 2);
+    expect(idle.cutting).toBe(0);
+  });
+
+  it('revs up and gets loud with the trigger held, quickly', () => {
+    expect(run(0.4, { ...carried, throttle: true }, 0.5).rpm).toBeGreaterThan(0.9);
+    const full = run(0.4, { ...carried, throttle: true }, 3);
+    expect(full.rpm).toBeCloseTo(1, 2);
+    expect(full.engine).toBeCloseTo(0.15, 2);
+  });
+
+  it('drops a little and makes a cutting sound while the line cuts', () => {
+    const cutting = run(1, { out: true, throttle: true, load: 1 }, 3);
+    expect(cutting.rpm).toBeCloseTo(0.8, 2);
+    expect(cutting.cutting).toBeCloseTo(0.2);
+  });
+
+  it('winds down and falls silent when put away', () => {
+    const stopping = run(1, { out: false, throttle: false, load: 0 }, 0.1);
+    expect(stopping.engine).toBeGreaterThan(0);
+    expect(run(1, { out: false, throttle: false, load: 0 }, 5).engine).toBe(0);
   });
 });

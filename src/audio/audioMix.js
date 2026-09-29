@@ -57,6 +57,41 @@ export function engineSound(rpm, state, settings, dt) {
   };
 }
 
+/**
+ * @typedef {{ idleSpeed: number, revUp: number, revDown: number, bogDepth: number,
+ *   idle: number, full: number, cutting: number }} TrimmerSettings
+ *   idleSpeed: engine speed (0..1) while carried with the trigger up. revUp/revDown: how
+ *   quickly it revs and drops (see smoothTowards). bogDepth: how far cutting drags it down.
+ *   idle/full/cutting: volumes (0..1) at idle, at full revs, and of the line cutting grass.
+ */
+
+/**
+ * The string trimmer's little two-stroke engine: it idles while you carry it, screams when
+ * you hold the trigger, and drops a little while the line cuts through grass.
+ *
+ * @param {number} rpm Engine speed last frame, 0..1 (full throttle is 1).
+ * @param {{ out: boolean, throttle: boolean, load: number }} state out: you're carrying it;
+ *   throttle: the trigger is held; load: how much the line is cutting, 0..1.
+ * @param {TrimmerSettings} settings
+ * @param {number} dt Seconds since the previous frame.
+ * @returns {{ rpm: number, engine: number, cutting: number }} The new engine speed, and the
+ *   volumes of the engine and of the line cutting grass.
+ */
+export function trimmerSound(rpm, state, settings, dt) {
+  const load = clamp01(state.load);
+  let target = 0;
+  if (state.out) target = state.throttle ? 1 - settings.bogDepth * load : settings.idleSpeed;
+  const next = smoothTowards(rpm, target, dt, target > rpm ? settings.revUp : settings.revDown);
+  const revving = clamp01((next - settings.idleSpeed) / (1 - settings.idleSpeed));
+  const volume = settings.idle + (settings.full - settings.idle) * revving;
+  return {
+    rpm: next,
+    // Fades in as it starts and out as it's put away, so it never pops.
+    engine: next > 0.01 ? volume * clamp01(next / settings.idleSpeed) : 0,
+    cutting: state.out && state.throttle ? settings.cutting * load : 0,
+  };
+}
+
 /** @param {number} value */
 function clamp01(value) {
   return Math.min(1, Math.max(0, value));

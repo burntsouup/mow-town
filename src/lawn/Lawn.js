@@ -2,6 +2,7 @@ import { config } from '../config.js';
 import { DeckCutter } from './DeckCutter.js';
 import { GrassField } from './GrassField.js';
 import { GrassGrid, MOWED_TOLERANCE } from './GrassGrid.js';
+import { TrimCutter } from './TrimCutter.js';
 
 /**
  * The mowable lawn: its grass data (GrassGrid), how it's drawn (GrassField), and the cutter
@@ -24,6 +25,7 @@ export class Lawn {
     this.grid.fill(area.heightAt, area.densityAt);
     this.field = new GrassField(scene, this.grid, area);
     this.cutter = new DeckCutter(this.grid);
+    this.trimCutter = new TrimCutter(this.grid);
     // Anything taller than this in the grass map (half a byte of slack) still needs mowing.
     this.field.plugin.uncutAbove = config.grass.cutHeight + MOWED_TOLERANCE + 0.5 / 255;
     this.finishing = false;
@@ -43,6 +45,7 @@ export class Lawn {
   reset() {
     this.grid.reset();
     this.cutter.lift();
+    this.trimCutter.lift();
     this.finishing = false;
   }
 
@@ -82,6 +85,29 @@ export class Lawn {
   /** The deck stopped cutting: the next cut starts a new stroke. */
   lift() {
     this.cutter.lift();
+  }
+
+  /**
+   * Cuts under the string trimmer's head as it moved during this frame.
+   *
+   * @param {number} dt
+   * @param {{ x: number, z: number }} from World position at the start of the frame.
+   * @param {{ x: number, z: number }} to World position at the end of the frame.
+   * @returns {number} Grass cut this frame (see GrassGrid.cutDeck).
+   */
+  trim(dt, from, to) {
+    return this.trimCutter.update(
+      dt,
+      this.field.toLocal(from.x, from.z),
+      this.field.toLocal(to.x, to.z),
+      config.trimmer.radius,
+      config.grass.cutHeight,
+    );
+  }
+
+  /** The trimmer's line stopped: the next cut starts a new sweep. */
+  liftTrimmer() {
+    this.trimCutter.lift();
   }
 
   /**

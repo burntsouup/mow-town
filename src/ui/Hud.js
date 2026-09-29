@@ -75,6 +75,8 @@ export class Hud {
         <dt>E</dt><dd>Grab the mower / let go</dd>
         <dt>W / S</dt><dd>Push / pull the mower</dd>
         <dt>Mouse or A / D</dt><dd>Steer the mower</dd>
+        <dt>Q</dt><dd>Take out / put away the string trimmer</dd>
+        <dt>Hold mouse</dt><dd>Run the trimmer (it cuts where you look)</dd>
         <dt>Hold F</dt><dd>Highlight the grass that's left</dd>
         <dt>V</dt><dd>View the lawn from above</dd>
         <dt>R</dt><dd>Mow it again (once it's done)</dd>
