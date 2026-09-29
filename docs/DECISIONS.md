@@ -290,3 +290,19 @@ away, and a $10 "crisp edges" tip is paid. Trimming first works too: the tip is 
 when the lawn is done. It's a tip, not a requirement, so skipping it is fine.
 **Revisit when:** the playtest shows the mower leaving almost nothing along the edges (widen
 them, or lower `edgesDoneAt`) or far too much (narrow them).
+
+## 26. The first upgrade is a wider deck, sold at a garage-sale table
+
+**Why:** A wider deck is the upgrade you feel in every pass: more lawn per row, wider stripes,
+and a lawn that takes 29% less time (the pacing check runs both decks). It's also a little
+worse at something, which keeps the trimmer useful: its bigger collision shape can't tuck in
+as close to things. It's sold at a table at the top of the driveway, not from a menu, so
+buying it is something you walk up to and do, like grabbing the mower. The price ($50) is the
+front lawn's pay plus one tip. The deck goes onto your mower wherever it is (`fitDeck`
+changes the cutting area, the collision shape and the model). The rules (`shop.js`) are pure
+and tested; the stand's sign is a `DynamicTexture` painted with the canvas API.
+**Revisit when:** there's more than one thing to buy (a shop menu, or a shelf of items), or
+upgrades need saving.
+**Gotcha:** `E` means both "grab the mower" and "buy". The shop runs before the mower each
+frame and backs off whenever the mower would take the key (you're holding it or standing by
+it), so one press never does both.

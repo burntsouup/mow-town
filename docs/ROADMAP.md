@@ -188,12 +188,18 @@ while you trimmed, so it now tucks away 6 s after the aerial view and pops back 
 comes in. Still open for the playtest: how much of the edges the mower leaves in real play (a
 bot pushing the real mower got wedged against the fence and the flower bed too often to say).
 
-### 4. First upgrade
+### 4. First upgrade ✅
 
-- [ ] A sale stand by the garage sells a 30-inch deck; `E` to buy it
-- [ ] About 40% more lawn per pass and wider stripes, but bulkier: it can't get as close to
+- [x] A sale stand by the garage sells a 30-inch deck; `E` to buy it
+- [x] About 40% more lawn per pass and wider stripes, but bulkier: it can't get as close to
       things, so the trimmer matters more
-- [ ] The pacing bot runs with both decks
+- [x] The pacing bot runs with both decks
+
+**Findings:** a tidy run of the front lawn takes 3.0 minutes with the 30-inch deck instead of
+4.3 (15 rows instead of 22, 29% faster), and still earns the whole neat-stripes tip. The deck
+costs $50: the front lawn's price plus one tip, so a tidy first job pays for it. It's fitted
+to your mower wherever the mower is, so there's no fetching it first. The stand shares `E`
+with the mower; if you're holding the mower or standing by it, `E` is for the mower.
 
 ### 5. Next door
 
