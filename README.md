@@ -28,6 +28,8 @@ player movement, jobs, tuning panel, HUD, and synthesized audio.
 | W / S         | Push / pull the mower                              |
 | Mouse         | Steer the mower (default: it heads where you look) |
 | A / D         | Steer the mower (with "A / D keys" steering)       |
+| Q             | Take out / put away the string trimmer             |
+| Hold mouse    | Run the trimmer (its head goes where you look)     |
 | Hold F        | Highlight the grass that's left                    |
 | V             | View the lawn from above                           |
 | R             | Mow it again (once it's done)                      |
@@ -68,8 +70,9 @@ src/
   environment/         The level: layout (FrontYard.js), lighting + sky, greybox kit
   player/              The player character (movement.js is the tested, pure part)
   camera/              Third-person camera and the aerial reveal (*Math.js: tested, pure)
-  lawn/                The grass: GrassGrid + DeckCutter (tested, pure) and the renderer
+  lawn/                The grass: GrassGrid + cutters and neatness (tested, pure), renderer
   mower/               The push mower (mowerMath.js is the tested, pure handling)
+  trimmer/             The string trimmer (trimmerMath.js: tested, pure aiming)
   audio/               Synthesized sounds (audioMix.js is the tested, pure part)
   effects/             Grass clippings and particle textures drawn in code
   math/                Small pure helpers: seeded noise, rectangles, ground shapes

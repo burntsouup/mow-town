@@ -256,3 +256,24 @@ reloading the page starts over.
 underneath), or when saving is worth it (more upgrades, longer sessions).
 **Gotcha:** only the deck records a mowing direction. The auto-finish at 98% doesn't, so the
 leftover tufts don't count either way.
+
+## 24. The string trimmer: aim by looking, cut only what's long
+
+**Why:** The mower can't reach right up to fences, trunks and posts, and a second tool that
+can is a small, different kind of fun: precise work after the broad strokes. `Q` takes it out
+(no pickup to lose, and grabbing the mower puts it away), and holding the mouse button runs
+it. Aiming works like p-washer's nozzle: where your view meets the ground
+(`trimmerMath.groundAim`), kept within arm's reach (0.6–1.3 m) and swung there at a human
+speed, with your body turning to face the head. It cuts a 34 cm circle (a 13-inch trimmer) at
+fixed 60 Hz ticks (`TrimCutter`, like `DeckCutter`), but only grass that still needs cutting:
+waving it over neat stripes leaves them alone, and trimmed grass has no mowing direction, so
+it neither leans nor counts toward stripe neatness.
+**The view:** carrying it switches the camera to a trimming view (higher, closer, the player
+at 55%): from the walking view the head sat out of reach of the middle of the screen, or
+hidden behind your body. It tips down to the head as you take it out, and won't look above
+the horizon meanwhile (`camera.trimming.minPitch`).
+**Gotcha:** a higher camera can sit inside a tree's canopy, which isn't solid, so the
+camera's wall check never moves it out. Meshes marked `metadata.seeThrough` fade while the
+line from the camera to the player passes through them.
+**Revisit when:** the playtest says aiming feels floaty (lower `follow`/`maxSpeed`), or edges
+need a different tool (an edger, for a crisp line along paths).
