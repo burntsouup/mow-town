@@ -26,7 +26,8 @@ const DT = 1 / 60;
 
 /**
  * @param {PacingOptions} options
- * @returns {{ seconds: number, progress: number, rows: number, turningSeconds: number }}
+ * @returns {{ seconds: number, progress: number, rows: number, turningSeconds: number,
+ *   grid: GrassGrid }} grid: the lawn as the bot left it.
  */
 export function simulateRows(options) {
   const { area, mower, deck, cutHeight, along = 'x', completeAt = 0.98 } = options;
@@ -102,5 +103,5 @@ export function simulateRows(options) {
     cutter.update(DT, from, poseAt(position, cross, yaw), deck, cutHeight);
     time += DT;
   }
-  return { seconds: time, progress: grid.progress, rows, turningSeconds };
+  return { seconds: time, progress: grid.progress, rows, turningSeconds, grid };
 }

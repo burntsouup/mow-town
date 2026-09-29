@@ -8,8 +8,8 @@ JavaScript.
 
 **Status:** v0.1, "Mowing feels satisfying": grab the push mower on the driveway, mow the
 fenced front lawn around a tree, a flower bed and some toys, and finish with an aerial view
-of your stripes. Next up (v0.2): money, a first upgrade, a bigger property and a string
-trimmer. See [docs/ROADMAP.md](docs/ROADMAP.md)
+of your stripes. In progress (v0.2, "A little mowing business"): money, a string trimmer, a
+first upgrade and a bigger lawn next door. See [docs/ROADMAP.md](docs/ROADMAP.md)
 for what's done and next.
 
 mow-town started as a copy of [p-washer](https://github.com/burntsouup/p-washer) v0.2.0 (a
@@ -64,7 +64,7 @@ npm run dev      # opens http://localhost:5173 with live reload
 src/
   main.js              Entry point: creates the Game
   config.js            Every tunable number lives here
-  game/                Game loop, keyboard/mouse input, jobs, tuning helpers
+  game/                Game loop, keyboard/mouse input, jobs and pay, tuning helpers
   environment/         The level: layout (FrontYard.js), lighting + sky, greybox kit
   player/              The player character (movement.js is the tested, pure part)
   camera/              Third-person camera and the aerial reveal (*Math.js: tested, pure)

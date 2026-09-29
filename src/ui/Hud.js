@@ -1,4 +1,6 @@
+import { config } from '../config.js';
 import { formatDuration } from '../game/job.js';
+import { formatMoney, receiptTotal } from '../game/pay.js';
 import './hud.css';
 
 /**
@@ -11,14 +13,19 @@ import './hud.css';
  *   elapsed: number,
  *   nextJob: import('../game/jobList.js').JobDefinition | null,
  *   revealing: boolean,
- * }} HudState hasMower: the player has grabbed the mower at least once; progress is 0..1 for display; elapsed is seconds on the job; nextJob is the one
- *   after this (null if this is the last).
+ *   money: number,
+ *   moneyCounting: boolean,
+ *   receipt: import('../game/pay.js').PayLine[] | null,
+ * }} HudState hasMower: the player has grabbed the mower at least once; progress is 0..1
+ *   for display; elapsed is seconds on the job; nextJob is the one after this (null if this
+ *   is the last); money is what to show in the wallet (it counts up); receipt is what the
+ *   job paid, once it's done.
  */
 
 /**
  * The HTML overlay players see:
- * - while playing: the job objective with a progress bar, interaction prompts, and a
- *   "Job complete!" card at the end
+ * - while playing: the job objective with a progress bar, your money, interaction prompts,
+ *   and a "Job complete!" card with a receipt at the end
  * - otherwise: a "click to play" card with the controls
  */
 export class Hud {
@@ -44,6 +51,7 @@ export class Hud {
     this.completeCard.innerHTML = `
       <h2 class="job-complete-title"></h2>
       <p><span class="job-summary"></span> <strong class="job-time"></strong></p>
+      <table class="receipt"></table>
       <p class="job-complete-hint"></p>`;
     /** @param {string} selector */
     const find = (selector) =>
@@ -52,6 +60,9 @@ export class Hud {
     this.jobSummary = find('.job-summary');
     this.jobTime = find('.job-time');
     this.completeHint = find('.job-complete-hint');
+    this.receipt = find('.receipt');
+
+    this.wallet = element('div', 'wallet');
 
     this.playPrompt = element('div', 'play-prompt');
     this.playPrompt.innerHTML = `
@@ -72,7 +83,7 @@ export class Hud {
         <dt>Esc</dt><dd>Release the mouse</dd>
       </dl>`;
 
-    root.append(this.objective, this.prompt, this.completeCard, this.playPrompt);
+    root.append(this.objective, this.wallet, this.prompt, this.completeCard, this.playPrompt);
     /** What's currently on screen, so we only touch the page when something changes. */
     this.shown = /** @type {Record<string, unknown>} */ ({});
   }
@@ -85,6 +96,15 @@ export class Hud {
     this.set('locked', locked, () => {
       this.playPrompt.hidden = locked;
       this.objective.hidden = !locked;
+      this.wallet.hidden = !locked;
+    });
+
+    const money = formatMoney(state.money);
+    this.set('money', money, () => {
+      this.wallet.textContent = money;
+    });
+    this.set('moneyCounting', state.moneyCounting, () => {
+      this.wallet.classList.toggle('is-counting', state.moneyCounting);
     });
 
     const promptText = locked ? state.prompt : null;
@@ -123,13 +143,31 @@ export class Hud {
       this.completeCard.hidden = !shownJob;
       if (!shownJob) return;
       const next = state.nextJob;
-      this.completeTitle.textContent = next ? 'Job complete!' : 'Nice stripes!';
+      const stripes = state.receipt?.find((line) => line.tip === 'stripes');
+      const neat = stripes && stripes.amount >= config.money.stripesTip;
+      this.completeTitle.textContent = neat ? 'Nice stripes!' : 'Job complete!';
       this.jobSummary.textContent = job.summary;
       this.jobTime.textContent = formatDuration(state.elapsed);
       this.completeHint.textContent = next
         ? `Press N for the next job: ${next.name ?? next.title}. R to redo this one.`
         : 'Press R to mow it again.';
     });
+
+    this.set('receipt', state.receipt, () => this.showReceipt(state.receipt));
+  }
+
+  /** @param {import('../game/pay.js').PayLine[] | null} lines */
+  showReceipt(lines) {
+    this.receipt.replaceChildren();
+    this.receipt.hidden = !lines;
+    if (!lines) return;
+    for (const line of [...lines, { label: 'Total', amount: receiptTotal(lines), total: true }]) {
+      const row = this.receipt.insertRow();
+      if ('total' in line) row.className = 'receipt-total';
+      row.insertCell().textContent = line.label;
+      const tip = 'tip' in line && line.tip;
+      row.insertCell().textContent = `${tip ? '+' : ''}${formatMoney(line.amount)}`;
+    }
   }
 
   /**

@@ -66,6 +66,29 @@
   background: linear-gradient(90deg, #7be495, #d4ffb0);
 }
 
+/* Your money, top right. It glows gold and swells while counting up. */
+.wallet {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: rgb(20 24 30 / 0.6);
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #c9f2b0;
+  transition:
+    transform 0.2s ease-out,
+    color 0.2s;
+  transform-origin: top right;
+}
+
+.wallet.is-counting {
+  color: #ffd76a;
+  transform: scale(1.15);
+}
+
 /* "Job complete!" card. It pops in, and clicks pass through so you can keep playing. */
 .job-complete {
   position: absolute;
@@ -97,6 +120,29 @@
 
 .job-complete-hint {
   opacity: 0.75;
+}
+
+.receipt {
+  margin: 10px auto 8px;
+  border-collapse: collapse;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.receipt td {
+  padding: 2px 0;
+}
+
+.receipt td:last-child {
+  padding-left: 28px;
+  text-align: right;
+}
+
+.receipt-total td {
+  padding-top: 6px;
+  border-top: 1px solid rgb(255 255 255 / 0.3);
+  font-weight: 700;
+  color: #ffd76a;
 }
 
 @keyframes pop-in {

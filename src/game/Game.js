@@ -8,6 +8,7 @@ import { Clippings } from '../effects/Clippings.js';
 import { createFrontYard } from '../environment/FrontYard.js';
 import { createLighting, createSky } from '../environment/lighting.js';
 import { Lawn } from '../lawn/Lawn.js';
+import { stripeNeatness } from '../lawn/neatness.js';
 import { grassSpeedFactor } from '../mower/mowerMath.js';
 import { PushMower } from '../mower/PushMower.js';
 import { Player } from '../player/Player.js';
@@ -17,6 +18,7 @@ import { TuningPanel } from '../ui/TuningPanel.js';
 import { Celebration } from './Celebration.js';
 import { Input } from './Input.js';
 import { JobList } from './jobList.js';
+import { countTowards, jobReceipt, receiptTotal } from './pay.js';
 import { toDeltaSeconds } from './time.js';
 
 /**
@@ -59,6 +61,10 @@ export class Game {
     this.jobs = new JobList(this.level.jobs, config.job.completeAt);
     this.celebration = new Celebration(this.scene);
     this.highlight = 0; // 0..1, eases in and out while the highlight key is held
+    this.money = 0; // dollars earned (not saved yet: reloading starts over)
+    this.moneyShown = 0; // what the HUD shows: counts up to `money` like a till
+    /** @type {import('./pay.js').PayLine[] | null} What the current job paid, once done. */
+    this.receipt = null;
     this.time = 0;
     this.hud = new Hud(hudRoot, this.input);
     this.debugOverlay = new DebugOverlay(this.engine, this.scene, hudRoot);
@@ -98,6 +104,10 @@ export class Game {
       grabbed: this.mower.justGrabbed,
     });
     if (this.input.wasPressed(config.debug.tuningKey)) this.tuning.toggle();
+    this.moneyShown = countTowards(this.moneyShown, this.money, dt, {
+      speed: config.money.countSpeed,
+      minSpeed: config.money.countMinSpeed,
+    });
     const job = this.jobs.currentJob;
     this.hud.update({
       prompt: this.mower.prompt,
@@ -108,6 +118,9 @@ export class Game {
       elapsed: job.elapsed,
       nextJob: this.jobs.upcoming,
       revealing: this.reveal.isActive,
+      money: this.moneyShown,
+      moneyCounting: this.moneyShown !== this.money,
+      receipt: this.receipt,
     });
     this.debugOverlay.update(dt);
   }
@@ -140,6 +153,8 @@ export class Game {
     const job = this.jobs.currentJob;
     const event = job.update(dt, this.lawn.progress, this.grassCut > 0);
     if (event === 'completed') {
+      const neatness = stripeNeatness(this.lawn.grid, config.money.neatnessPatch);
+      this.pay(jobReceipt(this.jobs.current, { neatness }, config.money));
       this.lawn.finish(); // leftover tufts shrink away
       this.celebration.play(this.lawn.field.mesh);
       this.audio.playChime();
@@ -153,12 +168,24 @@ export class Game {
 
     if (!job.isComplete) return;
     if (this.input.wasPressed(config.job.nextKey)) {
-      this.jobs.next();
+      if (this.jobs.next()) this.receipt = null;
     } else if (this.input.wasPressed(config.job.resetKey)) {
       if (this.jobs.allComplete) this.jobs.resetAll();
       else this.jobs.redoCurrent();
-      this.lawn.reset(); // the grass grows back
+      this.lawn.reset(); // the grass grows back (and mowing it again pays again)
+      this.receipt = null;
     }
+  }
+
+  /**
+   * Pays for a finished job: the money counts up on screen with a "ka-ching".
+   *
+   * @param {import('./pay.js').PayLine[]} receipt
+   */
+  pay(receipt) {
+    this.receipt = receipt;
+    this.money += receiptTotal(receipt);
+    this.audio.playCoins(0.6); // just after the chime
   }
 
   /**
