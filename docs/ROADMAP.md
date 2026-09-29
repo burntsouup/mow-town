@@ -220,9 +220,34 @@ visible but not obviously shaggy.
 
 ### 6. Tuning + playtest
 
-- [ ] Prices and pay, pacing bands for each lawn and deck, findings recorded here
-- [ ] Frame rate with two lawns on screen; cap the resolution on high-refresh screens
+- [x] Prices and pay, pacing bands for each lawn and deck, findings recorded here
+- [x] Frame rate with two lawns on screen; cap the resolution on high-refresh screens
 - [ ] Playtest
+
+### v0.2 pacing (simulated)
+
+The tidy bot from v0.1 (straight rows, 8 cm overlap, turning on the spot, ignoring obstacles),
+so a best case: expect a real run to take roughly 1.5× longer. Each lawn has its own band in
+`pacing.test.js`.
+
+| Lawn                         | 22-inch deck                  | 30-inch deck         |
+| ---------------------------- | ----------------------------- | -------------------- |
+| Front lawn (142 m²)          | 4.3 min (4.7 with short rows) | 3.0 min (29% faster) |
+| Parkers' lawn (192 m², an L) | 5.9 min                       | 4.2–4.3 min          |
+
+### v0.2 tuning findings
+
+- Money: the front lawn pays $40 and the Parkers' $65, with up to $10 each for neat stripes
+  and crisp edges; the deck costs $50. A tidy first job affords it with either tip, and the
+  edges tip can always be earned after the lawn is done, so even sloppy stripes can get
+  there by trimming. The first time you can afford the deck, a message points out the stand.
+- Frame rate: at 2880 × 1800 on an M3 MacBook, a view full of lawn takes ~10 ms (the grass
+  ~4.6 ms of it). Both lawns in view costs less than one filling the view, since each covers
+  less of the screen. At 1.5 pixels per CSS pixel it's ~6.6 ms, and at 1× ~4.7 ms. So on
+  screens faster than 75 Hz (8.3 ms per frame at 120 Hz) it now renders at 1.5×; the FPS
+  readout shows which.
+- Open for the playtest: how much of the edges the mower leaves, how neat a real run scores,
+  whether aiming the trimmer feels precise, the trimmer's sound, and the walk next door.
 
 ### v0.2 success checklist
 
