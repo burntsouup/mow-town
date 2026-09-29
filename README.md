@@ -68,7 +68,8 @@ src/
   main.js              Entry point: creates the Game
   config.js            Every tunable number lives here
   game/                Game loop, keyboard/mouse input, jobs and pay, tuning helpers
-  environment/         The level (level.js): our yard, next door, lighting + sky, greybox kit
+  environment/         The level (level.js): our yard, next door, lighting + sky, the shape
+                       kit (greybox.js) and surfaces painted in code
   player/              The player character (movement.js is the tested, pure part)
   camera/              Third-person camera and the aerial reveal (*Math.js: tested, pure)
   lawn/                The grass: GrassGrid + cutters and neatness (tested, pure), renderer

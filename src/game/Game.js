@@ -6,7 +6,7 @@ import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { config } from '../config.js';
 import { Clippings } from '../effects/Clippings.js';
 import { createLevel } from '../environment/level.js';
-import { createLighting, createSky } from '../environment/lighting.js';
+import { applyColorGrading, createLighting, createSky } from '../environment/lighting.js';
 import { Lawn } from '../lawn/Lawn.js';
 import { stripeNeatness } from '../lawn/neatness.js';
 import { grassSpeedFactor } from '../mower/mowerMath.js';
@@ -43,6 +43,7 @@ export class Game {
 
     const { shadows } = createLighting(this.scene);
     createSky(this.scene);
+    applyColorGrading(this.scene);
     this.level = createLevel(this.scene, shadows);
     /** @type {Record<string, Lawn>} Every lawn on the street, by id (each job names its own). */
     this.lawns = Object.fromEntries(

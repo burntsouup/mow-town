@@ -15,14 +15,28 @@ export const config = {
     highRefreshPixelRatio: 1.5,
     shadowMapSize: 2048,
     // Sky dome gradient. The horizon color is also the fog color so distant ground fades out.
-    sky: { zenith: '#5b8fd8', horizon: '#cfdfee' },
+    // sunGlow: added around the sun; cloudShade: the undersides of clouds.
+    // The sky and clouds skip the color grading, so these are the colors you see.
+    sky: { zenith: '#4f97e8', horizon: '#dfeaf2', sunGlow: '#ffe6bf', cloudShade: '#cdd9ec' },
     // Linear fog, in meters from the camera. Hides the edge of the world.
     fog: { start: 45, end: 120 },
-    // Direction the sunlight travels. Keep x/z small-ish so faces get distinct brightness.
-    // Sun + fill should add up to roughly 1 on sunlit ground, or colors wash out to white.
-    sun: { direction: [-0.35, -1.5, 0.75], intensity: 0.75, color: '#fff3dc' },
-    // Soft light from the sky above and bounced light from the ground below.
-    fill: { intensity: 0.5, skyColor: '#dbe8f5', groundColor: '#7d8a62' },
+    // Direction the sunlight travels: a late-afternoon sun, low enough for long shadows.
+    sun: { direction: [-0.55, -1, 0.7], intensity: 1.35, color: '#ffe0b3', shadowDarkness: 0.3 },
+    // Soft light from the sky above and bounced light from the ground below. It's what
+    // lights the shadows, so its blue keeps them cool next to the warm sun.
+    fill: { intensity: 0.7, skyColor: '#b9d3f2', groundColor: '#8a8a5e' },
+    // The final look (see applyColorGrading in environment/lighting.js). exposure/contrast:
+    // 1 = unchanged. saturation: -100..100. Hues in degrees (40 = warm, 220 = blue);
+    // densities 0..100. vignette: 0 = none.
+    grading: {
+      exposure: 1.05,
+      contrast: 1.05,
+      saturation: 6,
+      highlights: { hue: 40, density: 18 },
+      shadows: { hue: 215, density: 28 },
+      vignette: 0.9,
+      vignetteColor: '#3a2a4a',
+    },
   },
   debug: {
     showFps: true,
@@ -45,7 +59,7 @@ export const config = {
     minHeight: 0.3, // never go lower than this above the ground
     nearClip: 0.05, // closest distance the camera can draw; small so walls don't clip
     // When pushed in close, fade the player out so they don't fill the screen (meters).
-    seeThroughOpacity: 0.25, // how faint a tree's leaves get when they're in the way
+    seeThroughOpacity: 0.12, // how faint a tree's leaves get when they're in the way
     playerHiddenBelow: 0.7,
     playerSolidAbove: 1.4,
     // While pushing the mower: further back and higher, so you can see the mower ahead, with
@@ -89,7 +103,7 @@ export const config = {
     cutHeight: 0.3, // height after mowing, as a fraction of maxHeight (~3.5 cm)
     stripes: 0.18, // how much lighter/darker mowed grass looks leaning away/toward you
     mowLean: 0.35, // how far mowed blade tips lean the way the mower went (in blade widths)
-    colors: { root: '#23391a', tip: '#88b44b', longTip: '#5f8f35' },
+    colors: { root: '#27401c', tip: '#86ad4d', longTip: '#5e8c38' },
   },
   mower: {
     // 'mouse': the mower turns toward where you look (A/D swing the view too).

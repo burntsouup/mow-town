@@ -1,5 +1,5 @@
 import { DRIVEWAY, FENCE, HOUSE, LAWN, SIDEWALK, SPOTS, WALKWAY } from './frontYardLayout.js';
-import { buildFlowerBed, buildHouse, buildMailbox, buildTree } from './props.js';
+import { buildBushes, buildFlowerBed, buildHouse, buildMailbox, buildTree } from './props.js';
 import { COLLIDER_HEIGHT, COLORS, LAYER } from './style.js';
 
 // Our place: the house, the driveway, and the fenced front lawn with a tree, a flower bed and
@@ -13,6 +13,7 @@ export function buildFrontYard(kit) {
   buildHouse(kit, HOUSE, {
     walls: COLORS.walls,
     roof: COLORS.roof,
+    shutters: COLORS.shutters,
     garageX: DRIVEWAY.centerX,
     door: { x: WALKWAY.centerX, color: COLORS.frontDoor },
     windows: [
@@ -24,29 +25,37 @@ export function buildFrontYard(kit) {
   kit.flat('walkway', {
     size: [walkway.maxX - walkway.minX, walkway.maxZ - walkway.minZ],
     at: [WALKWAY.centerX, LAYER.paving, (walkway.minZ + walkway.maxZ) / 2],
-    color: COLORS.concrete,
+    surface: 'concrete',
+    tile: 1.2,
   });
   buildFence(kit);
   kit.flat('houseBed', {
     size: [LAWN.right - FENCE.x, FENCE.back - LAWN.back],
     at: [(FENCE.x + LAWN.right) / 2, LAYER.mulch, (LAWN.back + FENCE.back) / 2],
-    color: COLORS.mulch,
+    surface: 'mulch',
+    tile: 1.5,
   });
   buildTree(kit, SPOTS.tree, 1);
   buildFlowerBed(kit, 'flowerBed', SPOTS.flowerBed, { seed: 5, flowers: 26 });
   // A row of bushes in the bed along the front of the house, skipping the door and garage.
-  for (const x of [-12.9, -11.5, -10.1, -7.4, -6.2, -5, -3.7, -0.4, 0.8]) {
-    kit.blob('bush', {
-      radius: 0.6,
-      at: [x, 0, HOUSE.front - 0.7],
-      color: COLORS.bush,
-      squash: 0.8,
-    });
-  }
+  buildBushes(kit, [-12.9, -11.5, -10.1, -7.4, -6.2, -5, -3.7, -0.4, 0.8], HOUSE.front - 0.7, 3);
   buildToys(kit);
-  // Trash bins beside the garage.
-  kit.block('trashBin', { size: [0.6, 1.05, 0.7], at: [7.5, 0, 0.8], color: COLORS.bin });
-  kit.block('trashBin', { size: [0.6, 1.05, 0.7], at: [7.5, 0, 0], color: COLORS.bin });
+  // Trash bins beside the garage, lids on.
+  for (const z of [0, 0.8]) {
+    kit.rounded('trashBin', {
+      size: [0.6, 0.98, 0.7],
+      at: [7.5, 0, z],
+      color: COLORS.bin,
+      radius: 0.06,
+    });
+    kit.rounded('trashBinLid', {
+      size: [0.66, 0.08, 0.76],
+      at: [7.5, 0.98, z],
+      color: '#355f56',
+      radius: 0.035,
+    });
+    kit.contactShadow(7.5, z, 0.6);
+  }
   buildMailbox(kit, SPOTS.mailbox);
 }
 
@@ -60,12 +69,14 @@ function buildDriveway(kit) {
   kit.flat('driveway', {
     size: [DRIVEWAY.width, length],
     at: [DRIVEWAY.centerX, LAYER.paving, HOUSE.front - length / 2],
-    color: COLORS.concrete,
+    surface: 'concrete',
+    tile: 2.5,
   });
 }
 
 /**
- * A low wooden fence down the left side of the lot, then across to the house.
+ * A white picket fence down the left side of the lot, then across to the house: posts with
+ * caps, two rails, and rounded pickets.
  *
  * @param {import('./greybox.js').Greybox} kit
  */
@@ -76,31 +87,59 @@ function buildFence(kit) {
     [FENCE.x, FENCE.back, HOUSE.left, FENCE.back],
   ];
   const postSpacing = 2;
+  const pickets = 0.15;
   const parts = [];
   for (const [x1, z1, x2, z2] of runs) {
     const length = Math.hypot(x2 - x1, z2 - z1);
     const alongX = z1 === z2;
-    // Two rails; the lower one, a solid board, is what you bump into.
-    for (const [y, height] of [
-      [0.05, 0.45],
-      [0.7, 0.12],
-    ]) {
+    const midX = (x1 + x2) / 2;
+    const midZ = (z1 + z2) / 2;
+    for (const y of [0.2, 0.62]) {
       parts.push(
-        kit.block('fenceRail', {
-          size: alongX ? [length, height, 0.06] : [0.06, height, length],
-          at: [(x1 + x2) / 2, y, (z1 + z2) / 2],
+        kit.rounded('fenceRail', {
+          size: alongX ? [length, 0.08, 0.04] : [0.04, 0.08, length],
+          at: [midX, y, midZ],
           color: COLORS.fence,
+          radius: 0.015,
+          segments: 1,
+        }),
+      );
+    }
+    const count = Math.floor(length / pickets);
+    for (let i = 0; i <= count; i++) {
+      const t = (i + 0.5) / (count + 1);
+      const x = x1 + (x2 - x1) * t;
+      const z = z1 + (z2 - z1) * t;
+      const offset = 0.035; // pickets sit on the lawn side of the rails
+      parts.push(
+        kit.rounded('fencePicket', {
+          size: alongX ? [0.075, 0.9, 0.022] : [0.022, 0.9, 0.075],
+          at: [alongX ? x : x + offset, 0.02, alongX ? z - offset : z],
+          color: COLORS.fence,
+          radius: 0.0375,
+          segments: 1,
         }),
       );
     }
     const posts = Math.ceil(length / postSpacing);
     for (let i = 0; i <= posts; i++) {
       const t = i / posts;
+      const x = x1 + (x2 - x1) * t;
+      const z = z1 + (z2 - z1) * t;
       parts.push(
-        kit.block('fencePost', {
-          size: [0.1, FENCE.height, 0.1],
-          at: [x1 + (x2 - x1) * t, 0, z1 + (z2 - z1) * t],
+        kit.rounded('fencePost', {
+          size: [0.11, FENCE.height, 0.11],
+          at: [x, 0, z],
           color: COLORS.fence,
+          radius: 0.02,
+          segments: 1,
+        }),
+        kit.rounded('fencePostCap', {
+          size: [0.15, 0.05, 0.15],
+          at: [x, FENCE.height, z],
+          color: COLORS.fence,
+          radius: 0.02,
+          segments: 1,
         }),
       );
     }
@@ -121,11 +160,12 @@ function buildFence(kit) {
  */
 function buildToys(kit) {
   const { ball, truck } = SPOTS;
-  kit.blob('ball', {
+  kit.puff('ball', {
     radius: ball.radiusX,
     at: [ball.x, 0, ball.z],
     color: COLORS.ball,
     solid: false,
+    shade: 0.3,
   });
   kit.invisibleWall('ballCollider', {
     size: [ball.radiusX * 2, COLLIDER_HEIGHT, ball.radiusX * 2],
@@ -137,17 +177,19 @@ function buildToys(kit) {
   const length = truck.maxX - truck.minX;
   const width = truck.maxZ - truck.minZ;
   const parts = [
-    kit.block('truckBed', {
+    kit.rounded('truckBed', {
       size: [length * 0.6, 0.12, width * 0.9],
       at: [x - length * 0.18, 0.06, z],
       color: COLORS.truck,
       solid: false,
+      radius: 0.025,
     }),
-    kit.block('truckCab', {
+    kit.rounded('truckCab', {
       size: [length * 0.3, 0.16, width * 0.8],
       at: [x + length * 0.3, 0.05, z],
       color: COLORS.truck,
       solid: false,
+      radius: 0.035,
     }),
   ];
   for (const dx of [-0.32, 0.32]) {

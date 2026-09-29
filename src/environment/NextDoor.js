@@ -1,7 +1,7 @@
 import { MeshBuilder } from '@babylonjs/core';
 import { SIDEWALK } from './frontYardLayout.js';
 import { HEDGE, NEXT_DRIVEWAY, NEXT_HOUSE, NEXT_LAWN, NEXT_SPOTS, SHED } from './nextDoorLayout.js';
-import { buildFlowerBed, buildHouse, buildMailbox, buildTree } from './props.js';
+import { buildBushes, buildFlowerBed, buildHouse, buildMailbox, buildTree } from './props.js';
 import { COLLIDER_HEIGHT, COLORS, LAYER } from './style.js';
 
 // The Parkers' place next door: a bigger, L-shaped lawn behind a low hedge, with a tree, an
@@ -16,12 +16,14 @@ export function buildNextDoor(kit) {
   kit.flat('theirDriveway', {
     size: [NEXT_DRIVEWAY.width, drivewayLength],
     at: [NEXT_DRIVEWAY.centerX, LAYER.paving, NEXT_HOUSE.front - drivewayLength / 2],
-    color: COLORS.concrete,
+    surface: 'concrete',
+    tile: 2.2,
   });
   const doorX = 19.5;
   buildHouse(kit, NEXT_HOUSE, {
     walls: COLORS.theirWalls,
     roof: COLORS.theirRoof,
+    shutters: '#4f6f8f',
     garageX: NEXT_DRIVEWAY.centerX,
     door: { x: doorX, color: COLORS.theirDoor },
     windows: [
@@ -36,30 +38,26 @@ export function buildNextDoor(kit) {
   kit.flat('theirHouseBed', {
     size: [front.right - side.right, NEXT_HOUSE.front - bedFront],
     at: [(side.right + front.right) / 2, LAYER.mulch, (bedFront + NEXT_HOUSE.front) / 2],
-    color: COLORS.mulch,
+    surface: 'mulch',
+    tile: 1.5,
   });
   kit.flat('theirSideBed', {
     size: [NEXT_HOUSE.left - side.right, side.back - NEXT_HOUSE.front],
     at: [(side.right + NEXT_HOUSE.left) / 2, LAYER.mulch, (NEXT_HOUSE.front + side.back) / 2],
-    color: COLORS.mulch,
+    surface: 'mulch',
+    tile: 1.5,
   });
   kit.flat('theirPath', {
     size: [1, NEXT_HOUSE.front - bedFront],
     at: [doorX, LAYER.paving, (bedFront + NEXT_HOUSE.front) / 2],
-    color: COLORS.concrete,
+    surface: 'concrete',
+    tile: 1.2,
   });
-  for (const x of [15.1, 16.4, 17.7, 21.3, 22.6, 23.9]) {
-    kit.blob('bush', {
-      radius: 0.55,
-      at: [x, 0, NEXT_HOUSE.front - 0.65],
-      color: COLORS.bush,
-      squash: 0.8,
-    });
-  }
+  buildBushes(kit, [15.1, 16.4, 17.7, 21.3, 22.6, 23.9], NEXT_HOUSE.front - 0.65, 8);
 
   buildHedge(kit);
   buildShed(kit);
-  buildTree(kit, NEXT_SPOTS.tree, 0.8);
+  buildTree(kit, NEXT_SPOTS.tree, 0.8, 4);
   buildFlowerBed(kit, 'islandBed', NEXT_SPOTS.islandBed, { seed: 12, flowers: 44 });
   buildBirdbath(kit);
   buildGnome(kit);
@@ -78,8 +76,8 @@ function buildHedge(kit) {
   const blobs = [];
   for (let i = 0; i <= count; i++) {
     blobs.push(
-      kit.blob('hedge', {
-        radius: 0.42,
+      kit.puff('hedge', {
+        radius: 0.44,
         at: [HEDGE.x, 0, HEDGE.front + (length * i) / count],
         color: COLORS.hedge,
         squash: 1.05,
@@ -104,16 +102,22 @@ function buildShed(kit) {
   const depth = SHED.back - SHED.front;
   const x = (SHED.left + SHED.right) / 2;
   const z = (SHED.front + SHED.back) / 2;
-  kit.block('shed', { size: [width, SHED.height, depth], at: [x, 0, z], color: COLORS.shed });
+  kit.rounded('shed', {
+    size: [width, SHED.height, depth],
+    at: [x, 0, z],
+    color: COLORS.shed,
+    radius: 0.08,
+  });
   kit.pyramid('shedRoof', {
     size: [width + 0.3, 1, depth + 0.3],
     at: [x, SHED.height, z],
     color: COLORS.shedRoof,
   });
-  kit.block('shedDoor', {
+  kit.rounded('shedDoor', {
     size: [1.4, 1.9, 0.08],
     at: [x, 0, SHED.front - 0.03],
     color: COLORS.shedRoof,
+    radius: 0.03,
   });
 }
 

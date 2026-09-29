@@ -142,14 +142,12 @@ export class ThirdPersonCamera {
    */
   fadeSeeThrough(dt) {
     const camera = this.babylonCamera.position;
+    // Only while we're the camera you're looking through (not during the aerial view).
+    const inUse = this.scene.activeCamera === this.babylonCamera;
     for (const mesh of this.seeThrough) {
       const sphere = mesh.getBoundingInfo().boundingSphere;
-      const blocking = segmentHitsSphere(
-        camera,
-        this.pivot,
-        sphere.centerWorld,
-        sphere.radiusWorld,
-      );
+      const blocking =
+        inUse && segmentHitsSphere(camera, this.pivot, sphere.centerWorld, sphere.radiusWorld);
       const target = blocking ? config.camera.seeThroughOpacity : 1;
       mesh.visibility += (target - mesh.visibility) * (1 - Math.exp(-8 * dt));
     }

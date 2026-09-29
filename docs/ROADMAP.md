@@ -261,7 +261,87 @@ so a best case: expect a real run to take roughly 1.5× longer. Each lawn has it
 Saving (money and the upgrade reset when you reload), more than one upgrade, a riding mower,
 regrowth, time pressure or client ratings, bagging clippings, multiplayer.
 
+## v0.3 — "Looking good"
+
+Goal: the game looks like one charming little toy world, and you play as your own fuzzy
+critter.
+
+Art direction, "soft toy suburbia": chunky, rounded shapes (soft-edged boxes, pill-shaped
+hedges, puffy trees), a warm late-afternoon sun with soft shadows, and a rich but harmonious
+palette. Only two things are fuzzy, the grass and you, so they stand out. The character is
+our own design (working name "Tuft"), inspired by the friendly monsters in Microsoft Reflect
+but not copied from them: a round, two-tone fur body drawn with the same shells as the grass,
+big googly eyes, eyebrow tufts, noodle limbs with mitts and sneakers, all animated in code.
+
+Budget: 120 fps at the 1.5× render on an M3 MacBook, 60 fps everywhere else. Anything too
+expensive gets cut or faked.
+
+### 1. Style test ✅
+
+- [x] New lighting, color grading, sky and palette
+- [x] A rounded-shape kit and painted surfaces (concrete, asphalt, mulch, shingles)
+- [x] Our front yard restyled with them; frame cost measured; screenshots for a checkpoint
+
+**Findings:** lighting and color alone didn't fix "basic": the shapes did. Framed windows
+with shutters, a panelled garage door, shingles, a picket fence, puffy bushes and textured
+paths changed the look far more than the grade. So did filling the world in: an empty green
+plane to the horizon read as a test level, and a row of houses across the street plus a
+treeline made it a neighborhood. Because the house, tree, flower bed and mailbox are shared
+pieces, next door and the backdrop got the new look for free. Color grading runs inside the
+materials (no extra full-screen pass); the sky skips it so its colors come out as picked.
+The first pass had 243k vertices, mostly tiny flowers (smooth puffs are expensive), so small
+puffs now use fewer triangles and flowers cast no shadows (141k in the playable area, plus
+the backdrop, which casts no shadows so the sun's shadow map doesn't stretch). In the
+embedded browser's timing test, frames cost the same as v0.2 (within noise); the real check
+is the FPS readout on a 120 Hz screen in the playtest.
+
+### 2. Tuft
+
+- [ ] A round, furry body, a face (eyes that glance around and blink, eyebrow tufts) and
+      noodle arms and legs with mitts and sneakers
+- [ ] Walking, pushing and trimming, animated in code; replaces the orange capsule
+- [ ] A checkpoint to look at Tuft before building on it
+
+### 3. Wardrobe and saving
+
+- [ ] Fur colors, hats, glasses, gloves, shirts, shorts and shoes
+- [ ] A customize screen from the start menu, and a closet at your front door
+- [ ] Your outfit, money, deck and current job are saved between visits
+
+### 4. Restyle the world
+
+- [ ] The mower, the trimmer, the sale table, next door and the HUD, in the new style
+
+### 5. Character juice
+
+- [ ] A jump and a wave when a job's done, blinking and looking around, footstep puffs and
+      sounds
+
+### 6. Tuning + playtest
+
+- [ ] Frame rate on the budget above, findings recorded here
+- [ ] Playtest
+
+### v0.3 success checklist
+
+- [ ] The game looks charming, not basic, from every angle you'd play from
+- [ ] Tuft is lovable, and fun to watch walking, pushing and trimming
+- [ ] Dressing Tuft up is fun, and it's still dressed that way next time
+- [ ] It runs as smoothly as v0.2
+
+## Deliberately not in v0.3
+
+New machines or lawns, buying clothes with money (starter items are free), saving the state
+of half-mowed lawns.
+
 ## Later (ideas, not commitments)
 
-- **v0.3:** a riding mower and large properties
-- **Later:** co-op multiplayer (why cutting runs in fixed, deterministic steps)
+- **v0.4, "Bigger machines":** a riding mower, a large property built for it, and a real
+  shop with more than one thing in it
+- **v0.5, "Mow-town":** a street of clients, jobs you pick, lawns that grow back day by day,
+  and a reputation that unlocks bigger clients
+- **v0.6, "Pride in the craft":** clients asking for patterns, bagging or blowing clippings,
+  an edger, a golden-hour aerial view
+- **v0.7, "Co-op":** two players on one lawn (why cutting runs in fixed, deterministic steps)
+- **v1.0, "A full summer":** about a dozen properties, 5–6 tools and upgrades, a big finale,
+  an art and sound pass, settings and gamepad support
