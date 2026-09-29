@@ -14,10 +14,13 @@ export class Lawn {
    * @param {{ center: number[], width: number, depth: number,
    *   heightAt: (x: number, z: number) => number,
    *   densityAt?: (x: number, z: number) => number,
-   *   edgeAt?: (x: number, z: number) => boolean }} area From the level (see
-   *   GrassGrid.fill and GrassGrid.markEdges).
+   *   edgeAt?: (x: number, z: number) => boolean, revealScale?: number }} area From the
+   *   level (see GrassGrid.fill and GrassGrid.markEdges); revealScale: how much further out
+   *   the aerial view goes for this lawn (1 = the front lawn's view).
    */
   constructor(scene, area) {
+    this.center = { x: area.center[0], z: area.center[1] };
+    this.revealScale = area.revealScale ?? 1;
     this.grid = new GrassGrid({
       width: area.width,
       depth: area.depth,

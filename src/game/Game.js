@@ -5,7 +5,7 @@ import { RevealCamera } from '../camera/RevealCamera.js';
 import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { config } from '../config.js';
 import { Clippings } from '../effects/Clippings.js';
-import { createFrontYard } from '../environment/FrontYard.js';
+import { createLevel } from '../environment/level.js';
 import { createLighting, createSky } from '../environment/lighting.js';
 import { Lawn } from '../lawn/Lawn.js';
 import { stripeNeatness } from '../lawn/neatness.js';
@@ -42,8 +42,11 @@ export class Game {
 
     const { shadows } = createLighting(this.scene);
     createSky(this.scene);
-    this.level = createFrontYard(this.scene, shadows);
-    this.lawn = new Lawn(this.scene, this.level.lawn);
+    this.level = createLevel(this.scene, shadows);
+    /** @type {Record<string, Lawn>} Every lawn on the street, by id (each job names its own). */
+    this.lawns = Object.fromEntries(
+      Object.entries(this.level.lawns).map(([id, area]) => [id, new Lawn(this.scene, area)]),
+    );
 
     this.player = new Player(this.scene, shadows, this.input, this.level.spawn);
     this.camera = new ThirdPersonCamera(this.scene, this.input, this.player, this.level.spawn.yaw);
@@ -64,8 +67,7 @@ export class Game {
         return config.shop.wideDeck.price; // read live, so the tuning slider works
       },
     });
-    const [centerX, centerZ] = this.level.lawn.center;
-    this.reveal = new RevealCamera(this.scene, this.camera, { x: centerX, z: centerZ });
+    this.reveal = new RevealCamera(this.scene, this.camera);
     this.grassCut = 0; // grass cut this frame (see GrassGrid.cutDeck)
     this.cutRate = 0; // grass cut per second, smoothed so effects don't flicker
     this.grassTrimmed = 0; // grass cut by the string trimmer this frame
@@ -73,6 +75,7 @@ export class Game {
     this.clippings = new Clippings(this.scene, this.mower.model.chute);
     this.audio = new AudioSystem();
     this.jobs = new JobList(this.level.jobs, config.job.completeAt);
+    this.reveal.frame(this.lawn); // the first job's lawn
     this.celebration = new Celebration(this.scene);
     this.highlight = 0; // 0..1, eases in and out while the highlight key is held
     this.money = 0; // dollars earned (not saved yet: reloading starts over)
@@ -117,7 +120,8 @@ export class Game {
     this.updateTrimming(dt); // aims with the camera, so after it moves
     this.updateReveal(dt);
     this.updateJob(dt);
-    this.lawn.update(dt); // finish off leftovers and send cut grass to the GPU
+    // Finish off leftovers and send cut grass to the GPU.
+    for (const lawn of Object.values(this.lawns)) lawn.update(dt);
     if (this.input.wasPressed(config.audio.muteKey)) this.audio.toggleMute();
     this.audio.update(
       dt,
@@ -163,6 +167,11 @@ export class Game {
     this.debugOverlay.update(dt);
   }
 
+  /** The lawn of the job you're on. */
+  get lawn() {
+    return this.lawns[this.jobs.current.lawn ?? ''] ?? Object.values(this.lawns)[0];
+  }
+
   /**
    * The aerial view: V plays it any time. While it plays, the controls are paused; any key
    * or click (after a moment) cuts it short.
@@ -172,6 +181,7 @@ export class Game {
   updateReveal(dt) {
     const { reveal, input } = this;
     if (!reveal.isActive && input.isPointerLocked && input.wasPressed(config.job.revealKey)) {
+      reveal.frame(this.lawn);
       reveal.start();
     }
     if (reveal.isActive && reveal.time > config.job.reveal.skipAfter && input.anyPressed) {
@@ -197,6 +207,7 @@ export class Game {
       this.lawn.finish(); // leftover tufts shrink away (but not along the edges)
       this.celebration.play(this.lawn.field.mesh);
       this.audio.playChime();
+      this.reveal.frame(this.lawn);
       this.reveal.start(); // and fly up to show off the stripes
     }
     // Trimming the edges (before or after the lawn is done) earns a tip.
@@ -211,15 +222,22 @@ export class Game {
     // Hold the key to make uncut grass glow, pulsing gently so it catches the eye.
     const held = this.input.isPointerLocked && this.input.isDown(config.job.highlightKey);
     this.highlight = smoothTowards(this.highlight, held ? 1 : 0, dt, 12);
-    this.lawn.setHighlight(this.highlight * (0.75 + 0.25 * Math.sin(this.time * 6)));
+    const glow = this.highlight * (0.75 + 0.25 * Math.sin(this.time * 6));
+    for (const lawn of Object.values(this.lawns)) lawn.setHighlight(lawn === this.lawn ? glow : 0);
 
     if (!job.isComplete) return;
     if (this.input.wasPressed(config.job.nextKey)) {
       if (this.jobs.next()) this.startJob();
     } else if (this.input.wasPressed(config.job.resetKey)) {
-      if (this.jobs.allComplete) this.jobs.resetAll();
-      else this.jobs.redoCurrent();
-      this.lawn.reset(); // the grass grows back (and mowing it again pays again)
+      // The grass grows back (and mowing it again pays again). After the last job, every
+      // lawn does, and it all starts over (your money and upgrades stay yours).
+      if (this.jobs.allComplete) {
+        this.jobs.resetAll();
+        for (const lawn of Object.values(this.lawns)) lawn.reset();
+      } else {
+        this.jobs.redoCurrent();
+        this.lawn.reset();
+      }
       this.startJob();
     }
   }
@@ -280,15 +298,17 @@ export class Game {
    */
   updateMowing(dt) {
     const from = this.mower.deckPose;
-    // Long and thick grass ahead of the deck slows the mower down.
     const { deck } = this.mower;
-    this.mower.speedFactor = grassSpeedFactor(this.lawn.workAhead(from, deck), config.mower);
+    const lawns = Object.values(this.lawns);
+    // Long and thick grass ahead of the deck slows the mower down.
+    const work = Math.max(...lawns.map((lawn) => lawn.workAhead(from, deck)));
+    this.mower.speedFactor = grassSpeedFactor(work, config.mower);
     this.mower.update(dt);
-    if (this.mower.isCutting) {
-      this.grassCut = this.lawn.cut(dt, from, this.mower.deckPose, deck);
-    } else {
-      this.grassCut = 0;
-      this.lawn.lift();
+    // It cuts whichever lawn it's on (even one that isn't your job yet).
+    this.grassCut = 0;
+    for (const lawn of lawns) {
+      if (this.mower.isCutting) this.grassCut += lawn.cut(dt, from, this.mower.deckPose, deck);
+      else lawn.lift();
     }
     if (dt > 0) this.cutRate = smoothTowards(this.cutRate, this.grassCut / dt, dt, 10);
     this.clippings.update(this.cutRate);
@@ -301,11 +321,13 @@ export class Game {
    */
   updateTrimming(dt) {
     this.trimmer.update(dt, !this.mower.isHeld);
-    if (this.trimmer.isRunning) {
-      this.grassTrimmed = this.lawn.trim(dt, this.trimmer.from, this.trimmer.head);
-    } else {
-      this.grassTrimmed = 0;
-      this.lawn.liftTrimmer();
+    this.grassTrimmed = 0;
+    for (const lawn of Object.values(this.lawns)) {
+      if (this.trimmer.isRunning) {
+        this.grassTrimmed += lawn.trim(dt, this.trimmer.from, this.trimmer.head);
+      } else {
+        lawn.liftTrimmer();
+      }
     }
     if (dt > 0) this.trimRate = smoothTowards(this.trimRate, this.grassTrimmed / dt, dt, 10);
     this.trimmer.updateSpray(this.trimRate);
