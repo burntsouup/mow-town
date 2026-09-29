@@ -152,11 +152,18 @@ export const config = {
       fullLoadCutRate: 0.15, // grass trimmed per second that counts as full load
     },
     chime: 0.22, // "job complete" jingle
+    ding: 0.14, // "edges done"
     coins: 0.16, // "ka-ching" when you're paid
     muteKey: 'KeyM',
   },
   job: {
     completeAt: 0.98, // fraction of the lawn that counts as done; the rest is finished for you
+    // The edges: lawn within this many meters of things you trim around (the fence, trees,
+    // beds, toys). They're left long when the lawn is done, for the string trimmer, and count
+    // as done at edgesDoneAt (then the last bits shrink away).
+    edgeWidth: 0.25,
+    edgesDoneAt: 0.97,
+    cardTime: 6, // seconds the "Job complete" card stays up (after the aerial view)
     finishFadeTime: 1.2, // seconds for the leftover tufts to shrink away once it's done
     highlightKey: 'KeyF', // hold to highlight the grass that's left
     highlightColor: '#ff3df2', // bright magenta: stands out against every green
@@ -171,6 +178,7 @@ export const config = {
     // What each job pays when it's done, in dollars, by job id (see the level's jobs).
     jobPay: { frontLawn: 40 },
     stripesTip: 10, // dollars, at most, for neat stripes
+    edgesTip: 10, // dollars for trimming the edges
     // How neat the stripes are (0..1, see lawn/neatness.js): the tip starts above tipFrom
     // and is the whole amount at tipFull. Tidy rows score ~0.95; a random scribble ~0.35.
     tipFrom: 0.6,

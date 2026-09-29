@@ -298,6 +298,27 @@ export class AudioSystem {
     });
   }
 
+  /** "Edges done!": two quick, bright bell notes (E6, then A6). */
+  playDing() {
+    if (!this.context || !this.master) return;
+    const context = this.context;
+    const start = context.currentTime + 0.02;
+    [1318.5, 1760].forEach((frequency, i) => {
+      const at = start + i * 0.09;
+      const tone = context.createOscillator();
+      tone.type = 'sine';
+      tone.frequency.value = frequency;
+      const envelope = context.createGain();
+      envelope.gain.setValueAtTime(0.0001, at);
+      envelope.gain.exponentialRampToValueAtTime(config.audio.ding, at + 0.008);
+      envelope.gain.exponentialRampToValueAtTime(0.0001, at + 0.7);
+      tone.connect(envelope);
+      envelope.connect(/** @type {GainNode} */ (this.master));
+      tone.start(at);
+      tone.stop(at + 0.75);
+    });
+  }
+
   /**
    * "Ka-ching!": a till's bell (two bright pings, with the off-key overtones that make
    * metal sound like metal) over a quick rattle of coins.

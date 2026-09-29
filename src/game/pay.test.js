@@ -1,22 +1,35 @@
 import { describe, expect, it } from 'vitest';
 import { countTowards, formatMoney, jobReceipt, receiptTotal } from './pay.js';
 
-const SETTINGS = { jobPay: { frontLawn: 40 }, stripesTip: 10, tipFrom: 0.6, tipFull: 0.9 };
+const SETTINGS = {
+  jobPay: { frontLawn: 40 },
+  stripesTip: 10,
+  tipFrom: 0.6,
+  tipFull: 0.9,
+  edgesTip: 8,
+};
 const FRONT_LAWN = { id: 'frontLawn', shortName: 'Front lawn', title: 'Mow the front lawn' };
 
 describe('jobReceipt', () => {
-  it("pays the job's price, plus the whole tip for neat stripes", () => {
-    const receipt = jobReceipt(FRONT_LAWN, { neatness: 0.95 }, SETTINGS);
+  it("pays the job's price, plus the whole tips for neat stripes and crisp edges", () => {
+    const receipt = jobReceipt(FRONT_LAWN, { neatness: 0.95, edgesDone: true }, SETTINGS);
     expect(receipt).toEqual([
       { label: 'Front lawn', amount: 40 },
       { label: 'Neat stripes (95%)', amount: 10, tip: 'stripes' },
+      { label: 'Crisp edges', amount: 8, tip: 'edges' },
     ]);
+    expect(receiptTotal(receipt)).toBe(58);
+  });
+
+  it("lists the edges tip as still to earn until they're trimmed, and doesn't count it", () => {
+    const receipt = jobReceipt(FRONT_LAWN, { neatness: 0.95, edgesDone: false }, SETTINGS);
+    expect(receipt[2]).toEqual({ label: 'Crisp edges', amount: 8, tip: 'edges', pending: true });
     expect(receiptTotal(receipt)).toBe(50);
   });
 
   it('scales the tip between "starts" and "full", in whole dollars', () => {
     const tipFor = (/** @type {number} */ neatness) =>
-      jobReceipt(FRONT_LAWN, { neatness }, SETTINGS)[1].amount;
+      jobReceipt(FRONT_LAWN, { neatness, edgesDone: false }, SETTINGS)[1].amount;
     expect(tipFor(0.3)).toBe(0);
     expect(tipFor(0.6)).toBe(0);
     expect(tipFor(0.75)).toBe(5);
@@ -25,7 +38,8 @@ describe('jobReceipt', () => {
   });
 
   it('falls back to the title, and pays nothing for a job with no price', () => {
-    const receipt = jobReceipt({ id: 'mystery', title: 'Mow it' }, { neatness: 0 }, SETTINGS);
+    const work = { neatness: 0, edgesDone: false };
+    const receipt = jobReceipt({ id: 'mystery', title: 'Mow it' }, work, SETTINGS);
     expect(receipt[0]).toEqual({ label: 'Mow it', amount: 0 });
   });
 });

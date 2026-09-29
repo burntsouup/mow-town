@@ -13,7 +13,9 @@ export class Lawn {
    * @param {import('@babylonjs/core').Scene} scene
    * @param {{ center: number[], width: number, depth: number,
    *   heightAt: (x: number, z: number) => number,
-   *   densityAt?: (x: number, z: number) => number }} area From the level.
+   *   densityAt?: (x: number, z: number) => number,
+   *   edgeAt?: (x: number, z: number) => boolean }} area From the level (see
+   *   GrassGrid.fill and GrassGrid.markEdges).
    */
   constructor(scene, area) {
     this.grid = new GrassGrid({
@@ -23,12 +25,14 @@ export class Lawn {
       targetHeight: config.grass.cutHeight,
     });
     this.grid.fill(area.heightAt, area.densityAt);
+    this.grid.markEdges(config.job.edgeWidth, area.edgeAt);
     this.field = new GrassField(scene, this.grid, area);
     this.cutter = new DeckCutter(this.grid);
     this.trimCutter = new TrimCutter(this.grid);
     // Anything taller than this in the grass map (half a byte of slack) still needs mowing.
     this.field.plugin.uncutAbove = config.grass.cutHeight + MOWED_TOLERANCE + 0.5 / 255;
-    this.finishing = false;
+    /** Which leftovers are shrinking away: the lawn away from the edges, and the edges. */
+    this.finishing = { inner: false, edges: false };
   }
 
   /** @param {number} amount 0..1: how strongly to highlight grass that still needs mowing. */
@@ -36,9 +40,17 @@ export class Lawn {
     this.field.plugin.highlight = amount;
   }
 
-  /** The job is done: over the next moment, whatever is left shrinks down as if mowed. */
+  /**
+   * The job is done: over the next moment, whatever is left shrinks down as if mowed, except
+   * along the edges (that's the string trimmer's job, see finishEdges).
+   */
   finish() {
-    this.finishing = true;
+    this.finishing.inner = true;
+  }
+
+  /** The edges are done: the last bits along them shrink away too. */
+  finishEdges() {
+    this.finishing.edges = true;
   }
 
   /** Grows all the grass back, ready to mow again. */
@@ -46,12 +58,17 @@ export class Lawn {
     this.grid.reset();
     this.cutter.lift();
     this.trimCutter.lift();
-    this.finishing = false;
+    this.finishing = { inner: false, edges: false };
   }
 
   /** Fraction of the lawn mowed (weighted), 0..1. */
   get progress() {
     return this.grid.progress;
+  }
+
+  /** Fraction of the edges cut (weighted), 0..1. */
+  get edgeProgress() {
+    return this.grid.edgeProgress;
   }
 
   /**
@@ -116,8 +133,10 @@ export class Lawn {
    * @param {number} dt
    */
   update(dt) {
-    if (this.finishing) {
-      this.finishing = this.grid.shrinkRemaining(dt / config.job.finishFadeTime);
+    const { inner, edges } = this.finishing;
+    if (inner || edges) {
+      const left = this.grid.shrinkRemaining(dt / config.job.finishFadeTime, this.finishing);
+      if (!left) this.finishing = { inner: false, edges: false };
     }
     this.field.update();
   }
