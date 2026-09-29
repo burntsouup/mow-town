@@ -1,5 +1,6 @@
-import { Color3, Mesh, MeshBuilder, StandardMaterial, Vector3 } from '@babylonjs/core';
+import { Mesh, Vector3 } from '@babylonjs/core';
 import { config } from '../config.js';
+import { Tuft } from './Tuft.js';
 import {
   cameraRelativeMove,
   moveInputFromKeys,
@@ -9,7 +10,7 @@ import {
 } from './movement.js';
 
 /**
- * The player character: a capsule with a dark visor showing which way it faces.
+ * The player character: Tuft (see Tuft.js), walking around on an invisible capsule.
  *
  * `root` sits at the player's feet. It's an invisible mesh so Babylon's built-in collision
  * system can move it: `moveWithCollisions` slides an ellipsoid around walls and props that
@@ -37,30 +38,18 @@ export class Player {
     this.root.ellipsoidOffset = new Vector3(0, height / 2, 0);
     this.displacement = new Vector3(); // reused every frame
 
-    const body = MeshBuilder.CreateCapsule(
-      'playerBody',
-      { height, radius, tessellation: 16 },
-      scene,
-    );
-    body.parent = this.root;
-    body.position.y = height / 2;
-    body.material = matte('playerBodyMat', '#e8923a', scene);
+    this.tuft = new Tuft(scene, shadows, this.root);
+  }
 
-    // Local +z is "forward", so the visor goes on the front of the head.
-    const visor = MeshBuilder.CreateBox(
-      'playerVisor',
-      { width: radius * 1.1, height: 0.12, depth: 0.14 },
-      scene,
-    );
-    visor.parent = body;
-    visor.position.set(0, height / 2 - 0.28, radius - 0.03);
-    visor.material = matte('playerVisorMat', '#23272e', scene);
-
-    for (const mesh of [body, visor]) {
-      mesh.isPickable = false; // the camera's view checks should ignore the player
-      shadows.addShadowCaster(mesh);
-    }
-    this.meshes = [body, visor];
+  /**
+   * Animates Tuft for this frame, once everything has moved.
+   *
+   * @param {number} dt
+   * @param {Vector3[] | null} hands Where to hold on (world space: left, right), or null.
+   * @param {number} lean 0..1: leaning in to push.
+   */
+  animate(dt, hands, lean) {
+    this.tuft.update(dt, hands, lean);
   }
 
   /** World position of the player's feet. */
@@ -138,18 +127,6 @@ export class Player {
 
   /** @param {number} opacity 0 (invisible) to 1 (solid). The shadow stays either way. */
   setOpacity(opacity) {
-    for (const mesh of this.meshes) mesh.visibility = opacity;
+    this.tuft.setOpacity(opacity);
   }
-}
-
-/**
- * @param {string} name
- * @param {string} hex
- * @param {import('@babylonjs/core').Scene} scene
- */
-function matte(name, hex, scene) {
-  const material = new StandardMaterial(name, scene);
-  material.diffuseColor = Color3.FromHexString(hex);
-  material.specularColor = Color3.Black();
-  return material;
 }
