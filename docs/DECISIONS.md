@@ -277,3 +277,16 @@ camera's wall check never moves it out. Meshes marked `metadata.seeThrough` fade
 line from the camera to the player passes through them.
 **Revisit when:** the playtest says aiming feels floaty (lower `follow`/`maxSpeed`), or edges
 need a different tool (an edger, for a crisp line along paths).
+
+## 25. Edges are what you trim around, and they pay a tip
+
+**Why:** The trimmer needs a job, and it should be the job it has in real life: the strip
+along the fence and around the tree, the flower bed, the toys and the mailbox post, where the
+mower's deck can't quite reach. `GrassGrid.markEdges` marks lawn within 25 cm of those (the
+level's `edgeAt` says which non-lawn spots count; flat paths don't) and tracks their progress
+separately. When the lawn completes at 98%, the leftovers in the middle shrink away as before
+(#12), but the edges stay long for the trimmer; at 97% they count as done, the rest shrink
+away, and a $10 "crisp edges" tip is paid. Trimming first works too: the tip is on the receipt
+when the lawn is done. It's a tip, not a requirement, so skipping it is fine.
+**Revisit when:** the playtest shows the mower leaving almost nothing along the edges (widen
+them, or lower `edgesDoneAt`) or far too much (narrow them).
