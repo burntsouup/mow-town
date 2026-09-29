@@ -109,6 +109,11 @@ export const config = {
     // The cutting area under the mower, in meters: a 22-inch deck, like a real push mower.
     deck: { width: 0.56, length: 0.45 },
   },
+  shop: {
+    // The 30-inch deck: about 40% more lawn per pass, but bulkier (a bigger collision shape,
+    // in meters), so it can't get as close to things.
+    wideDeck: { price: 50, width: 0.76, length: 0.5, colliderRadius: 0.42 },
+  },
   trimmer: {
     key: 'KeyQ', // takes the string trimmer out, or puts it away
     radius: 0.17, // meters: how far the spinning line reaches (a 13-inch cut, like a real one)

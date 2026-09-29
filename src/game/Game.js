@@ -236,10 +236,11 @@ export class Game {
   updateMowing(dt) {
     const from = this.mower.deckPose;
     // Long and thick grass ahead of the deck slows the mower down.
-    this.mower.speedFactor = grassSpeedFactor(this.lawn.workAhead(from), config.mower);
+    const { deck } = this.mower;
+    this.mower.speedFactor = grassSpeedFactor(this.lawn.workAhead(from, deck), config.mower);
     this.mower.update(dt);
     if (this.mower.isCutting) {
-      this.grassCut = this.lawn.cut(dt, from, this.mower.deckPose);
+      this.grassCut = this.lawn.cut(dt, from, this.mower.deckPose, deck);
     } else {
       this.grassCut = 0;
       this.lawn.lift();
