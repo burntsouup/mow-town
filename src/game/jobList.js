@@ -5,10 +5,11 @@ import { Job } from './job.js';
  * The jobs in the level, in order. You work on one at a time; finishing it lets you move on
  * to the next. Pure logic, like Job.
  *
- * @typedef {{ id: string, name?: string, title: string, doneTitle: string, summary: string,
- *   hint?: string }} JobDefinition
- *   name for sentences ("the front lawn"); title while working; doneTitle once finished;
- *   summary before the time ("Front lawn mowed in"); hint shown under the title.
+ * @typedef {{ id: string, name?: string, shortName?: string, title: string, doneTitle: string,
+ *   summary: string, hint?: string }} JobDefinition
+ *   name for sentences ("the front lawn"); shortName for lists, like the receipt ("Front
+ *   lawn"); title while working; doneTitle once finished; summary before the time ("Front
+ *   lawn mowed in"); hint shown under the title. What it pays is in config.money.jobPay.
  */
 export class JobList {
   /**

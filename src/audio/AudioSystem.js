@@ -22,6 +22,8 @@ export class AudioSystem {
   constructor() {
     /** @type {AudioContext | null} */
     this.context = null;
+    /** @type {AudioBuffer | null} White noise, shared by the sounds made from it. */
+    this.noise = null;
     this.muted = false;
     this.rpm = 0; // mower engine speed, 0 (stopped) .. 1 (full speed)
     window.addEventListener('pointerdown', () => this.start());
@@ -44,6 +46,7 @@ export class AudioSystem {
 
     const random = createRandom(11);
     const noise = createNoiseBuffer(context, random);
+    this.noise = noise;
     this.engine = this.createEngine(noise);
     this.cutting = this.createNoiseLayer(noise, 0.7, [
       { type: 'bandpass', frequency: 1300, Q: 0.6 },
@@ -222,6 +225,58 @@ export class AudioSystem {
         tone.stop(at + 1.5);
       }
     });
+  }
+
+  /**
+   * "Ka-ching!": a till's bell (two bright pings, with the off-key overtones that make
+   * metal sound like metal) over a quick rattle of coins.
+   *
+   * @param {number} [delay] Seconds from now.
+   */
+  playCoins(delay = 0) {
+    if (!this.context || !this.master || !this.noise) return;
+    const context = this.context;
+    const master = this.master;
+    const start = context.currentTime + delay;
+    const volume = config.audio.coins;
+
+    const rattle = context.createBufferSource();
+    rattle.buffer = this.noise;
+    const bright = context.createBiquadFilter();
+    bright.type = 'highpass';
+    bright.frequency.value = 5000;
+    const rattleEnvelope = context.createGain();
+    rattleEnvelope.gain.setValueAtTime(0.0001, start);
+    rattleEnvelope.gain.exponentialRampToValueAtTime(volume * 0.5, start + 0.01);
+    rattleEnvelope.gain.exponentialRampToValueAtTime(0.0001, start + 0.25);
+    rattle.connect(bright);
+    bright.connect(rattleEnvelope);
+    rattleEnvelope.connect(master);
+    rattle.start(start, 0.3);
+    rattle.stop(start + 0.3);
+
+    for (const [frequency, after] of [
+      [1568, 0.02], // G6
+      [2093, 0.11], // C7
+    ]) {
+      const at = start + after;
+      for (const [ratio, level] of [
+        [1, 1],
+        [2.76, 0.3],
+        [5.4, 0.1],
+      ]) {
+        const ping = context.createOscillator();
+        ping.frequency.value = frequency * ratio;
+        const envelope = context.createGain();
+        envelope.gain.setValueAtTime(0.0001, at);
+        envelope.gain.exponentialRampToValueAtTime(volume * level, at + 0.004);
+        envelope.gain.exponentialRampToValueAtTime(0.0001, at + 0.8 / ratio);
+        ping.connect(envelope);
+        envelope.connect(master);
+        ping.start(at);
+        ping.stop(at + 0.85);
+      }
+    }
   }
 }
 

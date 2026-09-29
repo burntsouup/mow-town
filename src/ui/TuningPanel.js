@@ -76,6 +76,13 @@ export class TuningPanel {
       .onChange((/** @type {number} */ value) => (game.jobs.completeAt = value));
     job.close();
 
+    const money = gui.addFolder('Money');
+    money.add(config.money.jobPay, 'frontLawn', 0, 200, 1).name('Front lawn pays ($)');
+    money.add(config.money, 'stripesTip', 0, 50, 1).name('Neat stripes tip ($)');
+    money.add(config.money, 'tipFrom', 0, 1, 0.01).name('Tip starts at (neatness)');
+    money.add(config.money, 'tipFull', 0, 1, 0.01).name('Full tip at (neatness)');
+    money.close();
+
     const effects = gui.addFolder('Effects');
     effects.add(config.effects, 'clippingsPerCut', 0, 3000, 10).name('Clippings amount');
     effects.add(config.effects, 'maxClippingsRate', 0, 3000, 10).name('Clippings max / s');
@@ -90,6 +97,7 @@ export class TuningPanel {
     audio.add(config.audio, 'cutting', 0, 0.6, 0.01).name('Blades cutting');
     audio.add(config.audio, 'bogDepth', 0, 0.8, 0.01).name('Engine bogging');
     audio.add(config.audio, 'chime', 0, 0.5, 0.01).name('Job complete chime');
+    audio.add(config.audio, 'coins', 0, 0.5, 0.01).name('Ka-ching');
     audio.close();
 
     const actions = {

@@ -118,6 +118,7 @@ export const config = {
     bog: 5,
     spinDown: 1.5,
     chime: 0.22, // "job complete" jingle
+    coins: 0.16, // "ka-ching" when you're paid
     muteKey: 'KeyM',
   },
   job: {
@@ -131,5 +132,18 @@ export const config = {
     reveal: { flyTime: 2.2, holdTime: 4, height: 14, distance: 11, swing: 0.3, skipAfter: 1 },
     resetKey: 'KeyR', // after completion: redo the job (or, after the last one, start over)
     nextKey: 'KeyN', // after completion: move on to the next job
+  },
+  money: {
+    // What each job pays when it's done, in dollars, by job id (see the level's jobs).
+    jobPay: { frontLawn: 40 },
+    stripesTip: 10, // dollars, at most, for neat stripes
+    // How neat the stripes are (0..1, see lawn/neatness.js): the tip starts above tipFrom
+    // and is the whole amount at tipFull. Tidy rows score ~0.95; a random scribble ~0.35.
+    tipFrom: 0.6,
+    tipFull: 0.9,
+    neatnessPatch: 1.5, // meters: stripes are judged in square patches this big
+    // The money on screen counts up like a till (see countTowards in game/pay.js).
+    countSpeed: 3,
+    countMinSpeed: 15, // dollars per second
   },
 };
