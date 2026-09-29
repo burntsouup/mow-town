@@ -115,6 +115,10 @@ export class Hud {
       this.completeCard,
       this.playPrompt,
     );
+    // Hidden until the first update says otherwise (the game waits a moment before starting).
+    for (const panel of [this.objective, this.wallet, this.toast, this.prompt, this.completeCard]) {
+      panel.hidden = true;
+    }
     /** What's currently on screen, so we only touch the page when something changes. */
     this.shown = /** @type {Record<string, unknown>} */ ({});
   }

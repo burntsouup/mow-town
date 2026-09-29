@@ -6,6 +6,13 @@ export const config = {
   },
   render: {
     antialias: true,
+    // Pixels to render per CSS pixel: up to the screen's own (2 on a Retina Mac), but at most
+    // highRefreshPixelRatio on screens faster than highRefreshAbove Hz. At 120 Hz there are
+    // only 8.3 ms per frame, and at full Retina size the lawn takes ~10 ms on an M3 MacBook
+    // (~6.6 ms at 1.5). See game/display.js.
+    maxPixelRatio: 2,
+    highRefreshAbove: 75,
+    highRefreshPixelRatio: 1.5,
     shadowMapSize: 2048,
     // Sky dome gradient. The horizon color is also the fog color so distant ground fades out.
     sky: { zenith: '#5b8fd8', horizon: '#cfdfee' },

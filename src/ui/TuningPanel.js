@@ -107,6 +107,18 @@ export class TuningPanel {
     shop.add(config.shop.wideDeck, 'price', 0, 200, 1).name('30-inch deck price ($)');
     shop.close();
 
+    const render = gui.addFolder('Render');
+    const applyPixelRatio = () => game.applyPixelRatio();
+    render
+      .add(config.render, 'maxPixelRatio', 0.5, 3, 0.05)
+      .name('Max sharpness (px per px)')
+      .onChange(applyPixelRatio);
+    render
+      .add(config.render, 'highRefreshPixelRatio', 0.5, 3, 0.05)
+      .name('...on fast screens')
+      .onChange(applyPixelRatio);
+    render.close();
+
     const effects = gui.addFolder('Effects');
     effects.add(config.effects, 'clippingsPerCut', 0, 3000, 10).name('Clippings amount');
     effects.add(config.effects, 'maxClippingsRate', 0, 3000, 10).name('Clippings max / s');

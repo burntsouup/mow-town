@@ -19,6 +19,7 @@ import { DebugOverlay } from '../ui/DebugOverlay.js';
 import { Hud } from '../ui/Hud.js';
 import { TuningPanel } from '../ui/TuningPanel.js';
 import { Celebration } from './Celebration.js';
+import { pixelRatioFor, refreshRateFrom } from './display.js';
 import { Input } from './Input.js';
 import { JobList } from './jobList.js';
 import { countTowards, jobReceipt, receiptTotal } from './pay.js';
@@ -88,6 +89,8 @@ export class Game {
     this.toastText = ''; // a short message, like "deck fitted"
     this.toastTime = 0; // ...and how many seconds it has left
     this.time = 0;
+    this.refreshRate = 0; // the screen's, in Hz, measured when the game starts
+    this.pixelRatio = window.devicePixelRatio || 1; // pixels rendered per CSS pixel
     this.hud = new Hud(hudRoot, this.input);
     this.debugOverlay = new DebugOverlay(this.engine, this.scene, hudRoot);
     this.tuning = new TuningPanel(this);
@@ -95,13 +98,38 @@ export class Game {
     window.addEventListener('resize', () => this.engine.resize());
   }
 
+  /**
+   * Times a few idle frames to find the screen's refresh rate (see display.js), picks a
+   * render resolution it can keep up with, then starts the game loop.
+   */
   start() {
-    this.engine.runRenderLoop(() => {
-      const dt = toDeltaSeconds(this.engine.getDeltaTime(), config.loop.maxDeltaSeconds);
-      this.update(dt);
-      this.input.endFrame();
-      this.scene.render();
-    });
+    /** @type {number[]} */
+    const frameMs = [];
+    let last = performance.now();
+    const measure = (/** @type {number} */ now) => {
+      // Background tabs run slowly on purpose, so only count frames while you can see it.
+      if (!document.hidden) frameMs.push(now - last);
+      last = now;
+      if (frameMs.length < 20) {
+        requestAnimationFrame(measure);
+        return;
+      }
+      this.refreshRate = refreshRateFrom(frameMs.slice(4)); // the first few are still settling
+      this.applyPixelRatio();
+      this.engine.runRenderLoop(() => {
+        const dt = toDeltaSeconds(this.engine.getDeltaTime(), config.loop.maxDeltaSeconds);
+        this.update(dt);
+        this.input.endFrame();
+        this.scene.render();
+      });
+    };
+    requestAnimationFrame(measure);
+  }
+
+  /** Renders at the resolution the screen can keep up with (see display.js). */
+  applyPixelRatio() {
+    this.pixelRatio = pixelRatioFor(window.devicePixelRatio, this.refreshRate, config.render);
+    this.engine.setHardwareScalingLevel(1 / this.pixelRatio);
   }
 
   /**
