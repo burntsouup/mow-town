@@ -13,13 +13,17 @@ import './hud.css';
  *   elapsed: number,
  *   nextJob: import('../game/jobList.js').JobDefinition | null,
  *   revealing: boolean,
+ *   showCard: boolean,
+ *   edges: number,
+ *   edgesDone: boolean,
  *   money: number,
  *   moneyCounting: boolean,
  *   receipt: import('../game/pay.js').PayLine[] | null,
  * }} HudState hasMower: the player has grabbed the mower at least once; progress is 0..1
  *   for display; elapsed is seconds on the job; nextJob is the one after this (null if this
- *   is the last); money is what to show in the wallet (it counts up); receipt is what the
- *   job paid, once it's done.
+ *   is the last); showCard: the "Job complete" card is up (it tucks away after a while);
+ *   edges is 0..1 for display; money is what to show in the wallet (it counts up); receipt
+ *   is what the job paid, once it's done.
  */
 
 /**
@@ -45,7 +49,22 @@ export class Hud {
     this.progressFill = element('div', 'progress-fill');
     bar.append(this.progressFill);
     this.progressLabel = element('div', 'progress-label');
-    this.objective.append(this.objectiveTitle, this.objectiveHint, bar, this.progressLabel);
+    // The edges: a smaller bar underneath, for the string trimmer.
+    this.edgesRow = element('div', 'edges-row');
+    const edgesName = element('span', 'edges-name');
+    edgesName.textContent = 'Edges';
+    const edgesBar = element('div', 'progress-bar edges-bar');
+    this.edgesFill = element('div', 'progress-fill');
+    edgesBar.append(this.edgesFill);
+    this.edgesLabel = element('span', 'edges-label');
+    this.edgesRow.append(edgesName, edgesBar, this.edgesLabel);
+    this.objective.append(
+      this.objectiveTitle,
+      this.objectiveHint,
+      bar,
+      this.progressLabel,
+      this.edgesRow,
+    );
 
     this.completeCard = element('div', 'job-complete');
     this.completeCard.innerHTML = `
@@ -117,13 +136,15 @@ export class Hud {
 
     const { job } = state;
     let title = job.title;
-    if (!state.hasMower) title = 'Grab the mower';
-    else if (complete) title = job.doneTitle;
+    if (complete) title = job.doneTitle;
+    else if (!state.hasMower) title = 'Grab the mower';
     this.set('title', title, () => {
       this.objectiveTitle.textContent = title;
     });
-    let hint = complete ? '' : (job.hint ?? '');
-    if (!state.hasMower) hint = "It's parked on the driveway";
+    let hint = job.hint ?? '';
+    if (complete && !state.edgesDone) hint = 'Trim the edges with Q for a tip';
+    else if (complete) hint = state.nextJob ? 'Press N for the next job' : 'Press R to mow again';
+    else if (!state.hasMower) hint = "It's parked on the driveway";
     this.set('hint', hint, () => {
       this.objectiveHint.textContent = hint;
       this.objectiveHint.hidden = !hint;
@@ -137,11 +158,20 @@ export class Hud {
       this.objective.classList.toggle('is-complete', complete);
     });
 
+    const edgesPercent = Math.floor(state.edges * 100);
+    this.set('edges', edgesPercent, () => {
+      this.edgesFill.style.width = `${edgesPercent}%`;
+      this.edgesLabel.textContent = `${edgesPercent}%`;
+    });
+    this.set('edgesDone', state.edgesDone, () => {
+      this.edgesRow.classList.toggle('is-complete', state.edgesDone);
+    });
+
     this.set('revealing', state.revealing, () => {
       this.completeCard.classList.toggle('is-revealing', state.revealing);
     });
 
-    this.set('complete', locked && complete ? job.id : null, (shownJob) => {
+    this.set('complete', locked && complete && state.showCard ? job.id : null, (shownJob) => {
       this.completeCard.hidden = !shownJob;
       if (!shownJob) return;
       const next = state.nextJob;
@@ -167,6 +197,9 @@ export class Hud {
       const row = this.receipt.insertRow();
       if ('total' in line) row.className = 'receipt-total';
       row.insertCell().textContent = line.label;
+      const pending = 'pending' in line && line.pending;
+      if (pending) row.className = 'receipt-pending';
+      row.insertCell().textContent = pending ? `${line.label} (trim them: Q)` : line.label;
       const tip = 'tip' in line && line.tip;
       row.insertCell().textContent = `${tip ? '+' : ''}${formatMoney(line.amount)}`;
     }

@@ -30,6 +30,8 @@ const STAMP_TURN = 0.08;
  * - mask: 1 where there's lawn at all, 0 on paths and flower beds
  * - density: how thick the grass is (1 = normal). Thick grass is harder work to mow.
  * - mow direction: which way the deck was facing when it last passed over, for stripes
+ * - edge: 1 on the strip of lawn along things like fences, trees and flower beds (see
+ *   markEdges), where the mower can't quite reach and the string trimmer comes in
  *
  * Progress is weighted: each texel counts for the grass it had to lose (starting height above
  * the target, times density), so tall, thick patches count for more than scrappy ones.
@@ -53,6 +55,7 @@ export class GrassGrid {
     this.height = new Float32Array(count);
     this.startHeight = new Float32Array(count);
     this.mask = new Uint8Array(count);
+    this.edge = new Uint8Array(count);
     this.density = new Float32Array(count);
     /** How much each texel counts toward progress (see the class comment). */
     this.weight = new Float32Array(count);
@@ -61,6 +64,8 @@ export class GrassGrid {
     this.mowZ = new Float32Array(count);
     this.totalWeight = 0;
     this.remainingWeight = 0;
+    this.edgeTotalWeight = 0; // the same, for just the edges
+    this.edgeRemainingWeight = 0;
     /** @type {Rect | null} Texels changed since the last takeChangedRect(). */
     this.changedRect = null;
   }
@@ -92,13 +97,17 @@ export class GrassGrid {
     this.mowX.fill(0);
     this.mowZ.fill(0);
     let total = 0;
+    let edgeTotal = 0;
     for (let i = 0; i < this.height.length; i++) {
       const excess = this.startHeight[i] - this.targetHeight - MOWED_TOLERANCE;
       this.weight[i] = this.mask[i] && excess > 0 ? excess * this.density[i] : 0;
       total += this.weight[i];
+      if (this.edge[i]) edgeTotal += this.weight[i];
     }
     this.totalWeight = total;
     this.remainingWeight = total;
+    this.edgeTotalWeight = edgeTotal;
+    this.edgeRemainingWeight = edgeTotal;
     this.markChanged(this.fullRect());
   }
 
@@ -106,6 +115,70 @@ export class GrassGrid {
   get progress() {
     if (this.totalWeight <= 0) return 1;
     return Math.min(1, Math.max(0, 1 - this.remainingWeight / this.totalWeight));
+  }
+
+  /** Fraction of the edges cut (weighted), 0..1. */
+  get edgeProgress() {
+    if (this.edgeTotalWeight <= 0) return 1;
+    return Math.min(1, Math.max(0, 1 - this.edgeRemainingWeight / this.edgeTotalWeight));
+  }
+
+  /**
+   * Marks the edges: every bit of lawn within `width` meters of something you'd trim around
+   * (a fence, a tree, a flower bed...), as opposed to a flat path the mower rolls right over.
+   * Then starts the lawn afresh.
+   *
+   * Each texel just outside the lawn stamps a small disc of "edge" onto the lawn around it,
+   * which is simple and quick enough to do once when the level loads.
+   *
+   * @param {number} width Meters.
+   * @param {(x: number, z: number) => boolean} [isEdgeSpot] Whether a spot that isn't lawn
+   *   (in lawn-local meters, possibly just outside the grid) is something to trim around.
+   *   By default, everything is.
+   */
+  markEdges(width, isEdgeSpot = () => true) {
+    const reach = width * this.texelsPerMeter;
+    const r = Math.floor(reach);
+    const { columns, rows, mask, edge } = this;
+    edge.fill(0);
+    const isLawn = (/** @type {number} */ column, /** @type {number} */ row) =>
+      column >= 0 && column < columns && row >= 0 && row < rows && mask[row * columns + column];
+    /** Stamps edge onto the lawn around a spot that isn't lawn. */
+    const stamp = (/** @type {number} */ column, /** @type {number} */ row) => {
+      for (let dy = -r; dy <= r; dy++) {
+        const y = row + dy;
+        if (y < 0 || y >= rows) continue;
+        for (let dx = -r; dx <= r; dx++) {
+          const x = column + dx;
+          if (x < 0 || x >= columns || dx * dx + dy * dy > reach * reach) continue;
+          edge[y * columns + x] = mask[y * columns + x];
+        }
+      }
+    };
+    // Every spot that isn't lawn but touches some (including just outside the grid).
+    for (let row = -1; row <= rows; row++) {
+      for (let column = -1; column <= columns; column++) {
+        if (isLawn(column, row)) continue;
+        const touches =
+          isLawn(column - 1, row) ||
+          isLawn(column + 1, row) ||
+          isLawn(column, row - 1) ||
+          isLawn(column, row + 1);
+        const t = this.texelsPerMeter;
+        if (touches && isEdgeSpot((column + 0.5) / t, (row + 0.5) / t)) stamp(column, row);
+      }
+    }
+    this.reset();
+  }
+
+  /**
+   * Takes a texel off the grass still to mow, once it's short enough to count as mowed.
+   *
+   * @param {number} i Texel index.
+   */
+  countMowed(i) {
+    this.remainingWeight -= this.weight[i];
+    if (this.edge[i]) this.edgeRemainingWeight -= this.weight[i];
   }
 
   /** @param {number} i Texel index. */
@@ -135,7 +208,7 @@ export class GrassGrid {
         const wasMowed = this.isMowed(i);
         cut += (height - cutHeight) * this.density[i];
         this.height[i] = cutHeight;
-        if (!wasMowed && this.isMowed(i)) this.remainingWeight -= this.weight[i];
+        if (!wasMowed && this.isMowed(i)) this.countMowed(i);
       }
       this.mowX[i] = forwardX;
       this.mowZ[i] = forwardZ;
@@ -259,7 +332,7 @@ export class GrassGrid {
         if (this.height[i] <= cutHeight) continue;
         cut += (this.height[i] - cutHeight) * this.density[i];
         this.height[i] = cutHeight;
-        if (this.isMowed(i)) this.remainingWeight -= this.weight[i];
+        if (this.isMowed(i)) this.countMowed(i);
       }
     }
     this.markChanged({ minX, minY, maxX, maxY });
@@ -297,16 +370,19 @@ export class GrassGrid {
    * each frame for a moment when a job completes, so the last tufts shrink away.
    *
    * @param {number} amount
-   * @returns {boolean} True while any grass is still above the target.
+   * @param {{ inner: boolean, edges: boolean }} [parts] Which grass to shrink: the lawn away
+   *   from the edges, the edges, or both.
+   * @returns {boolean} True while any of that grass is still above the target.
    */
-  shrinkRemaining(amount) {
+  shrinkRemaining(amount, parts = { inner: true, edges: true }) {
     const floor = Math.fround(this.targetHeight); // heights are stored as 32-bit floats
     let anyLeft = false;
     for (let i = 0; i < this.height.length; i++) {
       if (!this.mask[i] || this.height[i] <= floor) continue;
+      if (!(this.edge[i] ? parts.edges : parts.inner)) continue;
       const wasMowed = this.isMowed(i);
       this.height[i] = Math.max(floor, this.height[i] - amount);
-      if (!wasMowed && this.isMowed(i)) this.remainingWeight -= this.weight[i];
+      if (!wasMowed && this.isMowed(i)) this.countMowed(i);
       if (this.height[i] > floor) anyLeft = true;
     }
     this.markChanged(this.fullRect());

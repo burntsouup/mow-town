@@ -91,6 +91,7 @@ export class TuningPanel {
       .add(config.job, 'completeAt', 0.9, 1, 0.005)
       .name('Job done at')
       .onChange((/** @type {number} */ value) => (game.jobs.completeAt = value));
+    job.add(config.job, 'edgesDoneAt', 0.8, 1, 0.005).name('Edges done at');
     job.close();
 
     const money = gui.addFolder('Money');
@@ -98,6 +99,7 @@ export class TuningPanel {
     money.add(config.money, 'stripesTip', 0, 50, 1).name('Neat stripes tip ($)');
     money.add(config.money, 'tipFrom', 0, 1, 0.01).name('Tip starts at (neatness)');
     money.add(config.money, 'tipFull', 0, 1, 0.01).name('Full tip at (neatness)');
+    money.add(config.money, 'edgesTip', 0, 50, 1).name('Crisp edges tip ($)');
     money.close();
 
     const effects = gui.addFolder('Effects');

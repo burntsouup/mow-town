@@ -62,8 +62,37 @@
   opacity: 0.8;
 }
 
-.objective.is-complete .progress-fill {
+.objective.is-complete > .progress-bar .progress-fill,
+.edges-row.is-complete .progress-fill {
   background: linear-gradient(90deg, #7be495, #d4ffb0);
+}
+
+.edges-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+.edges-bar {
+  flex: 1;
+  height: 5px;
+}
+
+.edges-name,
+.edges-label {
+  min-width: 30px;
+}
+
+.edges-name {
+  text-align: left;
+}
+
+.edges-label {
+  text-align: right;
 }
 
 /* Your money, top right. It glows gold and swells while counting up. */
@@ -136,6 +165,10 @@
 .receipt td:last-child {
   padding-left: 28px;
   text-align: right;
+}
+
+.receipt-pending td {
+  opacity: 0.55;
 }
 
 .receipt-total td {

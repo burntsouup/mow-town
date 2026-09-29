@@ -173,11 +173,20 @@ trimming around the trunk, so canopies now fade while they're in the way. The tr
 cuts grass that still needs it, so waving it over neat stripes doesn't smudge them. The sound
 can only be judged in the playtest.
 
-### 3. Edges
+### 3. Edges ✅
 
-- [ ] A narrow strip along every border and obstacle counts as edges, with its own bar
-- [ ] At 98% the game still tidies up the middle, but leaves the edges for the trimmer
-- [ ] A "crisp edges" tip once the edges are done
+- [x] A narrow strip along every border and obstacle counts as edges, with its own bar
+- [x] At 98% the game still tidies up the middle, but leaves the edges for the trimmer
+- [x] A "crisp edges" tip once the edges are done
+
+**Findings:** counting every border as an edge made the edges 15% of the lawn, and the mower
+cuts nearly all of that anyway (it rolls right over the sidewalk, driveway and walkway), so
+the trimmer had nothing to do. Now the edges are only where you'd really trim: 25 cm along
+the fence and around the tree, flower bed, toys and mailbox post, about 4% of the front lawn
+(7 m²). They count as done at 97%. The "Job complete" card sat in the middle of the screen
+while you trimmed, so it now tucks away 6 s after the aerial view and pops back up when a tip
+comes in. Still open for the playtest: how much of the edges the mower leaves in real play (a
+bot pushing the real mower got wedged against the fence and the flower bed too often to say).
 
 ### 4. First upgrade
 

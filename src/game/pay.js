@@ -3,17 +3,19 @@
 /**
  * What a finished job pays: its price, plus tips for good work. Pure logic, no Babylon.
  *
- * @typedef {{ label: string, amount: number, tip?: 'stripes' }} PayLine One line on the
- *   receipt; tip says which tip it is (they show with a plus sign).
+ * @typedef {{ label: string, amount: number, tip?: 'stripes' | 'edges', pending?: boolean }}
+ *   PayLine One line on the receipt. tip says which tip it is (they show with a plus sign);
+ *   pending marks a tip you can still earn, which doesn't count toward the total yet.
  * @typedef {{ jobPay: Record<string, number>, stripesTip: number, tipFrom: number,
- *   tipFull: number }} PaySettings jobPay: dollars by job id. stripesTip: the most the
- *   neat-stripes tip can be. tipFrom/tipFull: the neatness (0..1) where the tip starts, and
- *   where it's the whole amount.
+ *   tipFull: number, edgesTip: number }} PaySettings jobPay: dollars by job id. stripesTip:
+ *   the most the neat-stripes tip can be. tipFrom/tipFull: the neatness (0..1) where the tip
+ *   starts, and where it's the whole amount. edgesTip: dollars for trimming the edges.
  */
 
 /**
  * @param {{ id: string, shortName?: string, title: string }} job
- * @param {{ neatness: number }} work neatness: 0..1, see lawn/neatness.js.
+ * @param {{ neatness: number, edgesDone: boolean }} work neatness: 0..1, see
+ *   lawn/neatness.js. edgesDone: the edges are trimmed (if not, that tip is still pending).
  * @param {PaySettings} settings
  * @returns {PayLine[]}
  */
@@ -27,12 +29,22 @@ export function jobReceipt(job, work, settings) {
       amount: tip,
       tip: 'stripes',
     },
+    {
+      label: 'Crisp edges',
+      amount: settings.edgesTip,
+      tip: 'edges',
+      ...(work.edgesDone ? {} : { pending: true }),
+    },
   ];
 }
 
-/** @param {PayLine[]} lines */
+/**
+ * What the receipt adds up to, leaving out tips still to be earned.
+ *
+ * @param {PayLine[]} lines
+ */
 export function receiptTotal(lines) {
-  return lines.reduce((sum, line) => sum + line.amount, 0);
+  return lines.reduce((sum, line) => sum + (line.pending ? 0 : line.amount), 0);
 }
 
 /**

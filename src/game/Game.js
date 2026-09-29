@@ -69,6 +69,9 @@ export class Game {
     this.moneyShown = 0; // what the HUD shows: counts up to `money` like a till
     /** @type {import('./pay.js').PayLine[] | null} What the current job paid, once done. */
     this.receipt = null;
+    this.neatness = 0; // how neat the stripes were when the current job was done (0..1)
+    this.edgesDone = false; // the current job's edges are trimmed
+    this.cardTime = 0; // seconds left to show the "Job complete" card
     this.time = 0;
     this.hud = new Hud(hudRoot, this.input);
     this.debugOverlay = new DebugOverlay(this.engine, this.scene, hudRoot);
@@ -132,6 +135,9 @@ export class Game {
       elapsed: job.elapsed,
       nextJob: this.jobs.upcoming,
       revealing: this.reveal.isActive,
+      showCard: this.reveal.isActive || this.cardTime > 0,
+      edges: Math.min(1, this.lawn.edgeProgress / config.job.edgesDoneAt),
+      edgesDone: this.edgesDone,
       money: this.moneyShown,
       moneyCounting: this.moneyShown !== this.money,
       receipt: this.receipt,
@@ -158,7 +164,7 @@ export class Game {
   }
 
   /**
-   * Progress, completion, the "show what's left" highlight, and mowing again.
+   * Progress, completion, the edges, the "show what's left" highlight, and mowing again.
    *
    * @param {number} dt
    */
@@ -168,13 +174,21 @@ export class Game {
     const working = this.grassCut > 0 || this.grassTrimmed > 0;
     const event = job.update(dt, this.lawn.progress, working);
     if (event === 'completed') {
-      const neatness = stripeNeatness(this.lawn.grid, config.money.neatnessPatch);
-      this.pay(jobReceipt(this.jobs.current, { neatness }, config.money));
-      this.lawn.finish(); // leftover tufts shrink away
+      this.neatness = stripeNeatness(this.lawn.grid, config.money.neatnessPatch);
+      this.pay();
+      this.lawn.finish(); // leftover tufts shrink away (but not along the edges)
       this.celebration.play(this.lawn.field.mesh);
       this.audio.playChime();
       this.reveal.start(); // and fly up to show off the stripes
     }
+    // Trimming the edges (before or after the lawn is done) earns a tip.
+    if (!this.edgesDone && this.lawn.edgeProgress >= config.job.edgesDoneAt) {
+      this.edgesDone = true;
+      this.lawn.finishEdges();
+      this.audio.playDing();
+      if (job.isComplete) this.pay();
+    }
+    if (!this.reveal.isActive) this.cardTime = Math.max(0, this.cardTime - dt);
 
     // Hold the key to make uncut grass glow, pulsing gently so it catches the eye.
     const held = this.input.isPointerLocked && this.input.isDown(config.job.highlightKey);
@@ -183,24 +197,35 @@ export class Game {
 
     if (!job.isComplete) return;
     if (this.input.wasPressed(config.job.nextKey)) {
-      if (this.jobs.next()) this.receipt = null;
+      if (this.jobs.next()) this.startJob();
     } else if (this.input.wasPressed(config.job.resetKey)) {
       if (this.jobs.allComplete) this.jobs.resetAll();
       else this.jobs.redoCurrent();
       this.lawn.reset(); // the grass grows back (and mowing it again pays again)
-      this.receipt = null;
+      this.startJob();
     }
   }
 
+  /** Forgets the last job's pay and edges, ready for the next one. */
+  startJob() {
+    this.receipt = null;
+    this.edgesDone = false;
+    this.cardTime = 0;
+  }
+
   /**
-   * Pays for a finished job: the money counts up on screen with a "ka-ching".
-   *
-   * @param {import('./pay.js').PayLine[]} receipt
+   * Pays what the finished job has earned so far (the receipt is written afresh, so a tip
+   * earned later just adds the difference). The money counts up with a "ka-ching", and the
+   * receipt pops up.
    */
-  pay(receipt) {
+  pay() {
+    const work = { neatness: this.neatness, edgesDone: this.edgesDone };
+    const receipt = jobReceipt(this.jobs.current, work, config.money);
+    const paidBefore = this.receipt ? receiptTotal(this.receipt) : 0;
     this.receipt = receipt;
-    this.money += receiptTotal(receipt);
+    this.money += receiptTotal(receipt) - paidBefore;
     this.audio.playCoins(0.6); // just after the chime
+    this.cardTime = config.job.cardTime;
   }
 
   /**
