@@ -64,7 +64,7 @@ npm run dev      # opens http://localhost:5173 with live reload
 src/
   main.js              Entry point: creates the Game
   config.js            Every tunable number lives here
-  game/                Game loop, keyboard/mouse input, jobs, tuning helpers
+  game/                Game loop, keyboard/mouse input, jobs and pay, tuning helpers
   environment/         The level: layout (FrontYard.js), lighting + sky, greybox kit
   player/              The player character (movement.js is the tested, pure part)
   camera/              Third-person camera and the aerial reveal (*Math.js: tested, pure)

@@ -239,3 +239,20 @@ case leaves a 3–5.5 minute band, so a tuning change that turns the lawn into a
 in CI. It turns on the spot and ignores obstacles, so treat it as a lower bound; real players
 take about 1.5× as long. **Revisit when:** more lawns arrive (give each its own band) or the
 turn model matters (the real mower swings around your hands, which costs more at row ends).
+
+## 23. Money: a price per job, plus a tip for neat stripes
+
+**Why:** Money is what v0.2's loop runs on, and the tip ties it to the fun part: neat rows.
+`stripeNeatness` (`lawn/neatness.js`) splits the lawn into 1.5 m patches and checks how
+parallel the mowing directions are in each, doubling the angles first so a row and the next
+one mowed the other way count as parallel. Patches instead of one score for the whole lawn,
+so rows that bend around a tree only cost a little, and an L-shaped lawn can be mowed in two
+directions. The tip is linear from a neatness of 0.6 (nothing) to 0.9 (all of it); see the
+v0.2 findings in the roadmap for what scores what. Speed isn't paid for: rushing fights neat
+stripes. The money counts up like a till (`countTowards`), with a synthesized "ka-ching".
+Redoing a lawn pays again, so you can always earn what you need. Nothing is saved yet:
+reloading the page starts over.
+**Revisit when:** real runs score low (cleanup passes at odd angles overwrite the directions
+underneath), or when saving is worth it (more upgrades, longer sessions).
+**Gotcha:** only the deck records a mowing direction. The auto-finish at 98% doesn't, so the
+leftover tufts don't count either way.

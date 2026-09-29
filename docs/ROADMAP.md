@@ -141,12 +141,18 @@ The loop: mow your front lawn and get paid (plus a tip for neat stripes), trim t
 mower can't reach (another tip), buy a wider deck, then push the mower next door and mow the
 neighbors' bigger lawn.
 
-### 1. Money
+### 1. Money ✅
 
-- [ ] Each job pays a set price; the money shows on screen and counts up when you're paid
-- [ ] A tip for neat stripes: how parallel your rows are, patch by patch (a row and the next
+- [x] Each job pays a set price; the money shows on screen and counts up when you're paid
+- [x] A tip for neat stripes: how parallel your rows are, patch by patch (a row and the next
       one mowed the other way count as parallel), so tidy rows pay in any direction
-- [ ] The "Job complete" card becomes a receipt; redoing a lawn (`R`) pays again
+- [x] The "Job complete" card becomes a receipt; redoing a lawn (`R`) pays again
+
+**Findings:** neatness scores (1.5 m patches): the tidy pacing bot gets 0.95–0.96 on the real
+front lawn (turns and obstacles included), rows wobbling ±20° still ~0.9, laps around the
+lawn ~0.8, and a random scribble ~0.35–0.45. So the tip starts at 0.6 and is whole at 0.9.
+The open question for the playtest: cleanup passes at odd angles overwrite the direction
+underneath, so a real, careful run may score lower than the bot.
 
 ### 2. String trimmer
 
