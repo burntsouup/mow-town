@@ -132,7 +132,7 @@ obstacles, so it's a best case; expect a real run to take roughly 1.5× longer.
 Money, a shop, upgrades, riding mowers, multiple lawns, a string trimmer, bagging clippings,
 regrowth, multiplayer.
 
-## v0.2 — "A little mowing business"
+## v0.2 — "A little mowing business" ✅ (released as 0.2.0)
 
 Goal: mow for money, spend it on a better mower, and take on a bigger yard. Earning,
 upgrading and then feeling the difference should be satisfying.
@@ -218,11 +218,11 @@ you can mow next door before it's your job (it just won't pay until it is). From
 driveway, their long grass reads as a solid carpet (the blades fade with distance), so it's
 visible but not obviously shaggy.
 
-### 6. Tuning + playtest
+### 6. Tuning + playtest ✅
 
 - [x] Prices and pay, pacing bands for each lawn and deck, findings recorded here
 - [x] Frame rate with two lawns on screen; cap the resolution on high-refresh screens
-- [ ] Playtest
+- [x] Playtest
 
 ### v0.2 pacing (simulated)
 
@@ -249,12 +249,12 @@ so a best case: expect a real run to take roughly 1.5× longer. Each lawn has it
 - Open for the playtest: how much of the edges the mower leaves, how neat a real run scores,
   whether aiming the trimmer feels precise, the trimmer's sound, and the walk next door.
 
-### v0.2 success checklist
+### v0.2 success checklist ✅ (confirmed in playtest)
 
-- [ ] Getting paid feels good, and the tip makes neat stripes worth the effort
-- [ ] Trimming is quick and satisfying, not a chore
-- [ ] The wider deck feels like a clear upgrade
-- [ ] The neighbors' yard feels like a step up, not a slog
+- [x] Getting paid feels good, and the tip makes neat stripes worth the effort
+- [x] Trimming is quick and satisfying, not a chore
+- [x] The wider deck feels like a clear upgrade
+- [x] The neighbors' yard feels like a step up, not a slog
 
 ## Deliberately not in v0.2
 
