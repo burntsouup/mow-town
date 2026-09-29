@@ -91,6 +91,25 @@ export const config = {
     deceleration: 40, // m/s²: how hard you brake when letting go of the keys
     turnSpeed: 14, // how quickly the body turns to face the direction of travel
   },
+  // Tuft, the character (see player/Tuft.js).
+  tuft: {
+    colors: {
+      furTop: '#ffd166',
+      furBottom: '#ff7b54',
+      limbs: '#ffb27d',
+      brows: '#b5532f',
+      mouth: '#5a2436',
+      shoes: '#4c6ef5',
+    },
+    // shells: layers of fur; length: meters from skin to tips; density: strands per meter;
+    // thickness: strand width at the root (0..1 of its spacing); trail: how far the tips
+    // lag behind per m/s of speed.
+    fur: { shells: 14, length: 0.07, density: 55, thickness: 0.55, trail: 0.006 },
+    // stride: meters each foot travels either side of its hip; lift: how high feet step;
+    // bob/squash: how much the body bounces and squishes per step; armSwing: arms vs feet;
+    // fullAt: the speed (m/s) that counts as a full walk.
+    walk: { stride: 0.25, lift: 0.09, bob: 0.05, squash: 0.06, armSwing: 0.9, fullAt: 1.2 },
+  },
   grass: {
     // The grass is drawn as a stack of see-through layers ("shells"); see
     // lawn/GrassMaterialPlugin.js. More shells = smoother blades, but slower to draw.

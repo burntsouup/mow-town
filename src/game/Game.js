@@ -148,6 +148,11 @@ export class Game {
     this.camera.mode = this.mower.isHeld ? 'mowing' : this.trimmer.isOut ? 'trimming' : 'walking';
     this.camera.update(dt); // follow the player to their new position
     this.updateTrimming(dt); // aims with the camera, so after it moves
+    // Tuft's hands go wherever the mower or trimmer handles ended up.
+    let hands = null;
+    if (this.mower.isHeld) hands = this.mower.gripPoints();
+    else if (this.trimmer.isOut) hands = this.trimmer.gripPoints();
+    this.player.animate(dt, hands, this.mower.isHeld ? 1 : 0);
     this.updateReveal(dt);
     this.updateJob(dt);
     // Finish off leftovers and send cut grass to the GPU.

@@ -6,7 +6,7 @@ import { groundAim, sweepTowards, withinReach } from './trimmerMath.js';
 import { createTrimmerModel, LINE_RADIUS } from './trimmerModel.js';
 
 /** Where your hands hold the trimmer, relative to your feet: right, up, forward (meters). */
-const HANDS = { right: 0.22, up: 0.95, forward: 0.22 };
+const HANDS = { right: 0.34, up: 0.82, forward: 0.34 };
 /** How high the head rides above the ground (meters). */
 const HEAD_HEIGHT = 0.02;
 /** Seconds the view takes to tip down toward the head when you take the trimmer out. */
@@ -52,6 +52,19 @@ export class StringTrimmer {
     if (!this.isOut) return null;
     const feet = this.player.position;
     return Math.atan2(this.head.x - feet.x, this.head.z - feet.z);
+  }
+
+  /**
+   * Where your hands hold it, in world space: the left on the loop handle, the right on the
+   * grip by the motor.
+   *
+   * @returns {Vector3[]}
+   */
+  gripPoints() {
+    const world = this.model.arm.computeWorldMatrix(true);
+    return [new Vector3(0, 0.06, 0.3), new Vector3(0, -0.02, -0.03)].map((p) =>
+      Vector3.TransformCoordinates(p, world),
+    );
   }
 
   /** Interaction hint for the HUD, or null. */

@@ -102,6 +102,16 @@ export class PushMower {
     return { x: this.collider.position.x, z: this.collider.position.z, yaw: this.yaw };
   }
 
+  /**
+   * Where your hands hold the handle (left, right), in world space.
+   *
+   * @returns {Vector3[]}
+   */
+  gripPoints() {
+    const world = this.model.root.computeWorldMatrix(true);
+    return [-0.2, 0.2].map((x) => Vector3.TransformCoordinates(new Vector3(x, 0.95, -0.95), world));
+  }
+
   /** Interaction hint for the HUD, or null. */
   get prompt() {
     if (this.state === 'parked' && this.isPlayerNear()) return 'Press E to grab the mower';
