@@ -1,10 +1,20 @@
-import { MeshBuilder } from '@babylonjs/core';
+import { Mesh } from '@babylonjs/core';
 import { buildFrontYard } from './FrontYard.js';
 import { DRIVEWAY, frontLawn, HOUSE, SIDEWALK } from './frontYardLayout.js';
 import { Greybox } from './greybox.js';
 import { buildNextDoor } from './NextDoor.js';
 import { NEXT_HOUSE, nextDoorLawn } from './nextDoorLayout.js';
+import { buildHouse, buildTree } from './props.js';
 import { COLORS, LAYER, SEAM_OVERLAP } from './style.js';
+import { createRandom } from '../math/noise.js';
+import { circle } from '../math/shapes.js';
+
+const STREET_WIDTH = 7;
+/** The sidewalk across the street (ours is SIDEWALK). */
+const FAR_SIDEWALK = {
+  front: SIDEWALK.front - STREET_WIDTH - (SIDEWALK.back - SIDEWALK.front),
+  back: SIDEWALK.front - STREET_WIDTH,
+};
 
 /**
  * Builds the greybox level: a stretch of street with our house and front lawn, and the
@@ -16,13 +26,17 @@ import { COLORS, LAYER, SEAM_OVERLAP } from './style.js';
 export function createLevel(scene, shadows) {
   const kit = new Greybox(scene, shadows);
 
-  const ground = MeshBuilder.CreateGround('ground', { width: 400, height: 400 }, scene);
-  ground.material = kit.material(COLORS.ground);
-  ground.receiveShadows = true;
+  const ground = kit.flat('ground', {
+    size: [400, 400],
+    at: [0, 0, 0],
+    surface: 'ground',
+    tile: 5,
+  });
 
   buildStreet(kit);
   buildFrontYard(kit);
   buildNextDoor(kit);
+  buildBackdrop(kit);
   buildBounds(kit);
 
   // Start at the street end of the driveway, facing the house (yaw 0 = toward +z).
@@ -69,24 +83,144 @@ export function createLevel(scene, shadows) {
 
 /** @param {Greybox} kit */
 function buildStreet(kit) {
-  const streetWidth = 7;
+  const streetWidth = STREET_WIDTH;
   const streetZ = SIDEWALK.front - streetWidth / 2;
   kit.flat('street', {
     size: [400, streetWidth + SEAM_OVERLAP],
     at: [0, LAYER.street, streetZ + SEAM_OVERLAP / 2],
-    color: COLORS.street,
+    surface: 'asphalt',
+    tile: 3,
   });
-  kit.flat('streetLine', {
-    size: [400, 0.12],
-    at: [0, LAYER.marking, streetZ],
-    color: COLORS.streetLine,
-  });
+  // A dashed center line, merged into one mesh.
+  const dashes = [];
+  for (let x = -120; x < 120; x += 4) {
+    dashes.push(
+      kit.flat('streetLine', {
+        size: [2.2, 0.14],
+        at: [x, LAYER.marking, streetZ],
+        color: COLORS.streetLine,
+      }),
+    );
+  }
+  Mesh.MergeMeshes(dashes, true, true);
+  // Sidewalks on both sides, each with a curb along the street.
   const sidewalkWidth = SIDEWALK.back - SIDEWALK.front;
-  kit.flat('sidewalk', {
-    size: [400, sidewalkWidth + SEAM_OVERLAP],
-    at: [0, LAYER.sidewalk, SIDEWALK.front + (sidewalkWidth + SEAM_OVERLAP) / 2],
-    color: COLORS.sidewalk,
-  });
+  for (const [front, curbZ] of [
+    [SIDEWALK.front, SIDEWALK.front - 0.08],
+    [FAR_SIDEWALK.front, FAR_SIDEWALK.back + 0.08],
+  ]) {
+    kit.flat('sidewalk', {
+      size: [400, sidewalkWidth + SEAM_OVERLAP],
+      at: [
+        0,
+        LAYER.sidewalk,
+        front + (sidewalkWidth + SEAM_OVERLAP) / 2 - (front === SIDEWALK.front ? 0 : SEAM_OVERLAP),
+      ],
+      surface: 'concrete',
+      tile: sidewalkWidth,
+    });
+    const curb = kit.rounded('curb', {
+      size: [400, 0.12, 0.22],
+      at: [0, 0, curbZ],
+      color: COLORS.curb,
+      radius: 0.04,
+      solid: false,
+      segments: 2,
+    });
+    kit.shadows.removeShadowCaster(curb);
+  }
+}
+
+/**
+ * The rest of the neighborhood, just for looks: houses across the street and further along
+ * ours, a few trees, and a line of trees on the horizon, so the world doesn't end at our
+ * fence. None of it casts shadows (the sun's shadow map would have to stretch to cover it,
+ * blurring the shadows up close), and you can't walk there (see buildBounds).
+ *
+ * @param {Greybox} kit
+ */
+function buildBackdrop(kit) {
+  const looks = [
+    { walls: '#f4d9c6', roof: '#7a5c52', shutters: '#8a4f45', door: '#c9553f' },
+    { walls: '#dfe8d2', roof: '#5f6f5a', shutters: '#55704d', door: '#f0c05a' },
+    { walls: '#f2ead8', roof: '#6b6f7a', shutters: '#3f5f8a', door: '#3f5f8a' },
+    { walls: '#e8d8ee', roof: '#6a5a72', shutters: '#7a5a8a', door: '#e07a9a' },
+    { walls: '#d9e6ef', roof: '#b9654b', shutters: '#b9654b', door: '#3f8f86' },
+  ];
+  const random = createRandom(29);
+  /** @type {import('@babylonjs/core').AbstractMesh[]} */
+  const scenery = [];
+  const house = { left: -7, right: 7, front: -5, back: 5, wallHeight: 3 };
+  /**
+   * @param {number} x The middle of the house.
+   * @param {number} frontZ Where its front wall is.
+   * @param {1 | -1} facing -1: facing -z (our side of the street); 1: facing +z (across).
+   * @param {number} index Which look.
+   */
+  const place = (x, frontZ, facing, index) => {
+    const look = looks[index % looks.length];
+    const garageX = 3.8;
+    const node = buildHouse(kit, house, {
+      walls: look.walls,
+      roof: look.roof,
+      shutters: look.shutters,
+      garageX,
+      door: { x: -1.2, color: look.door },
+      windows: [
+        [-4.4, 1.5],
+        [0.9, 1.1],
+      ],
+    });
+    node.rotation.y = facing === 1 ? Math.PI : 0;
+    // Turned around (facing +z), the house's front and its garage side swap over.
+    node.position.set(x, 0, frontZ + facing * house.front);
+    scenery.push(...node.getChildMeshes());
+    // A driveway out to the sidewalk, and a tree in the yard.
+    const sidewalkEdge = facing === -1 ? SIDEWALK.back : FAR_SIDEWALK.front;
+    const length = Math.abs(frontZ - sidewalkEdge);
+    const driveX = x - facing * garageX;
+    scenery.push(
+      kit.flat('backdropDriveway', {
+        size: [4.4, length],
+        at: [driveX, LAYER.paving, (frontZ + sidewalkEdge) / 2],
+        surface: 'concrete',
+        tile: 2.5,
+      }),
+    );
+    const treeX = x + facing * (4 + random() * 2.5); // on the other side from the garage
+    const treeZ = (frontZ + sidewalkEdge) / 2 + (random() - 0.5) * 3;
+    scenery.push(...buildTree(kit, circle(treeX, treeZ, 0.6), 0.8 + random() * 0.35, index + 9));
+  };
+  for (let i = 0; i < 7; i++) place(-54 + i * 18, FAR_SIDEWALK.front - 9.5, 1, i);
+  place(-32, HOUSE.front, -1, 2);
+  place(NEXT_HOUSE.right + 14, HOUSE.front, -1, 4);
+
+  // A line of trees along the horizon, both ways, fading into the haze.
+  const puffs = [];
+  for (const [z, count] of [
+    [-62, 26],
+    [48, 26],
+  ]) {
+    for (let i = 0; i < count; i++) {
+      const radius = 4 + random() * 3;
+      puffs.push(
+        kit.puff('treeline', {
+          radius,
+          at: [-130 + (i / (count - 1)) * 260 + (random() - 0.5) * 6, 0, z + (random() - 0.5) * 8],
+          color: '#4f7f3a',
+          squash: 0.8 + random() * 0.3,
+          solid: false,
+        }),
+      );
+    }
+  }
+  scenery.push(kit.merge('treeline', puffs));
+
+  for (const mesh of scenery) {
+    kit.shadows.removeShadowCaster(mesh);
+    mesh.checkCollisions = false;
+    mesh.metadata = null; // no fading trees out here: the camera never gets close
+  }
 }
 
 /**
