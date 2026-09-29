@@ -295,12 +295,22 @@ the backdrop, which casts no shadows so the sun's shadow map doesn't stretch). I
 embedded browser's timing test, frames cost the same as v0.2 (within noise); the real check
 is the FPS readout on a 120 Hz screen in the playtest.
 
-### 2. Tuft
+### 2. Tuft ✅
 
-- [ ] A round, furry body, a face (eyes that glance around and blink, eyebrow tufts) and
+- [x] A round, furry body, a face (eyes that glance around and blink, eyebrow tufts) and
       noodle arms and legs with mitts and sneakers
-- [ ] Walking, pushing and trimming, animated in code; replaces the orange capsule
-- [ ] A checkpoint to look at Tuft before building on it
+- [x] Walking, pushing and trimming, animated in code; replaces the orange capsule
+- [x] A checkpoint to look at Tuft before building on it
+
+**Findings:** fine, dense fur (90 strands per meter, 4.5 cm long) read as a fuzzy texture,
+like a kiwi fruit; longer, sparser strands (55 per meter, 7 cm) with brighter roots read as
+soft fur. The first pupils sat just inside the eye whites, so the eyes looked blank; and
+eyebrows tilted inward read as cross, so they tilt the other way now. A walk that looks
+planted needs the feet to slide back in a straight line while down (not on a curve), then
+swing forward in an arc. From the mowing camera (behind and above), Tuft still hides the
+mower, so Tuft goes see-through there as the capsule did, but by dithering (the fur's
+layers would sort badly as transparent), and the face fades first so no eyes show through
+the back of its head. Glancing around and celebrating come in milestone 5.
 
 ### 3. Wardrobe and saving
 

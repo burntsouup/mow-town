@@ -365,3 +365,24 @@ icospheres get expensive fast (a subdivision-3 puff is 642 vertices), so small p
 fewer subdivisions.
 **Revisit when:** code-built art hits its ceiling somewhere it matters (then consider CC0
 model packs for props, matched to this palette).
+
+## 30. Tuft: an original fuzzy critter, animated in code
+
+**Why:** A character you can grow attached to (and later dress up) does more for the look
+than anything else on screen, and a round, furry body suits this game: fur is the grass's
+shell trick again (`furShells`, `FurMaterialPlugin`), and a body with no joints can be
+animated in code with no skeleton or rig. Tuft is our own design, inspired by the friendly
+monsters in Microsoft Reflect but not copied from them (an egg-shaped two-tone body, googly
+eyes, eyebrow tufts, a small smile, noodle limbs, mitts and sneakers; no giant mouth or
+medallion).
+**How:** strands sit on a 3D grid over the skin (no texture seams), taper, vary in length,
+get darker at the roots, and trail a little behind as you move (a vertex offset that grows
+toward the tips). Limbs are tubes reshaped every frame along a curve (`limbCurve`); feet slide
+back in a straight line while planted (so they stay put on the ground) and swing forward in
+an arc (`footOffset`); the body bobs once per step, squashes, breathes when still and leans
+in to push. Hands hold the mower's and trimmer's handles (`gripPoints`) while you use them.
+**See-through:** the fur fades by dithering (skipping a scattered share of pixels) rather
+than blending, because its layers would sort badly as ordinary transparency, and the face
+fades first.
+**Revisit when:** the walk needs to react to slopes or stairs (plant feet by raycasting), or
+Tuft needs more expressions (a mouth that opens).
