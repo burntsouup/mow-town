@@ -38,6 +38,7 @@ export const config = {
     minHeight: 0.3, // never go lower than this above the ground
     nearClip: 0.05, // closest distance the camera can draw; small so walls don't clip
     // When pushed in close, fade the player out so they don't fill the screen (meters).
+    seeThroughOpacity: 0.25, // how faint a tree's leaves get when they're in the way
     playerHiddenBelow: 0.7,
     playerSolidAbove: 1.4,
     // While pushing the mower: further back and higher, so you can see the mower ahead, with

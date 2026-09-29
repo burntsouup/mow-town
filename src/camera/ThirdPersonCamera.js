@@ -5,6 +5,7 @@ import {
   approachDistance,
   cameraOffset,
   playerOpacityForDistance,
+  segmentHitsSphere,
 } from './cameraMath.js';
 
 const MIN_DISTANCE = 0.1;
@@ -47,6 +48,9 @@ export class ThirdPersonCamera {
     this.ray = new Ray(new Vector3(), new Vector3(0, 0, 1), 1);
     /** @param {import('@babylonjs/core').AbstractMesh} mesh */
     this.blocksView = (mesh) => mesh.checkCollisions && mesh.isEnabled() && mesh.isVisible;
+    // Things the camera can pass through (like tree canopies), which fade out while they're
+    // between it and the player. Marked by the level with metadata.seeThrough.
+    this.seeThrough = scene.meshes.filter((mesh) => mesh.metadata?.seeThrough);
 
     this.update(0);
   }
@@ -107,11 +111,34 @@ export class ThirdPersonCamera {
 
     // Fade the player out when the camera is squeezed in close, and partly while mowing so
     // you can see the mower through them.
+    this.fadeSeeThrough(dt);
+
     const closeOpacity = playerOpacityForDistance(
       this.currentDistance,
       settings.playerHiddenBelow,
       settings.playerSolidAbove,
     );
     this.target.setOpacity(Math.min(closeOpacity, mix(1, mowing.playerOpacity)));
+  }
+
+  /**
+   * Fades see-through things (like a tree's canopy) while they're between the camera and
+   * the player, so trimming under a tree doesn't mean staring at leaves.
+   *
+   * @param {number} dt
+   */
+  fadeSeeThrough(dt) {
+    const camera = this.babylonCamera.position;
+    for (const mesh of this.seeThrough) {
+      const sphere = mesh.getBoundingInfo().boundingSphere;
+      const blocking = segmentHitsSphere(
+        camera,
+        this.pivot,
+        sphere.centerWorld,
+        sphere.radiusWorld,
+      );
+      const target = blocking ? config.camera.seeThroughOpacity : 1;
+      mesh.visibility += (target - mesh.visibility) * (1 - Math.exp(-8 * dt));
+    }
   }
 }
