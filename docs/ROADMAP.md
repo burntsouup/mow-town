@@ -276,11 +276,24 @@ big googly eyes, eyebrow tufts, noodle limbs with mitts and sneakers, all animat
 Budget: 120 fps at the 1.5× render on an M3 MacBook, 60 fps everywhere else. Anything too
 expensive gets cut or faked.
 
-### 1. Style test
+### 1. Style test ✅
 
-- [ ] New lighting, color grading, sky and palette
-- [ ] A rounded-shape kit and painted surfaces (concrete, asphalt, mulch, shingles)
-- [ ] Our front yard restyled with them; frame cost measured; screenshots for a checkpoint
+- [x] New lighting, color grading, sky and palette
+- [x] A rounded-shape kit and painted surfaces (concrete, asphalt, mulch, shingles)
+- [x] Our front yard restyled with them; frame cost measured; screenshots for a checkpoint
+
+**Findings:** lighting and color alone didn't fix "basic": the shapes did. Framed windows
+with shutters, a panelled garage door, shingles, a picket fence, puffy bushes and textured
+paths changed the look far more than the grade. So did filling the world in: an empty green
+plane to the horizon read as a test level, and a row of houses across the street plus a
+treeline made it a neighborhood. Because the house, tree, flower bed and mailbox are shared
+pieces, next door and the backdrop got the new look for free. Color grading runs inside the
+materials (no extra full-screen pass); the sky skips it so its colors come out as picked.
+The first pass had 243k vertices, mostly tiny flowers (smooth puffs are expensive), so small
+puffs now use fewer triangles and flowers cast no shadows (141k in the playable area, plus
+the backdrop, which casts no shadows so the sun's shadow map doesn't stretch). In the
+embedded browser's timing test, frames cost the same as v0.2 (within noise); the real check
+is the FPS readout on a 120 Hz screen in the playtest.
 
 ### 2. Tuft
 

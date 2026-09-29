@@ -340,3 +340,28 @@ tabs are slowed on purpose), and above 75 Hz it caps the resolution at 1.5×. Th
 shows the ratio; the tuning panel can change both caps.
 **Revisit when:** a slower computer can't hold 60 fps (lower the cap there too, or adapt it
 while playing), or the grass gets cheaper.
+
+## 29. Soft toy suburbia, built in code
+
+**Why:** v0.2 played well but looked like a test level. Before adding machines and lawns,
+we settled the art style, so everything after is built once, in the final look. The
+direction: chunky, rounded shapes, a warm late-afternoon sun, soft shadows, and a rich but
+harmonious palette, with only two fuzzy things (the grass and the character). It's all made
+in code, like before: `roundedBox` (pure, tested) for soft-edged shapes, smooth "puffs"
+shaded darker underneath with vertex colors, contact shadows under things on paths, and
+tileable surfaces painted with the canvas API (`surfaceTextures.js`, seeded so they're the
+same every load). Shared pieces in `props.js` (houses, trees, flower beds, mailboxes) mean
+every yard picks up the look.
+**Color:** Babylon's image processing (ACES tone mapping, exposure, contrast, a warm/cool
+color grade, a vignette) runs inside each material's shader, so it costs no extra
+full-screen pass. The sky and clouds opt out, so their colors are exactly as picked.
+**The backdrop:** houses across the street and a treeline make it a neighborhood, not a
+lawn on a plane. They cast no shadows: the sun's shadow map fits every shadow caster, so far
+casters would stretch it and blur the shadows up close.
+**Gotchas:** meshes can only be merged if they have the same vertex attributes, so
+`roundedBox` provides UVs even where nothing uses them. A cloned `DynamicTexture` comes out
+blank (#15), so every roof shares one shingle texture, scaled through its UVs. Smooth
+icospheres get expensive fast (a subdivision-3 puff is 642 vertices), so small puffs use
+fewer subdivisions.
+**Revisit when:** code-built art hits its ceiling somewhere it matters (then consider CC0
+model packs for props, matched to this palette).
