@@ -183,7 +183,7 @@ export const config = {
   },
   money: {
     // What each job pays when it's done, in dollars, by job id (see the level's jobs).
-    jobPay: { frontLawn: 40 },
+    jobPay: { frontLawn: 40, nextDoor: 65 },
     stripesTip: 10, // dollars, at most, for neat stripes
     edgesTip: 10, // dollars for trimming the edges
     // How neat the stripes are (0..1, see lawn/neatness.js): the tip starts above tipFrom

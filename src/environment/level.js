@@ -2,11 +2,13 @@ import { MeshBuilder } from '@babylonjs/core';
 import { buildFrontYard } from './FrontYard.js';
 import { DRIVEWAY, frontLawn, HOUSE, SIDEWALK } from './frontYardLayout.js';
 import { Greybox } from './greybox.js';
+import { buildNextDoor } from './NextDoor.js';
+import { NEXT_HOUSE, nextDoorLawn } from './nextDoorLayout.js';
 import { COLORS, LAYER, SEAM_OVERLAP } from './style.js';
 
 /**
- * Builds the greybox level: a stretch of street with our house and front lawn. Returns where
- * things start, the jobs, and the lawns.
+ * Builds the greybox level: a stretch of street with our house and front lawn, and the
+ * Parkers' bigger lawn next door. Returns where things start, the jobs, and the lawns.
  *
  * @param {import('@babylonjs/core').Scene} scene
  * @param {import('@babylonjs/core').ShadowGenerator} shadows
@@ -20,6 +22,7 @@ export function createLevel(scene, shadows) {
 
   buildStreet(kit);
   buildFrontYard(kit);
+  buildNextDoor(kit);
   buildBounds(kit);
 
   // Start at the street end of the driveway, facing the house (yaw 0 = toward +z).
@@ -42,6 +45,16 @@ export function createLevel(scene, shadows) {
       doneTitle: 'Lawn mowed!',
       summary: 'Front lawn mowed in',
     },
+    {
+      id: 'nextDoor',
+      lawn: 'nextDoor',
+      name: "the Parkers' lawn next door",
+      shortName: "Parkers' lawn",
+      title: "Mow the Parkers' lawn",
+      hint: 'Next door: along the sidewalk, past the hedge',
+      doneTitle: 'Lawn mowed!',
+      summary: "The Parkers' lawn mowed in",
+    },
   ];
 
   return {
@@ -50,7 +63,7 @@ export function createLevel(scene, shadows) {
     mowerSpot,
     standSpot,
     jobs,
-    lawns: { frontLawn: frontLawn() },
+    lawns: { frontLawn: frontLawn(), nextDoor: nextDoorLawn() },
   };
 }
 
@@ -85,7 +98,7 @@ function buildStreet(kit) {
 function buildBounds(kit) {
   const bounds = {
     left: -16,
-    right: 16,
+    right: NEXT_HOUSE.right + 3,
     front: SIDEWALK.front - 6.5,
     back: HOUSE.back + 2,
   };
