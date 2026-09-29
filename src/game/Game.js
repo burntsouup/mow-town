@@ -88,6 +88,7 @@ export class Game {
     this.cardTime = 0; // seconds left to show the "Job complete" card
     this.toastText = ''; // a short message, like "deck fitted"
     this.toastTime = 0; // ...and how many seconds it has left
+    this.toldAboutDeck = false; // we've pointed out the sale stand
     this.time = 0;
     this.refreshRate = 0; // the screen's, in Hz, measured when the game starts
     this.pixelRatio = window.devicePixelRatio || 1; // pixels rendered per CSS pixel
@@ -298,6 +299,12 @@ export class Game {
    */
   updateShop() {
     const { input, stand } = this;
+    // The first time you can afford it (once the aerial view is over), point it out.
+    const canAfford = !stand.owned && this.money >= stand.item.price;
+    if (canAfford && !this.toldAboutDeck && !this.reveal.isActive) {
+      this.toldAboutDeck = true;
+      this.toast('You can afford the 30-inch deck: it’s on the table by the garage', 5);
+    }
     const pressed = input.isPointerLocked && input.wasPressed(config.mower.grabKey);
     const mowerBusy = this.mower.isHeld || this.mower.isPlayerNear();
     if (!pressed || mowerBusy || !stand.isPlayerNear(this.player.position)) return;
@@ -313,10 +320,13 @@ export class Game {
     this.toast('30-inch deck fitted to your mower!');
   }
 
-  /** @param {string} text Shown briefly under the objective. */
-  toast(text) {
+  /**
+   * @param {string} text Shown briefly under the objective.
+   * @param {number} [seconds]
+   */
+  toast(text, seconds = config.shop.toastTime) {
     this.toastText = text;
-    this.toastTime = config.shop.toastTime;
+    this.toastTime = seconds;
   }
 
   /**
