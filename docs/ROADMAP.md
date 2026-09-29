@@ -201,12 +201,22 @@ costs $50: the front lawn's price plus one tip, so a tidy first job pays for it.
 to your mower wherever the mower is, so there's no fetching it first. The stand shares `E`
 with the mower; if you're holding the mower or standing by it, `E` is for the mower.
 
-### 5. Next door
+### 5. Next door ✅
 
-- [ ] A second house with a bigger L-shaped lawn (~1.5× the front lawn) and more to mow
+- [x] A second house with a bigger L-shaped lawn (~1.5× the front lawn) and more to mow
       around; its long grass is visible from the start
-- [ ] The second job: push the mower over along the sidewalk
-- [ ] Sized so it takes about as long with the new deck as the front lawn did with the old
+- [x] The second job: push the mower over along the sidewalk
+- [x] Sized so it takes about as long with the new deck as the front lawn did with the old
+
+**Findings:** the Parkers' lawn is 192 m² (1.35× the front lawn by area, 1.44× by the grass
+to cut, since it's a little shaggier), behind a low hedge to the right of our driveway: a
+wide front yard with a tree, an island flower bed, a birdbath and a garden gnome, and a side
+yard running back between the houses to a shed. A tidy run takes 4.2–4.3 minutes with the
+30-inch deck, the same as the front lawn with the 22-inch one, and 5.9 minutes without the
+upgrade. The pacing bot had to learn rows that stop short for the L. Every lawn stays live:
+you can mow next door before it's your job (it just won't pay until it is). From our
+driveway, their long grass reads as a solid carpet (the blades fade with distance), so it's
+visible but not obviously shaggy.
 
 ### 6. Tuning + playtest
 
