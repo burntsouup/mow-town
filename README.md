@@ -6,11 +6,11 @@ A small, satisfying 3D lawn-mowing game. Grab the mower, push it across a shaggy
 watch the stripes appear. Built with [Babylon.js](https://www.babylonjs.com/) and plain
 JavaScript.
 
-**Status:** v0.1, "Mowing feels satisfying": grab the push mower on the driveway, mow the
-fenced front lawn around a tree, a flower bed and some toys, and finish with an aerial view
-of your stripes. In progress (v0.2, "A little mowing business"): money, a string trimmer, a
-first upgrade and a bigger lawn next door. See [docs/ROADMAP.md](docs/ROADMAP.md)
-for what's done and next.
+**Status:** v0.2, "A little mowing business" (ready for a playtest): mow our front lawn for
+money, with tips for neat stripes and for trimming the edges with a string trimmer; buy a
+30-inch deck at the sale table by the garage; then push the mower next door and mow the
+Parkers' bigger, L-shaped lawn. See [docs/ROADMAP.md](docs/ROADMAP.md) for what's done and
+next.
 
 mow-town started as a copy of [p-washer](https://github.com/burntsouup/p-washer) v0.2.0 (a
 pressure-washing game), stripped down to its base systems: the game loop, input, camera,

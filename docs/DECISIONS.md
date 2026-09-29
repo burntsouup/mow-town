@@ -327,3 +327,16 @@ be offered rather than played in order.
 **Gotcha:** a lawn's grass grid covers its bounding box, so an L-shaped lawn's grid (and its
 shells) also covers the house beside it. The mask keeps grass out of it, and the house hides
 the shells, but the empty part still costs a little memory and drawing.
+
+## 28. A softer render on fast screens
+
+**Why:** Filling the screen with shell-textured grass is the most expensive thing we draw.
+At full Retina size (2880 × 1800 on an M3 MacBook) a view full of lawn takes ~10 ms, fine for
+60 Hz (16.7 ms) but over budget for 120 Hz (8.3 ms). Rendering at 1.5 pixels per CSS pixel
+instead of 2 roughly halves the pixels (~6.6 ms) and is hard to tell apart in motion. Before
+the game loop starts, `Game.start` times a few idle frames to find the refresh rate
+(`display.js`: the median frame time, and only while the tab is visible, since background
+tabs are slowed on purpose), and above 75 Hz it caps the resolution at 1.5×. The FPS readout
+shows the ratio; the tuning panel can change both caps.
+**Revisit when:** a slower computer can't hold 60 fps (lower the cap there too, or adapt it
+while playing), or the grass gets cheaper.

@@ -115,6 +115,10 @@ export class Hud {
       this.completeCard,
       this.playPrompt,
     );
+    // Hidden until the first update says otherwise (the game waits a moment before starting).
+    for (const panel of [this.objective, this.wallet, this.toast, this.prompt, this.completeCard]) {
+      panel.hidden = true;
+    }
     /** What's currently on screen, so we only touch the page when something changes. */
     this.shown = /** @type {Record<string, unknown>} */ ({});
   }
@@ -159,7 +163,7 @@ export class Hud {
     });
     let hint = job.hint ?? '';
     if (complete && !state.edgesDone) hint = 'Trim the edges with Q for a tip';
-    else if (complete) hint = state.nextJob ? 'Press N for the next job' : 'Press R to mow again';
+    else if (complete) hint = state.nextJob ? 'Press N for the next job' : 'Press R to start over';
     else if (!state.hasMower) hint = "It's parked on the driveway";
     this.set('hint', hint, () => {
       this.objectiveHint.textContent = hint;
@@ -198,7 +202,7 @@ export class Hud {
       this.jobTime.textContent = formatDuration(state.elapsed);
       this.completeHint.textContent = next
         ? `Press N for the next job: ${next.name ?? next.title}. R to redo this one.`
-        : 'Press R to mow it again.';
+        : 'Press R to start over: the grass grows back.';
     });
 
     this.set('receipt', state.receipt, () => this.showReceipt(state.receipt));

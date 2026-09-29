@@ -51,6 +51,7 @@ export class DebugOverlay {
     this.secondsSinceRefresh += dt;
     if (this.secondsSinceRefresh < FPS_REFRESH_SECONDS) return;
     this.secondsSinceRefresh = 0;
-    this.fpsLabel.textContent = `${Math.round(this.engine.getFps())} fps`;
+    const pixelRatio = 1 / this.engine.getHardwareScalingLevel();
+    this.fpsLabel.textContent = `${Math.round(this.engine.getFps())} fps · ${+pixelRatio.toFixed(2)}×`;
   }
 }
