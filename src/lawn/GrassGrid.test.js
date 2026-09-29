@@ -260,6 +260,47 @@ describe('GrassGrid.shrinkRemaining and reset', () => {
   });
 });
 
+describe('GrassGrid.cutCircle (string trimmer)', () => {
+  it('cuts long grass inside the circle only', () => {
+    const grid = lawn();
+    const cut = grid.cutCircle(1, 1, 0.3, CUT);
+    expect(heightAt(grid, 1, 1)).toBeCloseTo(CUT);
+    expect(heightAt(grid, 1.25, 1)).toBeCloseTo(CUT); // inside, near the rim
+    expect(heightAt(grid, 1.25, 1.25)).toBe(1); // a corner of the box, outside the circle
+    expect(heightAt(grid, 1.4, 1)).toBe(1);
+    // About π × 0.3² m² of full grass, cut from 1 down to 0.3.
+    expect(cut).toBeCloseTo(Math.PI * 0.09 * 0.7, 1);
+    expect(grid.progress).toBeGreaterThan(0);
+  });
+
+  it('leaves mowed stripes alone, and gives trimmed grass no mowing direction', () => {
+    const grid = lawn();
+    grid.cutDeck({ x: 0.5, z: 1, yaw: Math.PI / 2 }, { width: 0.4, length: 0.4 }, CUT);
+    const striped = Math.floor(10) * grid.columns + 5; // (0.5, 1)
+    expect(grid.cutCircle(0.5, 1, 0.1, CUT)).toBe(0);
+    expect(grid.mowX[striped]).toBeCloseTo(1);
+    grid.cutCircle(1.5, 1, 0.2, CUT);
+    const trimmed = Math.floor(10) * grid.columns + 15; // (1.5, 1)
+    expect(heightAt(grid, 1.5, 1)).toBeCloseTo(CUT);
+    expect([grid.mowX[trimmed], grid.mowZ[trimmed]]).toEqual([0, 0]);
+  });
+
+  it('only counts lawn, and marks the area it checked as changed', () => {
+    const grid = lawn({ heightAt: (x) => (x < 1 ? 1 : 0) });
+    grid.cutCircle(1, 1, 0.3, CUT);
+    expect(heightAt(grid, 1.1, 1)).toBe(0); // no lawn there, so nothing to cut
+    expect(grid.takeChangedRect()).toEqual({ minX: 7, minY: 7, maxX: 12, maxY: 12 });
+    expect(grid.cutCircle(-5, -5, 0.3, CUT)).toBe(0);
+    expect(grid.takeChangedRect()).toBeNull();
+  });
+
+  it('leaves no gaps along a fast sweep', () => {
+    const grid = lawn();
+    grid.cutCircleStroke({ x: 0.2, z: 1 }, { x: 1.8, z: 1 }, 0.15, CUT);
+    for (let x = 0.25; x <= 1.75; x += 0.1) expect(heightAt(grid, x, 1)).toBeCloseTo(CUT);
+  });
+});
+
 describe('GrassGrid.writeTexels', () => {
   it('packs height, mowing direction and lawn mask into RGBA bytes', () => {
     const grid = new GrassGrid({ width: 0.2, depth: 0.1, texelsPerMeter: 10, targetHeight: CUT });
