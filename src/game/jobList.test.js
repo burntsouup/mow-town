@@ -60,6 +60,19 @@ describe('JobList', () => {
     expect(list.jobs.every((job) => job.status === 'waiting')).toBe(true);
   });
 
+  it('resumes on a saved job, starting it fresh', () => {
+    const list = new JobList(definitions, 0.98);
+    finish(list);
+    list.resume(1);
+    expect(list.current.id).toBe('backyard');
+    expect(list.currentJob.isComplete).toBe(false);
+    list.resume(9);
+    expect(list.current.id).toBe('backyard');
+    list.resume(-1);
+    expect(list.current.id).toBe('front');
+    expect(list.currentJob.isComplete).toBe(false);
+  });
+
   it('applies a new completion threshold to every job', () => {
     const list = new JobList(definitions, 0.98);
     list.completeAt = 0.9;

@@ -12,6 +12,7 @@ import { stripeNeatness } from '../lawn/neatness.js';
 import { grassSpeedFactor } from '../mower/mowerMath.js';
 import { PushMower } from '../mower/PushMower.js';
 import { Player } from '../player/Player.js';
+import { DEFAULT_OUTFIT } from '../player/wardrobe.js';
 import { SaleStand } from '../shop/SaleStand.js';
 import { buy } from '../shop/shop.js';
 import { StringTrimmer } from '../trimmer/StringTrimmer.js';
@@ -23,6 +24,7 @@ import { pixelRatioFor, refreshRateFrom } from './display.js';
 import { Input } from './Input.js';
 import { JobList } from './jobList.js';
 import { countTowards, jobReceipt, receiptTotal } from './pay.js';
+import { readSave, writeSave } from './save.js';
 import { toDeltaSeconds } from './time.js';
 
 /**
@@ -80,7 +82,7 @@ export class Game {
     this.reveal.frame(this.lawn); // the first job's lawn
     this.celebration = new Celebration(this.scene);
     this.highlight = 0; // 0..1, eases in and out while the highlight key is held
-    this.money = 0; // dollars earned (not saved yet: reloading starts over)
+    this.money = 0; // dollars earned
     this.moneyShown = 0; // what the HUD shows: counts up to `money` like a till
     /** @type {import('./pay.js').PayLine[] | null} What the current job paid, once done. */
     this.receipt = null;
@@ -96,8 +98,46 @@ export class Game {
     this.hud = new Hud(hudRoot, this.input);
     this.debugOverlay = new DebugOverlay(this.engine, this.scene, hudRoot);
     this.tuning = new TuningPanel(this);
+    /** What you're wearing (see player/wardrobe.js). */
+    this.outfit = DEFAULT_OUTFIT;
+    this.storage = browserStorage();
+    this.load();
 
     window.addEventListener('resize', () => this.engine.resize());
+  }
+
+  /** Picks up where you left off last visit (see save.js), if you've been here before. */
+  load() {
+    const progress = readSave(this.storage, {
+      jobs: this.level.jobs.length,
+      items: [this.stand.item.id],
+    });
+    if (!progress) return;
+    this.outfit = progress.outfit;
+    this.player.wear(this.outfit);
+    this.money = progress.money;
+    this.moneyShown = progress.money;
+    if (progress.owned.includes(this.stand.item.id)) {
+      this.stand.markSold();
+      this.fitWideDeck();
+      this.toldAboutDeck = true;
+    }
+    this.jobs.resume(progress.job);
+    // Lawns from jobs you'd already done are still mowed.
+    for (const job of this.level.jobs.slice(0, this.jobs.index)) {
+      if (job.lawn && job.lawn !== this.jobs.current.lawn) this.lawns[job.lawn]?.mowAll();
+    }
+    this.reveal.frame(this.lawn);
+  }
+
+  /** Saves your progress (see save.js): after you're paid, buy something, or dress up. */
+  save() {
+    writeSave(this.storage, {
+      money: this.money,
+      owned: this.stand.owned ? [this.stand.item.id] : [],
+      job: this.jobs.index,
+      outfit: this.outfit,
+    });
   }
 
   /**
@@ -262,13 +302,17 @@ export class Game {
 
     if (!job.isComplete) return;
     if (this.input.wasPressed(config.job.nextKey)) {
-      if (this.jobs.next()) this.startJob();
+      if (this.jobs.next()) {
+        this.startJob();
+        this.save();
+      }
     } else if (this.input.wasPressed(config.job.resetKey)) {
       // The grass grows back (and mowing it again pays again). After the last job, every
       // lawn does, and it all starts over (your money and upgrades stay yours).
       if (this.jobs.allComplete) {
         this.jobs.resetAll();
         for (const lawn of Object.values(this.lawns)) lawn.reset();
+        this.save();
       } else {
         this.jobs.redoCurrent();
         this.lawn.reset();
@@ -297,6 +341,7 @@ export class Game {
     this.money += receiptTotal(receipt) - paidBefore;
     this.audio.playCoins(0.6); // just after the chime
     this.cardTime = config.job.cardTime;
+    this.save();
   }
 
   /**
@@ -318,12 +363,17 @@ export class Game {
     if (!bought) return;
     this.money = bought.money;
     stand.markSold();
-    const { wideDeck } = config.shop;
-    this.mower.fitDeck({ width: wideDeck.width, length: wideDeck.length }, wideDeck.colliderRadius);
+    this.fitWideDeck();
     this.celebration.play(this.mower.model.deck);
     this.audio.playCoins();
     this.audio.playClunk();
     this.toast('30-inch deck fitted to your mower!');
+    this.save();
+  }
+
+  fitWideDeck() {
+    const { wideDeck } = config.shop;
+    this.mower.fitDeck({ width: wideDeck.width, length: wideDeck.length }, wideDeck.colliderRadius);
   }
 
   /**
@@ -375,5 +425,17 @@ export class Game {
     }
     if (dt > 0) this.trimRate = smoothTowards(this.trimRate, this.grassTrimmed / dt, dt, 10);
     this.trimmer.updateSpray(this.trimRate);
+  }
+}
+
+/**
+ * The browser's localStorage, or null if it isn't allowed (some private windows throw just
+ * for looking at it).
+ */
+function browserStorage() {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
   }
 }

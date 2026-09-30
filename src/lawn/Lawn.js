@@ -56,6 +56,11 @@ export class Lawn {
     this.finishing.edges = true;
   }
 
+  /** Mows the whole lawn at once (a job you'd already finished, on a later visit). */
+  mowAll() {
+    this.grid.shrinkRemaining(Infinity);
+  }
+
   /** Grows all the grass back, ready to mow again. */
   reset() {
     this.grid.reset();
