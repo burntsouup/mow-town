@@ -26,6 +26,7 @@ export class Lawn {
       depth: area.depth,
       texelsPerMeter: config.grass.texelsPerMeter,
       targetHeight: config.grass.cutHeight,
+      crossLean: config.grass.crossLean,
     });
     this.grid.fill(area.heightAt, area.densityAt);
     this.grid.markEdges(config.job.edgeWidth, area.edgeAt);

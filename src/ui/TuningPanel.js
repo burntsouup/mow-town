@@ -89,6 +89,15 @@ export class TuningPanel {
     grass.add(config.grass, 'bladeThickness', 0.1, 1.5, 0.05).name('Blade thickness');
     grass.add(config.grass, 'stripes', 0, 0.6, 0.01).name('Stripe strength');
     grass.add(config.grass, 'mowLean', 0, 1, 0.05).name('Mowed blade lean');
+    grass
+      .add(config.grass, 'crossLean', 0, 1, 0.05)
+      .name('Checkerboard: first pass shows')
+      .onChange((/** @type {number} */ value) => {
+        for (const lawn of Object.values(game.lawns)) {
+          lawn.grid.crossLean = value;
+          lawn.grid.markChanged(lawn.grid.fullRect()); // redraw the whole lawn
+        }
+      });
     grass.addColor(config.grass.colors, 'root').name('Root color');
     grass.addColor(config.grass.colors, 'tip').name('Tip color (cut)');
     grass.addColor(config.grass.colors, 'longTip').name('Tip color (long)');

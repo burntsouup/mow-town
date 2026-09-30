@@ -170,6 +170,9 @@ export const config = {
     cutHeight: 0.3, // height after mowing, as a fraction of maxHeight (~3.5 cm)
     stripes: 0.18, // how much lighter/darker mowed grass looks leaning away/toward you
     mowLean: 0.35, // how far mowed blade tips lean the way the mower went (in blade widths)
+    // Mowing across your stripes (a checkerboard): how much the earlier pass still shows
+    // (0 = the later pass wipes it out, 1 = both show as much).
+    crossLean: 1,
     // Colors: root and tip of a blade, tip of long grass; dry and lush: the patches some of
     // the lawn drifts toward (see grassNoise.js); the wildflowers.
     colors: {
