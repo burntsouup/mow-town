@@ -489,7 +489,20 @@ and a fire hydrant make the street a street. The cost didn't register (well unde
 
 ### 5. Life, polish and playtest
 
-- [ ] Birds, butterflies, a better backdrop; frame rate on budget; playtest
+- [x] Birds, butterflies and distant birdsong; rolling hills on the horizon
+- [x] Frame rate on budget, findings recorded here
+- [ ] Playtest
+
+**Findings:** birds wheel round in loose V's and butterflies wander the flower beds, their
+paths worked out straight from the time (nothing to simulate). A bird sings somewhere
+every few seconds. Past the treeline, two rings of hazy hills mean the world no longer ends
+in a flat plain. Frame cost over v0.4, measured by rendering 60 frames back to back at the
+1.5× render (1440 × 900), lawn view: 4.45 ms before, 6.5 ms after (the grass about 1.5 ms,
+the plants about 0.3 ms, everything else under 0.1 ms each), plus 0.5 ms of game logic,
+which runs alongside the GPU. That fits the 8.3 ms of a 120 Hz frame, and if a machine
+can't keep up, the resolution now steps down a notch by itself. Process: milestone 4 went
+straight to `main` without a PR (the second time); a local git hook now refuses commits
+and pushes on `main`.
 
 ### v0.4 success checklist
 

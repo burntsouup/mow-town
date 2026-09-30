@@ -6,10 +6,12 @@ import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { config } from '../config.js';
 import { Clippings } from '../effects/Clippings.js';
 import { Footsteps } from '../effects/Footsteps.js';
+import { createRandom } from '../math/noise.js';
 import { createLevel } from '../environment/level.js';
 import { applyColorGrading, createLighting } from '../environment/lighting.js';
 import { createSkyReflections } from '../environment/reflections.js';
 import { createSky } from '../environment/sky.js';
+import { Wildlife } from '../environment/Wildlife.js';
 import { Lawn } from '../lawn/Lawn.js';
 import { stripeNeatness } from '../lawn/neatness.js';
 import { grassSpeedFactor } from '../mower/mowerMath.js';
@@ -56,6 +58,9 @@ export class Game {
       Object.entries(this.level.lawns).map(([id, area]) => [id, new Lawn(this.scene, area)]),
     );
 
+    this.wildlife = new Wildlife(this.scene, this.level.wildlife);
+    this.birdsongRandom = createRandom(97);
+    this.birdsongIn = 3; // seconds until a bird next sings
     this.player = new Player(this.scene, shadows, this.input, this.level.spawn);
     this.camera = new ThirdPersonCamera(this.scene, this.input, this.player, this.level.spawn.yaw);
     this.mower = new PushMower(
@@ -238,6 +243,8 @@ export class Game {
     this.camera.mode = this.mower.isHeld ? 'mowing' : this.trimmer.isOut ? 'trimming' : 'walking';
     this.camera.update(dt); // follow the player to their new position
     this.sky.update(dt);
+    this.wildlife.update(dt);
+    this.updateBirdsong(dt);
     if (this.closet.isOpen) this.player.setOpacity(1); // the closet has its own camera
     this.updateTrimming(dt); // aims with the camera, so after it moves
     // Tuft's hands go wherever the mower or trimmer handles ended up.
@@ -441,6 +448,19 @@ export class Game {
   fitWideDeck() {
     const { wideDeck } = config.shop;
     this.mower.fitDeck({ width: wideDeck.width, length: wideDeck.length }, wideDeck.colliderRadius);
+  }
+
+  /**
+   * Now and then, a bird sings somewhere nearby.
+   *
+   * @param {number} dt
+   */
+  updateBirdsong(dt) {
+    this.birdsongIn -= dt;
+    if (this.birdsongIn > 0) return;
+    const [least, most] = config.audio.birdsongEvery;
+    this.birdsongIn = least + (most - least) * this.birdsongRandom();
+    this.audio.playChirps();
   }
 
   /** A puff and a patter wherever Tuft's feet land: grass on a lawn, dust on paths. */

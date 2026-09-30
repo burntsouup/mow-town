@@ -10,10 +10,11 @@ import {
   StandardMaterial,
   TransformNode,
   Vector3,
+  VertexData,
 } from '@babylonjs/core';
 import { config } from '../config.js';
-import { createRandom } from '../math/noise.js';
-import { cloudBlobs } from './skyMath.js';
+import { createRandom, createValueNoise, fractalNoise } from '../math/noise.js';
+import { cloudBlobs, hillRing } from './skyMath.js';
 
 const SKY_RADIUS = 400;
 
@@ -90,6 +91,7 @@ export function createSky(scene) {
   dome.material = material;
 
   const clouds = createClouds(scene);
+  createHills(scene);
   return {
     dome,
     clouds,
@@ -98,6 +100,51 @@ export function createSky(scene) {
       clouds.rotation.y += dt * settings.cloudDrift;
     },
   };
+}
+
+/**
+ * Two rings of rolling hills far off round the world, a nearer green one and a further,
+ * hazier blue one, fading into the horizon at their feet: the world goes on past the
+ * treeline. Unlit and ungraded, so their colors match the sky's haze exactly.
+ *
+ * @param {Scene} scene
+ */
+function createHills(scene) {
+  const horizon = Color3.FromHexString(config.render.sky.horizon);
+  const material = new StandardMaterial('hillsMat', scene);
+  material.disableLighting = true;
+  material.emissiveColor = Color3.White(); // the vertex colors, as they are
+  material.diffuseColor = Color3.Black();
+  material.specularColor = Color3.Black();
+  material.backFaceCulling = false;
+  material.fogEnabled = false;
+  material.imageProcessingConfiguration = ungraded(scene);
+  for (const [i, ring] of [
+    { radius: 210, depth: 45, height: 30, hex: '#a9bfc8', seed: 3 },
+    { radius: 160, depth: 35, height: 16, hex: '#93b09a', seed: 8 },
+  ].entries()) {
+    const noise = createValueNoise(ring.seed);
+    const top = Color3.Lerp(horizon, Color3.FromHexString(ring.hex), 0.75);
+    const hills = hillRing({
+      radius: ring.radius,
+      depth: ring.depth,
+      height: ring.height,
+      steps: 160,
+      noise: (angle) => fractalNoise(noise, angle * 2.2, 0.5, 3),
+      foot: [horizon.r, horizon.g, horizon.b],
+      top: [top.r, top.g, top.b],
+    });
+    const mesh = new Mesh(`hills${i}`, scene);
+    const data = new VertexData();
+    data.positions = hills.positions;
+    data.colors = hills.colors;
+    data.indices = hills.indices;
+    data.normals = hills.positions.map((_, k) => (k % 3 === 1 ? 1 : 0));
+    data.applyToMesh(mesh);
+    mesh.material = material;
+    mesh.isPickable = false;
+    mesh.applyFog = false;
+  }
 }
 
 /**

@@ -303,6 +303,35 @@ export class AudioSystem {
     source.start(now, this.random() * 0.5, length + 0.02);
   }
 
+  /**
+   * Birdsong in the distance: a little phrase of two to four quick, rising chirps, each
+   * phrase a bit different.
+   */
+  playChirps() {
+    if (!this.context || !this.master) return;
+    const context = this.context;
+    const start = context.currentTime + 0.02;
+    const notes = 2 + Math.floor(this.random() * 3);
+    const pitch = 2600 + 1400 * this.random();
+    for (let i = 0; i < notes; i++) {
+      const at = start + i * (0.09 + 0.05 * this.random());
+      const tone = context.createOscillator();
+      tone.type = 'sine';
+      const from = pitch * (0.85 + 0.3 * this.random());
+      tone.frequency.setValueAtTime(from, at);
+      tone.frequency.exponentialRampToValueAtTime(from * 1.45, at + 0.05);
+      tone.frequency.exponentialRampToValueAtTime(from * 1.1, at + 0.08);
+      const envelope = context.createGain();
+      envelope.gain.setValueAtTime(0.0001, at);
+      envelope.gain.exponentialRampToValueAtTime(config.audio.birds, at + 0.01);
+      envelope.gain.exponentialRampToValueAtTime(0.0001, at + 0.09);
+      tone.connect(envelope);
+      envelope.connect(this.master);
+      tone.start(at);
+      tone.stop(at + 0.1);
+    }
+  }
+
   /** A soft, bubbly "pop" (trying something on in the closet). */
   playPop() {
     if (!this.context || !this.master) return;
