@@ -89,6 +89,15 @@ export class TuningPanel {
     grass.add(config.grass, 'bladeThickness', 0.1, 1.5, 0.05).name('Blade thickness');
     grass.add(config.grass, 'stripes', 0, 0.6, 0.01).name('Stripe strength');
     grass.add(config.grass, 'mowLean', 0, 1, 0.05).name('Mowed blade lean');
+    grass
+      .add(config.grass, 'crossLean', 0, 1, 0.05)
+      .name('Checkerboard: first pass shows')
+      .onChange((/** @type {number} */ value) => {
+        for (const lawn of Object.values(game.lawns)) {
+          lawn.grid.crossLean = value;
+          lawn.grid.markChanged(lawn.grid.fullRect()); // redraw the whole lawn
+        }
+      });
     grass.addColor(config.grass.colors, 'root').name('Root color');
     grass.addColor(config.grass.colors, 'tip').name('Tip color (cut)');
     grass.addColor(config.grass.colors, 'longTip').name('Tip color (long)');
@@ -100,12 +109,16 @@ export class TuningPanel {
       .name('Job done at')
       .onChange((/** @type {number} */ value) => (game.jobs.completeAt = value));
     job.add(config.job, 'edgesDoneAt', 0.8, 1, 0.005).name('Edges done at');
+    job.add(config.job, 'crossDoneAt', 0.5, 1, 0.005).name('Checkerboard: across done at');
     job.close();
 
     const money = gui.addFolder('Money');
     money.add(config.money.jobPay, 'frontLawn', 0, 200, 1).name('Front lawn pays ($)');
     money.add(config.money.jobPay, 'nextDoor', 0, 300, 1).name("Parkers' lawn pays ($)");
+    money.add(config.money.jobPay, 'frontCheckerboard', 0, 300, 1).name('Checkerboard pays ($)');
+    money.add(config.money.jobPay, 'nextDoorDiagonal', 0, 300, 1).name('Diagonals pay ($)');
     money.add(config.money, 'stripesTip', 0, 50, 1).name('Neat stripes tip ($)');
+    money.add(config.money, 'patternTip', 0, 80, 1).name('Pattern tip ($)');
     money.add(config.money, 'tipFrom', 0, 1, 0.01).name('Tip starts at (neatness)');
     money.add(config.money, 'tipFull', 0, 1, 0.01).name('Full tip at (neatness)');
     money.add(config.money, 'edgesTip', 0, 50, 1).name('Crisp edges tip ($)');

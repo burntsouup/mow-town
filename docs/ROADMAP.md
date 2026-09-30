@@ -510,14 +510,96 @@ and pushes on `main`.
 - [x] The grass is a pleasure to look at, mowed and unmowed
 - [x] It runs as smoothly as v0.3
 
+## v0.5 — "Show it off"
+
+Goal: a finished lawn is something you want to show people. Stripes become lawn art, the
+aerial view gets a sped-up replay of your whole mow, there's music, and you can save a
+postcard or a clip to share.
+
+Why before bigger machines: the lawn-mowing games out there are realistic work sims or
+simple grind loops, and co-op is already taken; our edge is charm and moments worth sharing
+(see DECISIONS #36). These build on what's there (the stripes, the aerial view, cutting in
+fixed steps, synthesized sound), and they make everything after them shareable too.
+
+Approach: art and music stay in code; the frame budget stays v0.4's. A checkpoint after
+each milestone.
+
+### 1. Lawn art ✅
+
+- [x] Mowing across your stripes leaves both passes in the grass, so checkerboards (and
+      diamonds) show up
+- [x] Clients ask for patterns: a checkerboard on our lawn, then diagonal stripes next door
+      (the grass has grown back), with a string line to start the diagonals along
+- [x] The objective shows the pattern asked for; the tip is for how well the lawn matches it
+- [x] A checkerboard's job counts both passes
+- [x] The aerial view picks the angle that shows your stripes best
+
+**Findings:** stripes only show when you look along them: grass leaning away looks
+lighter, toward you darker, and from the side it all looks the same. So a checkerboard
+seen straight from the street looks like plaid, and diagonal stripes look faint; seen
+diagonally, the checkerboard pops and the diagonals look like bold straight stripes. The
+aerial view now turns to look along your stripes (diagonally across a checkerboard), which
+matters as much as the pattern itself. A random scribble crosses most of a lawn too, so
+the checkerboard's second pass counts toward finishing the job, but only neat, square-on
+passes earn the tip (a scribble scores about 0.15). Not done yet: during the second pass,
+holding F can't show the bits you haven't crossed (the grass there is already short).
+
+### 2. Timelapse
+
+- [ ] Every cut is recorded (the fixed 60 Hz steps), from the last time the lawn grew back
+- [ ] After the aerial view (or on a key), the whole mow plays back sped up from above, with
+      Tuft and the mower zipping round
+- [ ] The lawn ends up exactly as you left it
+
+### 3. Soundtrack
+
+- [ ] Gentle music, generated in code like the other sounds (seeded: the same tunes each
+      time)
+- [ ] It ducks under the engines and swells for the aerial view
+- [ ] Music on and off, apart from the sound effects
+
+### 4. Photo mode and sharing
+
+- [ ] Photo mode: a free camera, the HUD hidden, a few looks, Tuft striking a pose
+- [ ] Save a postcard (the picture in a frame, with a caption), or copy or share it
+- [ ] Save the timelapse as a short video clip, with the music
+
+### 5. Polish and playtest
+
+- [ ] Frame rate on budget, findings recorded here
+- [ ] Playtest
+
+### v0.5 success checklist
+
+- [ ] Finishing a lawn makes you want to show someone
+- [ ] Pulling off a checkerboard is satisfying
+- [ ] A postcard or a clip looks good enough to post
+
+## Deliberately not in v0.5
+
+Sharing online inside the game (links to your lawn, a gallery), accounts, new machines or
+lawns.
+
 ## Later (ideas, not commitments)
 
-- **v0.5, "Bigger machines":** a riding mower, a large property built for it, and a real
+- **v0.6, "Bigger machines":** a riding mower, a large property built for it, and a real
   shop with more than one thing in it
-- **v0.6, "Mow-town":** a street of clients, jobs you pick, lawns that grow back day by day,
-  and a reputation that unlocks bigger clients
-- **v0.7, "Pride in the craft":** clients asking for patterns, bagging or blowing clippings,
-  an edger, a golden-hour aerial view
-- **v0.8, "Co-op":** two players on one lawn (why cutting runs in fixed, deterministic steps)
+- **v0.7, "Mow-town":** a street of clients, each a character with a personality (written
+  lines, little babbling voices), jobs you pick, lawns that grow back day by day, and a
+  reputation that unlocks bigger clients
+- **v0.8, "Pride in the craft":** harder patterns, bagging or blowing clippings, an edger,
+  a golden-hour aerial view
+- **v0.9, "Co-op":** two players on one lawn (why cutting runs in fixed, deterministic steps)
 - **v1.0, "A full summer":** about a dozen properties, 5–6 tools and upgrades, a big finale,
-  an art and sound pass, settings and gamepad support
+  an art and sound pass, settings, gamepad and touch controls
+
+After 1.0 (v1.1+), roughly in this order:
+
+- **Neighbors (real people):** visit a friend's yard by code, see their stripes, leave a
+  note or mow it as a favor; later a shared street. Needs a small server, accounts and
+  moderation.
+- **Talking neighbors (AI):** clients whose lines are generated live, as an opt-in
+  experiment: the game decides what happens and the model only words it, through our own
+  server with a spending cap and safety filters, with written lines when offline.
+- **More to come back for:** a daily lawn (the same for everyone), seasons and weather
+  (leaves to blow, snow to shovel), decorating your own yard, a pet, a desktop build.

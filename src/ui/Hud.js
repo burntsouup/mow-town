@@ -1,6 +1,7 @@
 import { config } from '../config.js';
 import { formatDuration } from '../game/job.js';
-import { formatMoney, receiptTotal } from '../game/pay.js';
+import { biggestPatternTip, formatMoney, receiptTotal } from '../game/pay.js';
+import { PATTERNS } from '../lawn/patterns.js';
 import './hud.css';
 
 /**
@@ -10,6 +11,7 @@ import './hud.css';
  *   hasMower: boolean,
  *   job: import('../game/jobList.js').JobDefinition,
  *   jobStatus: 'waiting' | 'active' | 'complete',
+ *   stageHint: string | null,
  *   progress: number,
  *   elapsed: number,
  *   nextJob: import('../game/jobList.js').JobDefinition | null,
@@ -21,7 +23,8 @@ import './hud.css';
  *   moneyCounting: boolean,
  *   receipt: import('../game/pay.js').PayLine[] | null,
  *   closetOpen: boolean,
- * }} HudState hasMower: the player has grabbed the mower at least once; progress is 0..1
+ * }} HudState hasMower: the player has grabbed the mower at least once; stageHint: a hint
+ *   for where you are in the job (like "now mow across"), over the job's own; progress is 0..1
  *   for display; elapsed is seconds on the job; nextJob is the one after this (null if this
  *   is the last); showCard: the "Job complete" card is up (it tucks away after a while);
  *   edges is 0..1 for display; money is what to show in the wallet (it counts up); receipt
@@ -49,7 +52,11 @@ export class Hud {
     this.toast = element('div', 'toast');
 
     this.objective = element('div', 'objective');
+    // The title, with a little picture of the pattern when a client asks for one.
+    const head = element('div', 'objective-head');
+    this.patternIcon = element('span', 'pattern-icon');
     this.objectiveTitle = element('div', 'objective-title');
+    head.append(this.patternIcon, this.objectiveTitle);
     this.objectiveHint = element('div', 'objective-hint');
     const bar = element('div', 'progress-bar');
     this.progressFill = element('div', 'progress-fill');
@@ -64,13 +71,7 @@ export class Hud {
     edgesBar.append(this.edgesFill);
     this.edgesLabel = element('span', 'edges-label');
     this.edgesRow.append(edgesName, edgesBar, this.edgesLabel);
-    this.objective.append(
-      this.objectiveTitle,
-      this.objectiveHint,
-      bar,
-      this.progressLabel,
-      this.edgesRow,
-    );
+    this.objective.append(head, this.objectiveHint, bar, this.progressLabel, this.edgesRow);
 
     this.completeCard = element('div', 'job-complete');
     this.completeCard.innerHTML = `
@@ -191,7 +192,13 @@ export class Hud {
     this.set('title', title, () => {
       this.objectiveTitle.textContent = title;
     });
-    let hint = job.hint ?? '';
+    const pattern = state.hasMower ? (job.pattern ?? null) : null;
+    this.set('pattern', pattern, () => {
+      this.patternIcon.innerHTML = pattern ? patternPicture(pattern) : '';
+      this.patternIcon.hidden = !pattern;
+      this.patternIcon.title = pattern ? PATTERNS[pattern].name : '';
+    });
+    let hint = state.stageHint ?? job.hint ?? '';
     if (complete && !state.edgesDone) hint = 'Trim the edges with Q for a tip';
     else if (complete) hint = state.nextJob ? 'Press N for the next job' : 'Press R to start over';
     else if (!state.hasMower) hint = "It's parked on the driveway";
@@ -229,8 +236,9 @@ export class Hud {
         if (!shownJob) return;
         const next = state.nextJob;
         const stripes = state.receipt?.find((line) => line.tip === 'stripes');
-        const neat = stripes && stripes.amount >= config.money.stripesTip;
-        this.completeTitle.textContent = neat ? 'Nice stripes!' : 'Job complete!';
+        const neat = stripes && stripes.amount >= biggestPatternTip(job, config.money);
+        const { praise } = PATTERNS[job.pattern ?? 'stripes'];
+        this.completeTitle.textContent = neat ? praise : 'Job complete!';
         this.jobSummary.textContent = job.summary;
         this.jobTime.textContent = formatDuration(state.elapsed);
         showWithKeys(
@@ -273,6 +281,40 @@ export class Hud {
     this.shown[key] = value;
     apply(value);
   }
+}
+
+/**
+ * A tiny picture of a pattern: mowed stripes in two greens, as SVG.
+ *
+ * @param {import('../lawn/patterns.js').PatternId} pattern
+ */
+function patternPicture(pattern) {
+  /** @type {string[]} */
+  const dark = [];
+  if (pattern === 'checkerboard') {
+    for (let row = 0; row < 4; row++) {
+      for (let column = row % 2; column < 4; column += 2) {
+        dark.push(`<rect x="${column * 6}" y="${row * 6}" width="6" height="6"/>`);
+      }
+    }
+  } else if (pattern === 'diagonal') {
+    for (let offset = -24; offset < 24; offset += 12) {
+      dark.push(
+        `<polygon points="${offset},24 ${offset + 6},24 ${offset + 30},0 ${offset + 24},0"/>`,
+      );
+    }
+  } else {
+    for (let column = 1; column < 4; column += 2) {
+      dark.push(`<rect x="${column * 6}" y="0" width="6" height="24"/>`);
+    }
+  }
+  return `<svg viewBox="0 0 24 24" aria-hidden="true">
+    <clipPath id="pattern-clip"><rect width="24" height="24" rx="5"/></clipPath>
+    <g clip-path="url(#pattern-clip)">
+      <rect width="24" height="24" fill="#9fd66b"/>
+      <g fill="#4f9e3f">${dark.join('')}</g>
+    </g>
+  </svg>`;
 }
 
 /**

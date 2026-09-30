@@ -31,6 +31,29 @@ export function aerialView(center, settings, angle) {
 }
 
 /**
+ * The angle for aerialView that looks along a lawn's stripes, where they show best (grass
+ * leaning toward you looks darker, away lighter; seen from the side, it all looks the
+ * same). A checkerboard shows best looking diagonally across both passes. Stays within
+ * `maxTurn` of straight out from the street, so the view stays over the street side.
+ *
+ * @param {{ latest: number | null, earlier: number | null }} axes See stripeAxes in
+ *   lawn/patterns.js: radians from +x toward +z, or null.
+ * @param {number} maxTurn Radians.
+ * @returns {number} 0 if there are no stripes to show.
+ */
+export function stripeViewAngle({ latest, earlier }, maxTurn) {
+  if (latest === null) return 0;
+  const looks = earlier === null ? [latest] : [latest + Math.PI / 4, latest - Math.PI / 4];
+  // aerialView at angle θ looks along (-sin θ, cos θ), which is the axis at θ + π/2.
+  const turns = looks.map((axis) => {
+    const turn = axis - Math.PI / 2;
+    return turn - Math.PI * Math.round(turn / Math.PI); // an axis repeats every π
+  });
+  const nearest = turns.reduce((best, turn) => (Math.abs(turn) < Math.abs(best) ? turn : best));
+  return clamp(nearest, -maxTurn, maxTurn);
+}
+
+/**
  * @param {View} a
  * @param {View} b
  * @param {number} t 0 = a, 1 = b.

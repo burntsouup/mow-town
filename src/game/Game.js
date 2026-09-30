@@ -11,9 +11,10 @@ import { createLevel } from '../environment/level.js';
 import { applyColorGrading, createLighting } from '../environment/lighting.js';
 import { createSkyReflections } from '../environment/reflections.js';
 import { createSky } from '../environment/sky.js';
+import { StringLine } from '../environment/StringLine.js';
 import { Wildlife } from '../environment/Wildlife.js';
 import { Lawn } from '../lawn/Lawn.js';
-import { stripeNeatness } from '../lawn/neatness.js';
+import { PATTERNS, patternProgress, patternScore } from '../lawn/patterns.js';
 import { grassSpeedFactor } from '../mower/mowerMath.js';
 import { PushMower } from '../mower/PushMower.js';
 import { Player } from '../player/Player.js';
@@ -58,6 +59,12 @@ export class Game {
       Object.entries(this.level.lawns).map(([id, area]) => [id, new Lawn(this.scene, area)]),
     );
 
+    /** @type {Map<string, StringLine>} String lines to mow along, by the job that has one. */
+    this.guides = new Map(
+      this.level.jobs.flatMap((job) =>
+        job.guide ? [[job.id, new StringLine(this.scene, job.guide)]] : [],
+      ),
+    );
     this.wildlife = new Wildlife(this.scene, this.level.wildlife);
     this.birdsongRandom = createRandom(97);
     this.birdsongIn = 3; // seconds until a bird next sings
@@ -96,7 +103,7 @@ export class Game {
     this.moneyShown = 0; // what the HUD shows: counts up to `money` like a till
     /** @type {import('./pay.js').PayLine[] | null} What the current job paid, once done. */
     this.receipt = null;
-    this.neatness = 0; // how neat the stripes were when the current job was done (0..1)
+    this.neatness = 0; // how well the stripes matched the job's pattern when it was done (0..1)
     this.edgesDone = false; // the current job's edges are trimmed
     this.cardTime = 0; // seconds left to show the "Job complete" card
     this.toastText = ''; // a short message, like "deck fitted"
@@ -299,7 +306,8 @@ export class Game {
       hasMower: this.mower.everHeld,
       job: this.jobs.current,
       jobStatus: job.status,
-      progress: job.displayProgress(this.lawn.progress),
+      stageHint: this.stageHint(),
+      progress: job.displayProgress(this.jobWork()),
       elapsed: job.elapsed,
       nextJob: this.jobs.upcoming,
       revealing: this.reveal.isActive,
@@ -317,6 +325,27 @@ export class Game {
   /** The lawn of the job you're on. */
   get lawn() {
     return this.lawns[this.jobs.current.lawn ?? ''] ?? Object.values(this.lawns)[0];
+  }
+
+  /** The lawn art the job you're on asks for (plain stripes if nothing in particular). */
+  get pattern() {
+    return this.jobs.current.pattern ?? 'stripes';
+  }
+
+  /**
+   * How much of the job's work is done, in the lawn's progress units (see patternProgress):
+   * for a checkerboard, both passes count.
+   */
+  jobWork() {
+    const { progress, crossProgress } = this.lawn;
+    return patternProgress(this.pattern, { mowed: progress, crossed: crossProgress }, config.job);
+  }
+
+  /** A hint for where you are in a two-pass pattern ("now mow across"), or null. */
+  stageHint() {
+    const { acrossHint } = PATTERNS[this.pattern];
+    if (!acrossHint || this.jobs.currentJob.isComplete) return null;
+    return this.lawn.progress >= config.job.completeAt ? acrossHint : null;
   }
 
   /**
@@ -347,9 +376,9 @@ export class Game {
     this.time += dt;
     const job = this.jobs.currentJob;
     const working = this.grassCut > 0 || this.grassTrimmed > 0;
-    const event = job.update(dt, this.lawn.progress, working);
+    const event = job.update(dt, this.jobWork(), working);
     if (event === 'completed') {
-      this.neatness = stripeNeatness(this.lawn.grid, config.money.neatnessPatch);
+      this.neatness = patternScore(this.lawn.grid, this.pattern, config.money.neatnessPatch);
       this.pay();
       this.lawn.finish(); // leftover tufts shrink away (but not along the edges)
       this.celebration.play(this.lawn.field.mesh);
@@ -366,6 +395,10 @@ export class Game {
       if (job.isComplete) this.pay();
     }
     if (!this.reveal.isActive) this.cardTime = Math.max(0, this.cardTime - dt);
+    // A job's string line is there until the job is done.
+    for (const [id, guide] of this.guides) {
+      guide.show(id === this.jobs.current.id && !job.isComplete);
+    }
 
     // Hold the key to make uncut grass glow, pulsing gently so it catches the eye.
     const held = this.input.isPointerLocked && this.input.isDown(config.job.highlightKey);
@@ -376,6 +409,7 @@ export class Game {
     if (!job.isComplete) return;
     if (this.input.wasPressed(config.job.nextKey)) {
       if (this.jobs.next()) {
+        this.regrowIfMowedBefore();
         this.startJob();
         this.save();
       }
@@ -392,6 +426,18 @@ export class Game {
       }
       this.startJob();
     }
+  }
+
+  /**
+   * A new job on a lawn you've mowed before (for lawn art, say) comes a week later: the
+   * grass has grown back.
+   */
+  regrowIfMowedBefore() {
+    const { current, index } = this.jobs;
+    const earlier = this.level.jobs.slice(0, index);
+    if (!earlier.some((job) => job.lawn === current.lawn)) return;
+    this.lawn.reset();
+    this.toast('A week later: the grass has grown back', 5);
   }
 
   /** Forgets the last job's pay and edges, ready for the next one. */

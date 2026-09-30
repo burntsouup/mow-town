@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { countTowards, formatMoney, jobReceipt, receiptTotal } from './pay.js';
+import { biggestPatternTip, countTowards, formatMoney, jobReceipt, receiptTotal } from './pay.js';
 
 const SETTINGS = {
-  jobPay: { frontLawn: 40 },
+  jobPay: { frontLawn: 40, checkerboard: 60 },
   stripesTip: 10,
+  patternTip: 20,
   tipFrom: 0.6,
   tipFull: 0.9,
   edgesTip: 8,
@@ -35,6 +36,18 @@ describe('jobReceipt', () => {
     expect(tipFor(0.75)).toBe(5);
     expect(tipFor(0.84)).toBe(8);
     expect(tipFor(1)).toBe(10);
+  });
+
+  it('tips a pattern the client asked for by name, and more generously', () => {
+    const job = { id: 'checkerboard', title: 'Mow a checkerboard', pattern: 'checkerboard' };
+    const receipt = jobReceipt(
+      /** @type {import('./pay.js').PaidJob} */ (job),
+      { neatness: 0.93, edgesDone: true },
+      SETTINGS,
+    );
+    expect(receipt[1]).toEqual({ label: 'Checkerboard (93%)', amount: 20, tip: 'stripes' });
+    expect(biggestPatternTip(/** @type {import('./pay.js').PaidJob} */ (job), SETTINGS)).toBe(20);
+    expect(biggestPatternTip(FRONT_LAWN, SETTINGS)).toBe(10);
   });
 
   it('falls back to the title, and pays nothing for a job with no price', () => {

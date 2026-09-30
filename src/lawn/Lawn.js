@@ -1,7 +1,9 @@
+import { stripeViewAngle } from '../camera/revealMath.js';
 import { config } from '../config.js';
 import { DeckCutter } from './DeckCutter.js';
 import { GrassField } from './GrassField.js';
 import { GrassGrid, MOWED_TOLERANCE } from './GrassGrid.js';
+import { stripeAxes } from './patterns.js';
 import { TrimCutter } from './TrimCutter.js';
 
 /**
@@ -26,6 +28,7 @@ export class Lawn {
       depth: area.depth,
       texelsPerMeter: config.grass.texelsPerMeter,
       targetHeight: config.grass.cutHeight,
+      crossLean: config.grass.crossLean,
     });
     this.grid.fill(area.heightAt, area.densityAt);
     this.grid.markEdges(config.job.edgeWidth, area.edgeAt);
@@ -97,6 +100,16 @@ export class Lawn {
   /** Fraction of the edges cut (weighted), 0..1. */
   get edgeProgress() {
     return this.grid.edgeProgress;
+  }
+
+  /** Fraction of the lawn mowed across an earlier pass (a checkerboard's second half). */
+  get crossProgress() {
+    return this.grid.crossProgress;
+  }
+
+  /** Which way the aerial view should look from, to show off the stripes (radians). */
+  get revealAngle() {
+    return stripeViewAngle(stripeAxes(this.grid), config.job.reveal.maxTurn);
   }
 
   /**

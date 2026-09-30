@@ -12,8 +12,9 @@ butterflies, and you play as Tuft, a fuzzy critter you can dress up (at the coat
 front door, or "Dress up Tuft" on the start screen). Mow our front lawn for money, with tips
 for neat stripes and for trimming the edges with a string trimmer; buy a 30-inch deck at the
 garage-sale table; then push the mower next door and mow the Parkers' bigger, L-shaped lawn.
-Your money, deck, job and outfit are saved between visits. Next up (v0.5, "Bigger
-machines"): a riding mower and a large property built for it. See
+Your money, deck, job and outfit are saved between visits. Next up (v0.5, "Show it off"):
+lawn art (checkerboards and diagonal stripes), a sped-up replay of your mow, music, and
+postcards and clips to share. See
 [docs/ROADMAP.md](docs/ROADMAP.md) for what's done and next.
 
 mow-town started as a copy of [p-washer](https://github.com/burntsouup/p-washer) v0.2.0 (a
@@ -81,7 +82,8 @@ src/
   player/              Tuft, the player character: fur, face, walk, and outfits (movement.js,
                        tuftMath.js, wardrobe.js and clothesMath.js are the tested, pure parts)
   camera/              Third-person camera and the aerial reveal (*Math.js: tested, pure)
-  lawn/                The grass: GrassGrid + cutters and neatness (tested, pure), renderer
+  lawn/                The grass: GrassGrid + cutters, neatness and lawn-art patterns (tested,
+                       pure), renderer
   mower/               The push mower (mowerMath.js is the tested, pure handling)
   trimmer/             The string trimmer (trimmerMath.js: tested, pure aiming)
   shop/                The sale stand by the garage (shop.js: tested, pure rules)

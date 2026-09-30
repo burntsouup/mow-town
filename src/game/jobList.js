@@ -6,10 +6,14 @@ import { Job } from './job.js';
  * to the next. Pure logic, like Job.
  *
  * @typedef {{ id: string, lawn?: string, name?: string, shortName?: string, title: string,
- *   doneTitle: string, summary: string, hint?: string }} JobDefinition
+ *   doneTitle: string, summary: string, hint?: string,
+ *   pattern?: import('../lawn/patterns.js').PatternId,
+ *   guide?: { from: [number, number], to: [number, number] } }} JobDefinition
  *   lawn: which of the level's lawns it's about; name for sentences ("the front lawn");
  *   shortName for lists, like the receipt ("Front lawn"); title while working; doneTitle once
- *   finished; summary before the time ("Front lawn mowed in"); hint shown under the title.
+ *   finished; summary before the time ("Front lawn mowed in"); hint shown under the title;
+ *   pattern: the lawn art the client asked for (plain stripes if none); guide: a string
+ *   line to start along, from one stake to the other ([x, z] world meters).
  *   What it pays is in config.money.jobPay.
  */
 export class JobList {

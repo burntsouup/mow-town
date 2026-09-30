@@ -17,6 +17,11 @@ export const MAX_DENSITY = 3;
 const STAMP_SPACING = 0.5;
 /** ...and at least every this many radians while turning. */
 const STAMP_TURN = 0.08;
+/**
+ * A pass counts as going across the grass's earlier lean (for checkerboards) when it turns
+ * more than 45° from it: the cosine of the angle between them is below this.
+ */
+const CROSS_COS = Math.SQRT1_2;
 
 /**
  * The lawn as a grid of grass, one set of values per texel. Pure data: no Babylon, so it's
@@ -30,6 +35,8 @@ const STAMP_TURN = 0.08;
  * - mask: 1 where there's lawn at all, 0 on paths and flower beds
  * - density: how thick the grass is (1 = normal). Thick grass is harder work to mow.
  * - mow direction: which way the deck was facing when it last passed over, for stripes
+ * - cross direction: the mow direction before that, if the last pass went across it (more
+ *   than 45° off). Both show, so mowing across your stripes makes a checkerboard
  * - edge: 1 on the strip of lawn along things like fences, trees and flower beds (see
  *   markEdges), where the mower can't quite reach and the string trimmer comes in
  *
@@ -38,10 +45,12 @@ const STAMP_TURN = 0.08;
  */
 export class GrassGrid {
   /**
-   * @param {{ width: number, depth: number, texelsPerMeter: number, targetHeight: number }} options
-   *   Lawn size in meters; targetHeight is the height (0..1) that counts as mowed.
+   * @param {{ width: number, depth: number, texelsPerMeter: number, targetHeight: number,
+   *   crossLean?: number }} options Lawn size in meters; targetHeight is the height (0..1)
+   *   that counts as mowed; crossLean: how much an earlier pass still shows under a pass
+   *   across it (0 = not at all, 1 = as much as the later one).
    */
-  constructor({ width, depth, texelsPerMeter, targetHeight }) {
+  constructor({ width, depth, texelsPerMeter, targetHeight, crossLean = 1 }) {
     if (!(width > 0 && depth > 0 && texelsPerMeter > 0 && targetHeight >= 0)) {
       throw new Error(
         `GrassGrid: bad options ${JSON.stringify({ width, depth, texelsPerMeter, targetHeight })}`,
@@ -49,6 +58,7 @@ export class GrassGrid {
     }
     this.texelsPerMeter = texelsPerMeter;
     this.targetHeight = targetHeight;
+    this.crossLean = crossLean;
     this.columns = Math.max(1, Math.round(width * texelsPerMeter));
     this.rows = Math.max(1, Math.round(depth * texelsPerMeter));
     const count = this.columns * this.rows;
@@ -62,10 +72,14 @@ export class GrassGrid {
     /** Mowing direction (a unit vector on the ground), or 0, 0 where never mowed. */
     this.mowX = new Float32Array(count);
     this.mowZ = new Float32Array(count);
+    /** The mowing direction before the last pass went across it, or 0, 0 (never crossed). */
+    this.crossX = new Float32Array(count);
+    this.crossZ = new Float32Array(count);
     this.totalWeight = 0;
     this.remainingWeight = 0;
     this.edgeTotalWeight = 0; // the same, for just the edges
     this.edgeRemainingWeight = 0;
+    this.crossedWeight = 0; // the same, for grass that's been mowed across (see crossProgress)
     /** @type {Rect | null} Texels changed since the last takeChangedRect(). */
     this.changedRect = null;
   }
@@ -96,6 +110,9 @@ export class GrassGrid {
     this.height.set(this.startHeight);
     this.mowX.fill(0);
     this.mowZ.fill(0);
+    this.crossX.fill(0);
+    this.crossZ.fill(0);
+    this.crossedWeight = 0;
     let total = 0;
     let edgeTotal = 0;
     for (let i = 0; i < this.height.length; i++) {
@@ -121,6 +138,15 @@ export class GrassGrid {
   get edgeProgress() {
     if (this.edgeTotalWeight <= 0) return 1;
     return Math.min(1, Math.max(0, 1 - this.edgeRemainingWeight / this.edgeTotalWeight));
+  }
+
+  /**
+   * Fraction of the lawn (weighted like progress) that's been mowed across an earlier pass:
+   * the second half of a checkerboard. 0..1.
+   */
+  get crossProgress() {
+    if (this.totalWeight <= 0) return 1;
+    return Math.min(1, Math.max(0, this.crossedWeight / this.totalWeight));
   }
 
   /**
@@ -202,7 +228,7 @@ export class GrassGrid {
 
   /**
    * Cuts the grass under the deck (a rectangle centered on the pose) down to `cutTo`, and
-   * records the mowing direction there.
+   * records the mowing direction there (and the one before, if this pass goes across it).
    *
    * @param {DeckPose} pose
    * @param {Deck} deck
@@ -223,6 +249,14 @@ export class GrassGrid {
         cut += (height - cutHeight) * this.density[i];
         this.height[i] = cutHeight;
         if (!wasMowed && this.isMowed(i)) this.countMowed(i);
+      }
+      const oldX = this.mowX[i];
+      const oldZ = this.mowZ[i];
+      const across = Math.abs(oldX * forwardX + oldZ * forwardZ) < CROSS_COS;
+      if ((oldX !== 0 || oldZ !== 0) && across) {
+        if (this.crossX[i] === 0 && this.crossZ[i] === 0) this.crossedWeight += this.weight[i];
+        this.crossX[i] = oldX;
+        this.crossZ[i] = oldZ;
       }
       this.mowX[i] = forwardX;
       this.mowZ[i] = forwardZ;
@@ -422,8 +456,10 @@ export class GrassGrid {
 
   /**
    * Packs a rectangle of the grid into RGBA bytes for the GPU, row by row: red = height,
-   * green and blue = mowing direction x and z (mapped from -1..1 to 0..255, so 128 = none),
-   * alpha = 0 where there's no lawn, else 128 (normal density) up to 255 (MAX_DENSITY).
+   * green and blue = the way the grass leans, x and z (mapped from -1..1 to 0..255, so
+   * 128 = none), alpha = 0 where there's no lawn, else 128 (normal density) up to 255
+   * (MAX_DENSITY). The lean is the mowing direction, plus some of the cross direction where
+   * it was mowed across (see crossLean): a blend of both passes, so both show.
    *
    * @param {Uint8Array} target At least (rect width × height × 4) bytes.
    * @param {Rect} rect
@@ -435,8 +471,19 @@ export class GrassGrid {
       for (let i = start + rect.minX, end = start + rect.maxX; i <= end; i++) {
         // `(v * 255 + 0.5) | 0` rounds 0..1 to 0..255, a little faster than Math.round.
         target[o++] = (this.height[i] * 255 + 0.5) | 0;
-        target[o++] = ((this.mowX[i] * 0.5 + 0.5) * 255 + 0.5) | 0;
-        target[o++] = ((this.mowZ[i] * 0.5 + 0.5) * 255 + 0.5) | 0;
+        let leanX = this.mowX[i];
+        let leanZ = this.mowZ[i];
+        if (this.crossX[i] !== 0 || this.crossZ[i] !== 0) {
+          leanX += this.crossX[i] * this.crossLean;
+          leanZ += this.crossZ[i] * this.crossLean;
+          const length = Math.hypot(leanX, leanZ);
+          if (length > 0) {
+            leanX /= length;
+            leanZ /= length;
+          }
+        }
+        target[o++] = ((leanX * 0.5 + 0.5) * 255 + 0.5) | 0;
+        target[o++] = ((leanZ * 0.5 + 0.5) * 255 + 0.5) | 0;
         const thick = Math.min(1, Math.max(0, (this.density[i] - 1) / (MAX_DENSITY - 1)));
         target[o++] = this.mask[i] ? (128 + thick * 127 + 0.5) | 0 : 0;
       }

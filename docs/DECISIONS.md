@@ -505,3 +505,35 @@ like broken glass and is slow to blend, so leaves vanish instead of fading
 (`seeThroughOpacity: 0`).
 **Revisit when:** plants should rustle more (bushes that part as you walk through), or
 leaves change color with the seasons.
+
+## 36. Show it off before bigger machines
+
+**Why:** a look at the other lawn-mowing games (September 2026) showed a niche that's real
+but has no hit. Lawn Mowing Simulator (2021) is a realistic work sim with real mower brands,
+and its sequel launched to mixed reviews; the Roblox mowing games reach millions of players
+with simple mow-earn-upgrade loops and short visits; and Grass (Cosmic Dog, not out yet) is
+a cozy co-op lawn care game. So co-op alone won't make mow-town stand out, but charm and
+moments worth sharing can: Tuft and the wardrobe, lawn art, the aerial reveal, and playing
+in a browser from a link. Patterns, a replay, music and a postcard build on what's already
+there, and they make everything after them (machines, clients, co-op) shareable too. The
+riding mower moves to v0.6.
+**Revisit when:** playtests show people don't want to share what they made, or the
+cozy co-op games move into the same space.
+
+## 37. Lawn art: two passes, judged in patches, seen along the stripes
+
+**Why:** a checkerboard is stripes one way, then stripes across them, and both have to
+show. So each bit of the lawn keeps the direction it was mowed before whenever a later pass
+goes more than 45° across it (`crossX`, `crossZ` in GrassGrid), and the grass leans a blend
+of the two (`crossLean`: 1 = both count the same). No new texture: the blend is worked out
+when the grid is packed for the GPU. Patterns are judged like neatness (DECISIONS #23), in
+1.5 m patches using doubled angles (`patterns.js`): diagonals keep the part of each patch's
+direction that's at 45°, squared; a checkerboard needs both passes neat and at right angles
+(so diamonds count too). A two-pass job is half first pass and half mowing across it, in
+the lawn's own progress units, so the usual "done at 98%" still works.
+**Gotchas:** stripes only show looking along them, so the aerial view turns to face your
+stripes (`stripeViewAngle`), and diagonally across a checkerboard. Diagonals are hard to
+start by eye, hence the string line.
+**Revisit when:** the second pass needs a "what's left" highlight (it needs to know which
+grass hasn't been crossed, which the grass texture doesn't carry yet), or clients ask for
+harder patterns (circles, words).

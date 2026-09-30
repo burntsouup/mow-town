@@ -142,6 +142,58 @@ describe('GrassGrid.cutDeck', () => {
   });
 });
 
+describe('GrassGrid crossing (checkerboards)', () => {
+  const middle = 10 * 20 + 10; // the texel at (1, 1) m on a 2 × 2 m lawn
+
+  it('remembers the earlier pass when a later one goes across it', () => {
+    const grid = lawn();
+    grid.cutDeck({ x: 1, z: 1, yaw: 0 }, DECK, CUT); // heading +z
+    expect([grid.crossX[middle], grid.crossZ[middle]]).toEqual([0, 0]);
+    grid.cutDeck({ x: 1, z: 1, yaw: Math.PI / 2 }, DECK, CUT); // then +x, across it
+    expect(grid.mowX[middle]).toBeCloseTo(1);
+    expect(grid.crossX[middle]).toBeCloseTo(0);
+    expect(grid.crossZ[middle]).toBeCloseTo(1);
+  });
+
+  it("doesn't count going back the other way, or a gentle turn, as across", () => {
+    const grid = lawn();
+    grid.cutDeck({ x: 1, z: 1, yaw: 0 }, DECK, CUT);
+    grid.cutDeck({ x: 1, z: 1, yaw: Math.PI }, DECK, CUT); // the next stripe back
+    grid.cutDeck({ x: 1, z: 1, yaw: Math.PI - 0.6 }, DECK, CUT); // ~35° off
+    expect([grid.crossX[middle], grid.crossZ[middle]]).toEqual([0, 0]);
+    expect(grid.crossProgress).toBe(0);
+  });
+
+  it('keeps the first pass when the second goes back and forth across it', () => {
+    const grid = lawn();
+    grid.cutDeck({ x: 1, z: 1, yaw: 0 }, DECK, CUT);
+    grid.cutDeck({ x: 1, z: 1, yaw: Math.PI / 2 }, DECK, CUT);
+    grid.cutDeck({ x: 1, z: 1, yaw: -Math.PI / 2 }, DECK, CUT); // overlapping the next row
+    expect(grid.crossZ[middle]).toBeCloseTo(1);
+  });
+
+  it('counts how much of the lawn has been mowed across, weighted like progress', () => {
+    const grid = lawn();
+    const everything = { width: 5, length: 5 };
+    grid.cutDeck({ x: 1, z: 1, yaw: 0 }, everything, CUT);
+    expect(grid.progress).toBeCloseTo(1, 5);
+    expect(grid.crossProgress).toBe(0);
+    grid.cutDeck({ x: 0.5, z: 1, yaw: Math.PI / 2 }, { width: 5, length: 1 }, CUT);
+    expect(grid.crossProgress).toBeCloseTo(0.5, 5); // the left half
+    grid.cutDeck({ x: 1, z: 1, yaw: -Math.PI / 2 }, everything, CUT);
+    expect(grid.crossProgress).toBeCloseTo(1, 5); // crossing twice counts once
+  });
+
+  it('forgets the crossing when the grass grows back', () => {
+    const grid = lawn();
+    grid.cutDeck({ x: 1, z: 1, yaw: 0 }, DECK, CUT);
+    grid.cutDeck({ x: 1, z: 1, yaw: Math.PI / 2 }, DECK, CUT);
+    grid.reset();
+    expect(grid.crossZ.every((v) => v === 0)).toBe(true);
+    expect(grid.crossProgress).toBe(0);
+  });
+});
+
 describe('GrassGrid.workAhead', () => {
   it('is 1 in front of full, normal grass and 0 in front of cut grass', () => {
     const grid = lawn({ depth: 4 });
@@ -377,6 +429,23 @@ describe('GrassGrid.writeTexels', () => {
     const bytes = new Uint8Array(2 * 4);
     grid.writeTexels(bytes, { minX: 0, minY: 0, maxX: 1, maxY: 0 });
     expect(Array.from(bytes)).toEqual([255, 255, 128, 128, 0, 128, 128, 0]);
+  });
+
+  it('leans mowed-across grass partway back toward the earlier pass', () => {
+    const grid = new GrassGrid({
+      width: 0.1,
+      depth: 0.1,
+      texelsPerMeter: 10,
+      targetHeight: CUT,
+      crossLean: 1,
+    });
+    grid.fill(() => 1);
+    grid.cutDeck({ x: 0.05, z: 0.05, yaw: 0 }, DECK, CUT);
+    grid.cutDeck({ x: 0.05, z: 0.05, yaw: Math.PI / 2 }, DECK, CUT);
+    const bytes = new Uint8Array(4);
+    grid.writeTexels(bytes, { minX: 0, minY: 0, maxX: 0, maxY: 0 });
+    const lean = Math.round((Math.SQRT1_2 * 0.5 + 0.5) * 255); // halfway between +x and +z
+    expect([bytes[1], bytes[2]]).toEqual([lean, lean]);
   });
 
   it('stores thicker grass as a higher alpha, up to MAX_DENSITY', () => {

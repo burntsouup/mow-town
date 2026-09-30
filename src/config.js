@@ -170,6 +170,9 @@ export const config = {
     cutHeight: 0.3, // height after mowing, as a fraction of maxHeight (~3.5 cm)
     stripes: 0.18, // how much lighter/darker mowed grass looks leaning away/toward you
     mowLean: 0.35, // how far mowed blade tips lean the way the mower went (in blade widths)
+    // Mowing across your stripes (a checkerboard): how much the earlier pass still shows
+    // (0 = the later pass wipes it out, 1 = both show as much).
+    crossLean: 1,
     // Colors: root and tip of a blade, tip of long grass; dry and lush: the patches some of
     // the lawn drifts toward (see grassNoise.js); the wildflowers.
     colors: {
@@ -288,6 +291,9 @@ export const config = {
   },
   job: {
     completeAt: 0.98, // fraction of the lawn that counts as done; the rest is finished for you
+    // A checkerboard's second pass, across the first: the fraction of the lawn mowed across
+    // that counts as done (the mower can't cross quite everywhere it reached the first time).
+    crossDoneAt: 0.9,
     // The edges: lawn within this many meters of things you trim around (the fence, trees,
     // beds, toys). They're left long when the lawn is done, for the string trimmer, and count
     // as done at edgesDoneAt (then the last bits shrink away).
@@ -300,17 +306,29 @@ export const config = {
     revealKey: 'KeyV', // view the lawn from above (it also plays when the job is done)
     // The aerial shot: seconds to fly up (and back), seconds to hold, meters up and back
     // from the lawn's middle, and how far (radians) it swings across the lawn meanwhile.
-    reveal: { flyTime: 2.2, holdTime: 4, height: 14, distance: 11, swing: 0.3, skipAfter: 1 },
+    // It turns to look along your stripes (they show best that way), up to maxTurn radians
+    // from straight out from the street.
+    reveal: {
+      flyTime: 2.2,
+      holdTime: 4,
+      height: 14,
+      distance: 11,
+      swing: 0.3,
+      maxTurn: 0.8,
+      skipAfter: 1,
+    },
     resetKey: 'KeyR', // after completion: redo the job (or, after the last one, start over)
     nextKey: 'KeyN', // after completion: move on to the next job
   },
   money: {
     // What each job pays when it's done, in dollars, by job id (see the level's jobs).
-    jobPay: { frontLawn: 40, nextDoor: 65 },
+    jobPay: { frontLawn: 40, nextDoor: 65, frontCheckerboard: 60, nextDoorDiagonal: 90 },
     stripesTip: 10, // dollars, at most, for neat stripes
+    patternTip: 20, // ...and for a pattern the client asked for (see lawn/patterns.js)
     edgesTip: 10, // dollars for trimming the edges
-    // How neat the stripes are (0..1, see lawn/neatness.js): the tip starts above tipFrom
-    // and is the whole amount at tipFull. Tidy rows score ~0.95; a random scribble ~0.35.
+    // How neat the stripes are (0..1, see lawn/neatness.js), or how well they match the
+    // pattern asked for (lawn/patterns.js): the tip starts above tipFrom and is the whole
+    // amount at tipFull. Tidy rows score ~0.95; a random scribble ~0.35.
     tipFrom: 0.6,
     tipFull: 0.9,
     neatnessPatch: 1.5, // meters: stripes are judged in square patches this big

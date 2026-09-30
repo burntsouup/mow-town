@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aerialView, blendViews, RevealTimeline } from './revealMath.js';
+import { aerialView, blendViews, RevealTimeline, stripeViewAngle } from './revealMath.js';
 
 describe('aerialView', () => {
   const settings = { height: 14, distance: 10, swing: 0.3 };
@@ -14,6 +14,41 @@ describe('aerialView', () => {
     const view = aerialView({ x: 0, z: 0 }, settings, 0.5);
     expect(view.position.x).toBeGreaterThan(0);
     expect(Math.hypot(view.position.x, view.position.z)).toBeCloseTo(10);
+  });
+});
+
+describe('stripeViewAngle', () => {
+  const MAX = 0.8;
+  /** Which way (x, z) aerialView looks along the ground at an angle. */
+  const lookAt = (/** @type {number} */ angle) => {
+    const view = aerialView({ x: 0, z: 0 }, { height: 10, distance: 1, swing: 0 }, angle);
+    return [-view.position.x, -view.position.z];
+  };
+
+  it('looks straight out from the street at stripes that run away from it, or none', () => {
+    expect(stripeViewAngle({ latest: Math.PI / 2, earlier: null }, MAX)).toBeCloseTo(0);
+    expect(stripeViewAngle({ latest: -Math.PI / 2, earlier: null }, MAX)).toBeCloseTo(0);
+    expect(stripeViewAngle({ latest: null, earlier: null }, MAX)).toBe(0);
+  });
+
+  it('looks along diagonal stripes', () => {
+    for (const axis of [Math.PI / 4, -Math.PI / 4, (3 * Math.PI) / 4]) {
+      const [x, z] = lookAt(stripeViewAngle({ latest: axis, earlier: null }, MAX));
+      // Parallel to the axis: the cross product is 0.
+      expect(x * Math.sin(axis) - z * Math.cos(axis)).toBeCloseTo(0);
+    }
+  });
+
+  it('looks diagonally across a checkerboard, and at an angle across diamonds', () => {
+    const squares = stripeViewAngle({ latest: 0, earlier: Math.PI / 2 }, MAX);
+    expect(Math.abs(squares)).toBeCloseTo(Math.PI / 4);
+    const diamonds = stripeViewAngle({ latest: Math.PI / 4, earlier: -Math.PI / 4 }, MAX);
+    expect(diamonds).toBeCloseTo(0);
+  });
+
+  it("doesn't swing round further than it's allowed", () => {
+    const sideways = stripeViewAngle({ latest: 0.1, earlier: null }, MAX);
+    expect(Math.abs(sideways)).toBe(MAX);
   });
 });
 
