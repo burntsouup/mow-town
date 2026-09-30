@@ -42,6 +42,7 @@ export function buildHouse(kit, house, look) {
     parts.get(color)?.push(mesh);
   };
 
+  // A stone foundation, and walls of lap siding (see WallPatternPlugin).
   keep(
     kit.rounded('foundation', {
       size: [width + 0.12, 0.35, depth + 0.12],
@@ -49,7 +50,7 @@ export function buildHouse(kit, house, look) {
       color: COLORS.foundation,
       radius: 0.05,
     }),
-  );
+  ).material = kit.patterned(COLORS.foundation, 'stone');
   keep(
     kit.rounded('house', {
       size: [width, wall, depth],
@@ -57,8 +58,7 @@ export function buildHouse(kit, house, look) {
       color: look.walls,
       radius: 0.12,
     }),
-  );
-  kit.shadeUnderEaves(look.walls, wall - 0.1);
+  ).material = kit.patterned(look.walls, 'siding', wall - 0.1);
   // Soft shade on the ground all round its foot.
   const [x0, x1] = [house.left - 0.06, house.right + 0.06];
   const [z0, z1] = [house.front - 0.06, house.back + 0.06];
@@ -99,10 +99,28 @@ export function buildHouse(kit, house, look) {
     kit.rounded('chimney', {
       size: [0.75, 1.9, 0.75],
       at: [house.left + 2.6, wall, centerZ + 2],
-      color: '#a8574a',
+      color: COLORS.brick,
       radius: 0.06,
     }),
-  );
+  ).material = kit.patterned(COLORS.brick, 'brick');
+  // Gutters round the roof's edge, and downspouts at the front corners.
+  const gutterY = wall + 0.02;
+  for (const side of [-1, 1]) {
+    part(
+      COLORS.gutter,
+      [roofWidth + 0.08, 0.1, 0.12],
+      [centerX, gutterY, centerZ + side * (roofDepth / 2 + 0.02)],
+    );
+    part(
+      COLORS.gutter,
+      [0.12, 0.1, roofDepth + 0.08],
+      [centerX + side * (roofWidth / 2 + 0.02), gutterY, centerZ],
+    );
+    const x = side < 0 ? house.left + 0.25 : house.right - 0.25;
+    part(COLORS.gutter, [0.08, wall - 0.05, 0.08], [x, 0.12, house.front - 0.09], 0.025);
+    part(COLORS.gutter, [0.08, 0.08, 0.5], [x, wall - 0.04, house.front - 0.33], 0.025);
+    part(COLORS.gutter, [0.09, 0.07, 0.24], [x, 0.05, house.front - 0.2], 0.025); // the spout
+  }
 
   // Things on the front wall stick out of it by a few centimeters.
   const face = house.front;
@@ -125,6 +143,16 @@ export function buildHouse(kit, house, look) {
     const bottom = 0.95;
     const h = 1.2;
     part(COLORS.glass, [w, h, 0.06], [x, bottom, face - 0.02], 0.01);
+    // Curtains drawn back to the sides, behind the glass's cross bars, with a valance.
+    for (const side of [-1, 1]) {
+      part(
+        COLORS.curtains,
+        [w * 0.17, h * 0.9, 0.02],
+        [x + side * w * 0.41, bottom + 0.04, face - 0.055],
+        0.01,
+      );
+    }
+    part(COLORS.curtains, [w * 0.98, 0.1, 0.025], [x, bottom + h - 0.14, face - 0.058], 0.01);
     frame(x, bottom, w, h, false);
     part(COLORS.trim, [0.05, h, 0.08], [x, bottom, face - 0.04]); // the cross in the window
     part(COLORS.trim, [w, 0.05, 0.08], [x, bottom + h / 2 - 0.025, face - 0.04]);
@@ -138,10 +166,18 @@ export function buildHouse(kit, house, look) {
     }
   }
 
-  // The front door, with a knob and a step up to it.
+  // The front door, with a knob, a step up to it with a mat, a little roof over it on
+  // brackets, and a lantern beside it.
   const door = look.door;
   part(door.color, [1, 2.1, 0.08], [door.x, 0.25, face - 0.03], 0.02);
   frame(door.x, 0.25, 1, 2.1, false);
+  part(COLORS.trim, [1.6, 0.1, 0.66], [door.x, 2.6, face - 0.33], 0.04);
+  for (const side of [-1, 1]) {
+    part(COLORS.trim, [0.08, 0.32, 0.3], [door.x + side * 0.68, 2.28, face - 0.15], 0.02);
+  }
+  part(COLORS.doormat, [0.9, 0.025, 0.42], [door.x, 0.2, face - 0.3], 0.01);
+  part(COLORS.lantern, [0.16, 0.26, 0.16], [door.x - 0.8, 1.65, face - 0.1], 0.03);
+  part(COLORS.lanternGlass, [0.12, 0.16, 0.17], [door.x - 0.8, 1.7, face - 0.1], 0.02);
   const knob = MeshBuilder.CreateSphere('doorKnob', { diameter: 0.08, segments: 8 }, kit.scene);
   knob.position.set(door.x + 0.35, 1.25, face - 0.1);
   keep(kit.addSolid(knob, COLORS.knob, false));
@@ -167,6 +203,16 @@ export function buildHouse(kit, house, look) {
     );
   }
   frame(look.garageX, 0, garageWidth, garageHeight, false);
+  // A row of little windows across its top panel, and a light above it.
+  for (let i = 0; i < 4; i++) {
+    part(
+      COLORS.glass,
+      [0.72, 0.26, 0.02],
+      [look.garageX + (i - 1.5) * 0.98, garageHeight * 0.8, face - 0.08],
+      0.02,
+    );
+  }
+  part(COLORS.lantern, [0.3, 0.12, 0.18], [look.garageX, garageHeight + 0.2, face - 0.1], 0.04);
 
   for (const [color, meshes] of parts)
     keep(kit.merge(`house${color}`, meshes)).checkCollisions = false;

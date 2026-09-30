@@ -9,6 +9,7 @@ import {
 } from '@babylonjs/core';
 import { roundedBox } from '../math/roundedBox.js';
 import { GroundShadePlugin } from './GroundShadePlugin.js';
+import { WallPatternPlugin } from './WallPatternPlugin.js';
 import { GLOSSY } from './style.js';
 import {
   createAsphaltTexture,
@@ -43,8 +44,6 @@ export class Greybox {
     this.shadows = shadows;
     /** @type {Map<string, StandardMaterial>} */
     this.materials = new Map();
-    /** @type {Map<string, GroundShadePlugin>} Each solid color's soft shading (see there). */
-    this.groundShades = new Map();
   }
 
   /**
@@ -87,7 +86,7 @@ export class Greybox {
         material.specularPower = 160;
         material.metadata = { gloss };
       }
-      this.groundShades.set(hex, new GroundShadePlugin(material));
+      new GroundShadePlugin(material); // darker toward the ground
       this.materials.set(hex, material);
     }
     return material;
@@ -118,16 +117,25 @@ export class Greybox {
   }
 
   /**
-   * House walls of this color get a little darker just under their eaves, in the roof's
-   * shade (see GroundShadePlugin).
+   * A wall material with a pattern worked into it (see WallPatternPlugin): siding, brick or
+   * stone. Like every solid, it darkens toward the ground; walls with eaves also darken just
+   * under them, in the roof's shade (see GroundShadePlugin).
    *
    * @param {string} hex
-   * @param {number} height Meters: where the eaves are.
+   * @param {'siding' | 'brick' | 'stone'} pattern
+   * @param {number} [eaves] Meters: where the eaves are, if it's a wall under a roof.
    */
-  shadeUnderEaves(hex, height) {
-    this.material(hex);
-    const plugin = this.groundShades.get(hex);
-    if (plugin) plugin.eaveHeight = height;
+  patterned(hex, pattern, eaves = 0) {
+    const key = `${pattern}:${hex}:${eaves}`;
+    let material = this.materials.get(key);
+    if (!material) {
+      material = this.plainMaterial(hex);
+      const shade = new GroundShadePlugin(material);
+      shade.eaveHeight = eaves;
+      new WallPatternPlugin(material, pattern);
+      this.materials.set(key, material);
+    }
+    return material;
   }
 
   /**

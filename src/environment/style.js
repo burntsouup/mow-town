@@ -14,6 +14,12 @@ export const COLORS = {
   shutters: '#3f8f86',
   glass: '#5d7c93', // dark enough for the sky's reflection to show in it
   knob: '#d8b25a',
+  brick: '#a8574a',
+  gutter: '#f1ede4',
+  curtains: '#f3e8d2',
+  doormat: '#7a5638',
+  lantern: '#2f3238',
+  lanternGlass: '#ffe9ad',
   step: '#cfc8bb',
   trunk: '#7a563a',
   leaves: '#6aa845',
