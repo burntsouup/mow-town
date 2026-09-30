@@ -105,6 +105,7 @@ export class Game {
       change: (outfit) => {
         this.outfit = outfit;
         this.player.wear(outfit);
+        this.player.cheer(false); // a little hop in the new look
       },
       done: () => this.closeCloset(),
     });
@@ -297,6 +298,7 @@ export class Game {
       this.pay();
       this.lawn.finish(); // leftover tufts shrink away (but not along the edges)
       this.celebration.play(this.lawn.field.mesh);
+      this.player.cheer();
       this.audio.playChime();
       this.reveal.frame(this.lawn);
       this.reveal.start(); // and fly up to show off the stripes
@@ -381,6 +383,7 @@ export class Game {
     stand.markSold();
     this.fitWideDeck();
     this.celebration.play(this.mower.model.deck);
+    this.player.cheer();
     this.audio.playCoins();
     this.audio.playClunk();
     this.toast('30-inch deck fitted to your mower!');

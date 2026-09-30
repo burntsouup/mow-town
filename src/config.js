@@ -129,6 +129,10 @@ export const config = {
       softness: 0.12,
       sheen: 0.2,
     },
+    // Looking around when idle: a new glance every few seconds (every: min, max), up to yaw
+    // and pitch radians away, easing over at speed; body: how much of the turn is the body
+    // (visible from behind) rather than just the eyes.
+    glance: { every: [1.5, 4.5], yaw: 0.5, pitch: 0.2, speed: 5, body: 0.35 },
     // The body is soft, like jelly: springs (stiffness: how quick the wobble; damping: how
     // fast it settles) make it lag and sway when you start, stop and turn (lean: radians per
     // m/s² of change in speed, up to maxLean), and its surface ripples (ripple: meters).

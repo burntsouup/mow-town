@@ -144,6 +144,107 @@ export class Blinker {
   }
 }
 
+/**
+ * Which feet touched down as the walk cycle moved on (for footstep puffs and sounds). Foot 0
+ * lands as the phase passes 0 (2π), foot 1 half a cycle later, at π (see footOffset).
+ *
+ * @param {number} previous Phase last frame, 0..2π.
+ * @param {number} phase Phase now (it only moves forward, wrapping at 2π).
+ * @returns {number[]} The feet that landed, 0 and/or 1.
+ */
+export function footLandings(previous, phase) {
+  if (phase === previous) return [];
+  // How far it moved, and whether that passed each foot's landing point.
+  const moved = (((phase - previous) % TAU) + TAU) % TAU;
+  /** @param {number} at */
+  const passed = (at) => {
+    const toLanding = (((at - previous) % TAU) + TAU) % TAU;
+    return toLanding > 0 && toLanding <= moved;
+  };
+  const feet = [];
+  if (passed(0)) feet.push(0);
+  if (passed(Math.PI)) feet.push(1);
+  return feet;
+}
+
+/**
+ * Looking around: every few seconds Tuft glances somewhere new (a little left or right, up
+ * or down), easing over. While busy (walking fast, working), the glances shrink toward
+ * straight ahead.
+ */
+export class Glancer {
+  /**
+   * @param {() => number} random 0..1, e.g. from createRandom (seeded).
+   * @param {{ every: [number, number], yaw: number, pitch: number, speed: number }} settings
+   *   every: the range of seconds between glances; yaw/pitch: how far it can look, radians;
+   *   speed: how quickly the eyes get there.
+   */
+  constructor(random, settings) {
+    this.random = random;
+    this.settings = settings;
+    this.target = { yaw: 0, pitch: 0 };
+    this.yaw = 0;
+    this.pitch = 0;
+    this.untilNext = this.pickWait();
+  }
+
+  pickWait() {
+    const [min, max] = this.settings.every;
+    return min + (max - min) * this.random();
+  }
+
+  /**
+   * @param {number} dt Seconds since the previous frame.
+   * @param {number} calm 1 while idle, down to 0 while busy: how far the glances go.
+   * @returns {{ yaw: number, pitch: number }} Where it's looking now, radians.
+   */
+  update(dt, calm) {
+    const { yaw, pitch, speed } = this.settings;
+    this.untilNext -= dt;
+    if (this.untilNext <= 0) {
+      this.untilNext = this.pickWait();
+      // Now and then, back to straight ahead.
+      const ahead = this.random() < 0.3;
+      this.target = ahead
+        ? { yaw: 0, pitch: 0 }
+        : { yaw: (this.random() * 2 - 1) * yaw, pitch: (this.random() * 2 - 1) * pitch };
+    }
+    const ease = 1 - Math.exp(-speed * dt);
+    this.yaw += (this.target.yaw * calm - this.yaw) * ease;
+    this.pitch += (this.target.pitch * calm - this.pitch) * ease;
+    return { yaw: this.yaw, pitch: this.pitch };
+  }
+}
+
+/** Seconds a cheer lasts: two hops, then a wave. */
+export const CHEER_TIME = 2.2;
+
+/**
+ * Tuft cheering (a job done, an upgrade bought): two happy hops with both arms up, then a
+ * wave. A small cheer is one little hop (trying on clothes).
+ *
+ * @param {number} t Seconds since the cheer started.
+ * @param {boolean} big
+ * @returns {{ hop: number, arms: number, wave: number, squint: number }} hop: meters off the
+ *   ground; arms: 0..1, how far the arms are up; wave: -1..1, the waving hand side to side;
+ *   squint: 0..1, eyes scrunched up happily. All 0 once it's over.
+ */
+export function cheerPose(t, big = true) {
+  const time = big ? CHEER_TIME : 0.45;
+  if (t < 0 || t >= time) return { hop: 0, arms: 0, wave: 0, squint: 0 };
+  const hops = big ? 2 : 1;
+  const hopTime = big ? 0.42 : 0.45;
+  const height = big ? 0.22 : 0.1;
+  const hop = t < hops * hopTime ? height * Math.sin((Math.PI * (t % hopTime)) / hopTime) : 0;
+  if (!big) return { hop, arms: 0, wave: 0, squint: Math.sin((Math.PI * t) / time) };
+  // Arms fly up, stay up through the hops and the wave, then come down at the end.
+  const arms = Math.min(1, t / 0.12, (time - t) / 0.3);
+  const waveStart = hops * hopTime;
+  const wave = t > waveStart ? Math.sin((t - waveStart) * Math.PI * 2 * 2.2) : 0;
+  const squint = Math.min(1, t / 0.1, (time - t) / 0.25);
+  return { hop, arms, wave, squint };
+}
+
 /** Tuft's body: an egg this big (half-widths, meters), its middle this far up from its base. */
 export const TUFT_BODY = { center: { x: 0, y: 0.5, z: 0 }, radii: { x: 0.42, y: 0.5, z: 0.4 } };
 
