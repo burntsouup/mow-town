@@ -9,6 +9,12 @@ const triangle = {
 };
 
 describe('furShells', () => {
+  it('can make just the skin (no shells), exactly on the surface', () => {
+    const skin = furShells(triangle, { shells: 0, length: 0 });
+    expect(skin.positions).toEqual(triangle.positions);
+    expect(skin.furShell).toEqual([0, 0, 0]);
+  });
+
   it('can leave the skin out, for drawing it separately', () => {
     const shells = furShells(triangle, { shells: 2, length: 0.02, skin: false });
     expect(shells.furShell).toEqual([0.5, 0.5, 0.5, 1, 1, 1]);
