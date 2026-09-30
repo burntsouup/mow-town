@@ -409,14 +409,68 @@ went straight to `main` without a PR by mistake; each commit passed `npm run che
 New machines or lawns, buying clothes with money (starter items are free), saving the state
 of half-mowed lawns.
 
+## v0.4 — "Looking amazing"
+
+Goal: the whole world looks as good as Tuft. The game is one idea (a lawn under your nose),
+so the grass, the houses and the trees have to be a pleasure to look at.
+
+Approach: stay on Babylon.js (it isn't the limit: it has image-based lighting, ambient
+occlusion, soft shadows, bloom and custom shaders), keep building the art in code, and use
+free CC0 textures and a sky HDRI where they beat code. Same budget as v0.3: 120 fps at the
+1.5× render on an M3 MacBook; every milestone measures its cost. A checkpoint after each
+milestone, to look at before and after screenshots.
+
+### 1. Lighting and atmosphere ✅
+
+- [x] A smooth sky with a sun disc, and soft, painted cumulus clouds
+- [x] Reflections of the sky in glass, water, glossy plastic and Tuft's eyes
+- [x] Soft shading where things meet (a cheap stand-in for ambient occlusion)
+- [x] Distance haze, a punchier sun and smoother shadows
+
+**Findings:** the textbook screen effects were too expensive here: ambient occlusion cost
+about 4 ms a frame and bloom about 2 ms (the grass is many layers deep, and anything that
+redraws it doubles its cost), as did a 4096 shadow map (2 ms) and contact-hardening shadows.
+Cheap fakes got most of the look instead: shading from each pixel's height (darker toward
+the ground and under the eaves), soft dark strips round the foot of each house, and haze that
+thickens with distance, which is what makes the houses across the street look far away. The
+sky HDRI wasn't needed: reflections come from a picture of our own sky, taken once, so they
+match what you see. Measured by rendering 60 frames back to back at the 1.5× render
+(1440 × 900): 4.45 ms before, 4.56 ms after, in the lawn view. What still looks basic is
+content, not light: the flat-looking grass in the distance, faceted trees and clay-like
+bushes, and plain walls. That's the next three milestones.
+
+### 2. Grass
+
+- [ ] Real blades up close, clumps and color variety, wind
+- [ ] Light glowing through backlit blades; glossier stripes
+- [ ] Wildflowers (clover, dandelions) that the mower takes down
+
+### 3. Trees, hedges and flowers
+
+- [ ] Fluffy, leafy canopies and bark; leafy hedges and bushes; real flowers
+
+### 4. Buildings and street
+
+- [ ] Siding, brick, porches, gutters, windows with reflections and curtains, street lamps
+
+### 5. Life, polish and playtest
+
+- [ ] Birds, butterflies, a better backdrop; frame rate on budget; playtest
+
+### v0.4 success checklist
+
+- [ ] Screenshots from where you play look like a finished game
+- [ ] The grass is a pleasure to look at, mowed and unmowed
+- [ ] It runs as smoothly as v0.3
+
 ## Later (ideas, not commitments)
 
-- **v0.4, "Bigger machines":** a riding mower, a large property built for it, and a real
+- **v0.5, "Bigger machines":** a riding mower, a large property built for it, and a real
   shop with more than one thing in it
-- **v0.5, "Mow-town":** a street of clients, jobs you pick, lawns that grow back day by day,
+- **v0.6, "Mow-town":** a street of clients, jobs you pick, lawns that grow back day by day,
   and a reputation that unlocks bigger clients
-- **v0.6, "Pride in the craft":** clients asking for patterns, bagging or blowing clippings,
+- **v0.7, "Pride in the craft":** clients asking for patterns, bagging or blowing clippings,
   an edger, a golden-hour aerial view
-- **v0.7, "Co-op":** two players on one lawn (why cutting runs in fixed, deterministic steps)
+- **v0.8, "Co-op":** two players on one lawn (why cutting runs in fixed, deterministic steps)
 - **v1.0, "A full summer":** about a dozen properties, 5–6 tools and upgrades, a big finale,
   an art and sound pass, settings and gamepad support

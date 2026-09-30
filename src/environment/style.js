@@ -12,7 +12,7 @@ export const COLORS = {
   groove: '#ddd6ca', // the lines across a garage door
   frontDoor: '#3f8f86',
   shutters: '#3f8f86',
-  glass: '#a9cbe0',
+  glass: '#5d7c93', // dark enough for the sky's reflection to show in it
   knob: '#d8b25a',
   step: '#cfc8bb',
   trunk: '#7a563a',
@@ -37,7 +37,7 @@ export const COLORS = {
   shedBatten: '#a8472f',
   shedRoof: '#5d5249',
   stone: '#c7c0b4',
-  water: '#8cc3e3',
+  water: '#3f7396',
   gnomeHat: '#e0483c',
   gnomeCoat: '#3d6fb5',
   gnomeFace: '#f1c9a5',
@@ -48,6 +48,12 @@ export const COLORS = {
   birdBelly: '#f3c6a0',
   birdBeak: '#f2a33a',
 };
+/**
+ * Colors that are shiny, and how mirror-like (0..1): they reflect the sky (see
+ * reflections.js) and catch the sun.
+ */
+export const GLOSSY = { [COLORS.glass]: 0.9, [COLORS.water]: 0.7 };
+
 export const FLOWER_COLORS = ['#e84a5f', '#f7c948', '#f4f1ea', '#b565d9', '#ff8f3d'];
 
 // Flat surfaces are stacked a few millimeters apart so they don't flicker ("z-fighting").

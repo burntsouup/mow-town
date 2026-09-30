@@ -283,6 +283,8 @@ export class Tuft {
     mat.diffuseColor = Color3.FromHexString(hex);
     mat.specularColor = new Color3(shine, shine, shine);
     mat.specularPower = power;
+    // Glossy things (the eyes, shiny plastic) reflect the sky (see reflections.js).
+    if (shine >= 0.5) mat.metadata = { gloss: shine * 0.5 };
     return mat;
   }
 

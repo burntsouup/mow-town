@@ -57,6 +57,30 @@ export function buildHouse(kit, house, look) {
       radius: 0.12,
     }),
   );
+  kit.shadeUnderEaves(look.walls, wall - 0.1);
+  // Soft shade on the ground all round its foot.
+  const [x0, x1] = [house.left - 0.06, house.right + 0.06];
+  const [z0, z1] = [house.front - 0.06, house.back + 0.06];
+  for (const [from, to] of [
+    [
+      [x0, z0],
+      [x1, z0],
+    ],
+    [
+      [x1, z0],
+      [x1, z1],
+    ],
+    [
+      [x1, z1],
+      [x0, z1],
+    ],
+    [
+      [x0, z1],
+      [x0, z0],
+    ],
+  ]) {
+    keep(kit.groundShade('houseGroundShade', from, to, 1.3));
+  }
   part(COLORS.trim, [width + 0.3, 0.18, depth + 0.3], [centerX, wall - 0.06, centerZ], 0.06);
   const overhang = 0.55;
   const roofWidth = width + overhang * 2;
