@@ -1,5 +1,6 @@
 import { Color3, MeshBuilder, TransformNode, Vector3 } from '@babylonjs/core';
 import { createRandom } from '../math/noise.js';
+import { barkMaterial, flowerMesh, leafyMesh } from './foliage.js';
 import { COLLIDER_HEIGHT, COLORS, FLOWER_COLORS, LAYER } from './style.js';
 
 // Pieces both yards are built from: houses, trees, flower beds and mailboxes. Units are
@@ -181,9 +182,10 @@ export function buildHouse(kit, house, look) {
  * @param {{ x: number, z: number, radiusX: number, radiusZ: number }} ring
  * @param {number} size 1 = our big tree.
  * @param {number} [seed] Varies the canopy's shape.
- * @returns {import('@babylonjs/core').Mesh[]} The trunk and the canopy.
+ * @param {boolean} [far] Only ever seen from far off (less detail).
+ * @returns {import('@babylonjs/core').Mesh[]} The trunk, and the canopy's core and leaves.
  */
-export function buildTree(kit, ring, size, seed = 1) {
+export function buildTree(kit, ring, size, seed = 1, far = false) {
   mulchDisc(kit, 'treeRing', ring);
   const trunkHeight = 2.4 * size;
   const trunk = MeshBuilder.CreateCylinder(
@@ -192,11 +194,10 @@ export function buildTree(kit, ring, size, seed = 1) {
     kit.scene,
   );
   trunk.position.set(ring.x, trunkHeight / 2, ring.z);
-  kit.addSolid(trunk, COLORS.trunk, true);
+  trunk.material = barkMaterial(kit.scene, COLORS.trunk);
+  kit.addSolid(trunk, null, true);
 
   const random = createRandom(seed);
-  const base = Color3.FromHexString(COLORS.leaves);
-  const puffs = [];
   const clumps = [
     [0, 0.2, 0, 1.45],
     [0.95, -0.15, 0.35, 1.0],
@@ -205,23 +206,43 @@ export function buildTree(kit, ring, size, seed = 1) {
     [-0.35, 0.05, -0.6, 0.95],
     [0.15, 1.0, 0.1, 1.0],
   ];
-  for (const [dx, dy, dz, r] of clumps) {
-    const tint = Color3.Lerp(base, new Color3(0.72, 0.8, 0.3), random() * 0.25);
-    puffs.push(
-      kit.puff('treeLeaves', {
-        radius: r * size * (0.92 + random() * 0.16),
-        at: [ring.x + dx * size, trunkHeight - 0.7 * size + dy * size, ring.z + dz * size],
-        color: tint.toHexString(),
-        squash: 0.88,
-        solid: false,
-        shade: 0.4,
-      }),
-    );
-  }
-  const canopy = kit.merge('treeCanopy', puffs);
-  canopy.checkCollisions = false;
-  canopy.metadata = { seeThrough: true };
-  return [trunk, canopy];
+  const squash = 0.88;
+  const blobs = clumps.map(([dx, dy, dz, r]) => {
+    const radius = r * size * (0.92 + random() * 0.16);
+    return {
+      x: ring.x + dx * size,
+      y: trunkHeight - 0.7 * size + dy * size + radius * squash,
+      z: ring.z + dz * size,
+      radius,
+      squash,
+    };
+  });
+  // A dark core of leafy balls, so you never see through to the sky...
+  const puffs = blobs.map((blob) =>
+    kit.puff('treeLeaves', {
+      radius: blob.radius * 0.84,
+      at: [blob.x, blob.y - blob.radius * 0.84 * squash, blob.z],
+      color: COLORS.leavesCore,
+      squash,
+      solid: false,
+      shade: 0.4,
+    }),
+  );
+  const core = kit.merge('treeCore', puffs);
+  core.checkCollisions = false;
+  // ...covered in leaf cards (see foliage.js) that shade as one soft, fluffy ball.
+  // (Trees far across the street get fewer, bigger clusters: you can't tell from there.)
+  const leaves = leafyMesh(kit.scene, 'treeCanopy', [blobs], {
+    color: COLORS.leaves,
+    density: (far ? 4 : 10) / (size * size),
+    size: (far ? 0.9 : 0.6) * size,
+    seed: seed * 7 + 1,
+  });
+  kit.addSolid(leaves, null, false);
+  // Both fade when they come between the camera and you (see ThirdPersonCamera).
+  core.metadata = { seeThrough: true };
+  leaves.metadata = { seeThrough: true, seeThroughOpacity: 0 };
+  return [trunk, core, leaves];
 }
 
 /**
@@ -256,38 +277,57 @@ export function buildFlowerBed(kit, name, bed, planting) {
   kit.addSolid(edging, COLORS.edging, false);
 
   const random = createRandom(planting.seed);
+  const cores = [];
+  /** @type {import('./foliageMath.js').Blob[][]} */
+  const clumps = [];
+  /** @type {Parameters<typeof flowerMesh>[1]} */
   const flowers = [];
-  const leaves = [];
+  const squash = 0.75;
   for (let i = 0; i < planting.flowers; i++) {
     const angle = random() * Math.PI * 2;
     const reach = Math.sqrt(random()) * 0.8; // spread evenly over the ellipse
     const x = bed.x + Math.cos(angle) * bed.radiusX * reach;
     const z = bed.z + Math.sin(angle) * bed.radiusZ * reach;
-    leaves.push(
+    const radius = 0.14 + random() * 0.06;
+    // A leafy clump (a dark core under little leaves)...
+    cores.push(
       kit.puff('flowerLeaves', {
-        radius: 0.14 + random() * 0.06,
+        radius: radius * 0.85,
         at: [x, 0, z],
-        color: COLORS.bush,
-        squash: 0.75,
+        color: COLORS.bushCore,
+        squash,
         solid: false,
       }),
     );
+    clumps.push([{ x, y: radius * squash, z, radius, squash }]);
+    // ...with a couple of flowers on top.
     for (let f = 0; f < 2; f++) {
-      flowers.push(
-        kit.puff('flower', {
-          radius: 0.045 + random() * 0.025,
-          at: [x + (random() - 0.5) * 0.16, 0.15 + random() * 0.07, z + (random() - 0.5) * 0.16],
-          color: FLOWER_COLORS[Math.floor(random() * FLOWER_COLORS.length)],
-          solid: false,
-          shade: 0.2,
-          shadow: false,
-        }),
+      const color = Color3.FromHexString(
+        FLOWER_COLORS[Math.floor(random() * FLOWER_COLORS.length)],
       );
+      const yellow = color.r > 0.9 && color.g > 0.7;
+      flowers.push({
+        x: x + (random() - 0.5) * 0.16,
+        y: radius * squash * 1.7 + random() * 0.05,
+        z: z + (random() - 0.5) * 0.16,
+        radius: 0.05 + random() * 0.025,
+        petals: 5 + Math.floor(random() * 2),
+        color: [color.r, color.g, color.b],
+        middle: yellow ? [0.45, 0.28, 0.12] : [0.98, 0.78, 0.2],
+        tilt: [(random() - 0.5) * 0.6, (random() - 0.5) * 0.6],
+      });
     }
   }
-  kit.merge(`${name}Leaves`, leaves).checkCollisions = false;
-  const blooms = kit.merge(`${name}Flowers`, flowers);
-  blooms.checkCollisions = false;
+  kit.merge(`${name}Leaves`, cores).checkCollisions = false;
+  const leaves = leafyMesh(scene, `${name}Foliage`, clumps, {
+    color: COLORS.bush,
+    density: 160,
+    size: 0.13,
+    seed: planting.seed * 5 + 2,
+  });
+  kit.addSolid(leaves, null, false);
+  const blooms = flowerMesh(scene, `${name}Flowers`, flowers);
+  kit.addSolid(blooms, null, false);
   kit.shadows.removeShadowCaster(blooms); // too small to matter
 
   const collider = MeshBuilder.CreateCylinder(
@@ -405,21 +445,44 @@ export function buildCoatStand(kit, { x, z }) {
 export function buildBushes(kit, xs, z, seed) {
   const random = createRandom(seed);
   const puffs = [];
+  /** @type {import('./foliageMath.js').Blob[][]} */
+  const plants = [];
+  const squash = 0.85;
   for (const x of xs) {
     const size = 0.52 + random() * 0.12;
-    puffs.push(kit.puff('bush', { radius: size, at: [x, 0, z], color: COLORS.bush, squash: 0.85 }));
+    const top = {
+      x: x + (random() - 0.5) * 0.5,
+      z: z + (random() - 0.5) * 0.3,
+      radius: size * 0.7,
+    };
+    // A dark core (the lower one solid, so you can't walk through)...
+    puffs.push(
+      kit.puff('bush', { radius: size * 0.85, at: [x, 0, z], color: COLORS.bushCore, squash }),
+    );
     puffs.push(
       kit.puff('bush', {
-        radius: size * 0.7,
-        at: [x + (random() - 0.5) * 0.5, size * 0.6, z + (random() - 0.5) * 0.3],
-        color: COLORS.bush,
-        squash: 0.85,
+        radius: top.radius * 0.85,
+        at: [top.x, size * 0.6, top.z],
+        color: COLORS.bushCore,
+        squash,
         solid: false,
       }),
     );
+    // ...covered in leaves.
+    plants.push([
+      { x, y: size * squash, z, radius: size, squash },
+      { ...top, y: size * 0.6 + top.radius * squash, squash },
+    ]);
     kit.contactShadow(x, z, size * 1.5);
   }
   kit.merge('bushes', puffs);
+  const leaves = leafyMesh(kit.scene, 'bushLeaves', plants, {
+    color: COLORS.bush,
+    density: 42,
+    size: 0.3,
+    seed: seed * 13 + 3,
+  });
+  kit.addSolid(leaves, null, false);
 }
 
 /**

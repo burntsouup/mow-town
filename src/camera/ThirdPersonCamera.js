@@ -148,8 +148,12 @@ export class ThirdPersonCamera {
       const sphere = mesh.getBoundingInfo().boundingSphere;
       const blocking =
         inUse && segmentHitsSphere(camera, this.pivot, sphere.centerWorld, sphere.radiusWorld);
-      const target = blocking ? config.camera.seeThroughOpacity : 1;
+      // Some things vanish altogether (a tree's leaves, which see-through look like broken
+      // glass), leaving a faint ghost of the rest (the canopy's soft core).
+      const faint = mesh.metadata.seeThroughOpacity ?? config.camera.seeThroughOpacity;
+      const target = blocking ? faint : 1;
       mesh.visibility += (target - mesh.visibility) * (1 - Math.exp(-8 * dt));
+      mesh.isVisible = mesh.visibility > 0.02;
     }
   }
 }

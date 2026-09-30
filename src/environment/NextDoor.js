@@ -1,6 +1,7 @@
-import { MeshBuilder, Vector3 } from '@babylonjs/core';
+import { Color3, MeshBuilder, Vector3 } from '@babylonjs/core';
 import { SIDEWALK } from './frontYardLayout.js';
 import { HEDGE, NEXT_DRIVEWAY, NEXT_HOUSE, NEXT_LAWN, NEXT_SPOTS, SHED } from './nextDoorLayout.js';
+import { flowerMesh, leafyMesh } from './foliage.js';
 import { buildBushes, buildFlowerBed, buildHouse, buildMailbox, buildTree } from './props.js';
 import { COLLIDER_HEIGHT, COLORS, FLOWER_COLORS, LAYER } from './style.js';
 
@@ -74,18 +75,30 @@ function buildHedge(kit) {
   const length = HEDGE.back - HEDGE.front;
   const count = Math.round(length / 0.6);
   const blobs = [];
+  /** @type {import('./foliageMath.js').Blob[][]} */
+  const plants = [];
+  const squash = 1.05;
   for (let i = 0; i <= count; i++) {
+    const z = HEDGE.front + (length * i) / count;
     blobs.push(
       kit.puff('hedge', {
-        radius: 0.44,
-        at: [HEDGE.x, 0, HEDGE.front + (length * i) / count],
-        color: COLORS.hedge,
-        squash: 1.05,
+        radius: 0.38,
+        at: [HEDGE.x, 0, z],
+        color: COLORS.hedgeCore,
+        squash,
         solid: false,
       }),
     );
+    plants.push([{ x: HEDGE.x, y: 0.44 * squash, z, radius: 0.44, squash }]);
   }
   kit.merge('hedge', blobs).checkCollisions = false;
+  const leaves = leafyMesh(kit.scene, 'hedgeLeaves', plants, {
+    color: COLORS.hedge,
+    density: 40,
+    size: 0.28,
+    seed: 61,
+  });
+  kit.addSolid(leaves, null, false);
   kit.invisibleWall('hedgeCollider', {
     size: [0.7, COLLIDER_HEIGHT, length + 0.4],
     at: [HEDGE.x, 0, (HEDGE.front + HEDGE.back) / 2],
@@ -247,23 +260,43 @@ function buildShed(kit) {
     radius: 0.03,
     solid: false,
   });
-  FLOWER_COLORS.slice(0, 4).forEach((color, i) => {
+  /** @type {import('./foliageMath.js').Blob[][]} */
+  const clumps = [];
+  /** @type {Parameters<typeof flowerMesh>[1]} */
+  const flowers = [];
+  FLOWER_COLORS.slice(0, 4).forEach((hex, i) => {
     const fx = windowX - 0.27 + i * 0.18;
     kit.puff('shedFlowerLeaves', {
-      radius: 0.09,
-      at: [fx, windowY - 0.06, SHED.front - 0.12],
-      color: COLORS.bush,
+      radius: 0.075,
+      at: [fx, windowY - 0.05, SHED.front - 0.12],
+      color: COLORS.bushCore,
       shadow: false,
       solid: false,
     });
-    kit.puff('shedFlower', {
-      radius: 0.045,
-      at: [fx + 0.02, windowY + 0.06, SHED.front - 0.17],
-      color,
-      shadow: false,
-      solid: false,
+    clumps.push([{ x: fx, y: windowY + 0.04, z: SHED.front - 0.12, radius: 0.09 }]);
+    const color = Color3.FromHexString(hex);
+    flowers.push({
+      x: fx + 0.02,
+      y: windowY + 0.12,
+      z: SHED.front - 0.17,
+      radius: 0.05,
+      petals: 5,
+      color: [color.r, color.g, color.b],
+      middle: [0.98, 0.78, 0.2],
+      tilt: [-0.3, (i - 1.5) * 0.12],
     });
   });
+  kit.addSolid(
+    leafyMesh(kit.scene, 'shedFlowerFoliage', clumps, {
+      color: COLORS.bush,
+      density: 200,
+      size: 0.1,
+      seed: 67,
+    }),
+    null,
+    false,
+  );
+  kit.addSolid(flowerMesh(kit.scene, 'shedFlowers', flowers), null, false);
 }
 
 /**

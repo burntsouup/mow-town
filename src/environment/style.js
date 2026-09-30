@@ -16,8 +16,10 @@ export const COLORS = {
   knob: '#d8b25a',
   step: '#cfc8bb',
   trunk: '#7a563a',
-  leaves: '#5c9a3f',
-  bush: '#4f8a3a',
+  leaves: '#6aa845',
+  leavesCore: '#3f6e2c', // the dark middle of a tree's canopy
+  bush: '#5a9a40',
+  bushCore: '#35652a', // the dark middle of a bush, between its leaves
   bin: '#3f6f64',
   mailbox: '#34495e',
   mailboxFlag: '#e0483c',
@@ -32,7 +34,8 @@ export const COLORS = {
   theirWalls: '#d3e3ec',
   theirRoof: '#5d6b7c',
   theirDoor: '#f2b93b',
-  hedge: '#3f7a33',
+  hedge: '#4a8a3a',
+  hedgeCore: '#2e5c25',
   shed: '#c0573f', // barn red
   shedBatten: '#a8472f',
   shedRoof: '#5d5249',
