@@ -12,9 +12,9 @@ import {
 } from '@babylonjs/core';
 import { config } from '../config.js';
 import { createRandom } from '../math/noise.js';
-import { roundedBox } from '../math/roundedBox.js';
 import { furShells } from './furGeometry.js';
 import { FurMaterialPlugin } from './FurMaterialPlugin.js';
+import { TuftOutfit } from './TuftOutfit.js';
 import {
   advanceWalk,
   Blinker,
@@ -25,6 +25,7 @@ import {
   limbCurve,
   springStep,
 } from './tuftMath.js';
+import { DEFAULT_OUTFIT } from './wardrobe.js';
 
 /** Where the body sits: its bottom, above the feet. */
 const BODY_BASE = 0.45;
@@ -49,6 +50,7 @@ export class Tuft {
    */
   constructor(scene, shadows, parent) {
     this.scene = scene;
+    this.shadows = shadows;
     const colors = config.tuft.colors;
     this.root = new TransformNode('tuft', scene);
     this.root.parent = parent;
@@ -60,48 +62,26 @@ export class Tuft {
     this.meshes = [];
     /** @type {import('@babylonjs/core').AbstractMesh[]} The face: it fades out first. */
     this.face = [];
-
     /**
-     * @param {string} hex
-     * @param {{ shine?: number, power?: number }} [finish] shine: how strong the highlight
-     *   is (0..1); power: how small and sharp it is.
+     * Everything furry (the body, the eyebrows, a pompom): each is a skin and fur shells.
+     *
+     * @type {(ReturnType<Tuft['furryEgg']> & { face: boolean })[]}
      */
-    const material = (hex, { shine = 0.1, power = 32 } = {}) => {
-      const mat = new StandardMaterial(`tuft${hex}`, scene);
-      mat.diffuseColor = Color3.FromHexString(hex);
-      mat.specularColor = new Color3(shine, shine, shine);
-      mat.specularPower = power;
-      return mat;
-    };
-    /**
-     * @param {Mesh} mesh
-     * @param {StandardMaterial} mat
-     * @param {TransformNode} parentNode
-     */
-    const add = (mesh, mat, parentNode, castShadow = true) => {
-      mesh.material = mat;
-      mesh.parent = parentNode;
-      mesh.isPickable = false;
-      if (castShadow) shadows.addShadowCaster(mesh);
-      this.meshes.push(mesh);
-      return mesh;
-    };
+    this.furParts = [];
+    const material = this.material.bind(this);
+    const add = this.add.bind(this);
 
-    /** @type {FurMaterialPlugin[]} */
-    this.bodyPlugins = [];
     /** @type {FurMaterialPlugin[]} */
     this.browPlugins = [];
-    /** @type {Mesh[]} */
-    this.browSkins = [];
     const body = this.furryEgg('tuft', {
       surfaceAt: bodyPoint,
       segments: 24,
       fur: config.tuft.fur,
       parent: this.bodyNode,
     });
+    this.furParts.push({ ...body, face: false });
     this.bodyPlugins = body.plugins;
-    const { skin, fur } = body;
-    shadows.addShadowCaster(skin);
+    shadows.addShadowCaster(body.skin);
     // Rosy cheeks, just under the eyes.
     const cheeks = [-1, 1].map((side) => {
       const { point } = bodyPoint({ x: side * 0.5, y: 0.2, z: 1 });
@@ -192,7 +172,7 @@ export class Tuft {
         parent: brow,
       });
       this.browPlugins.push(...tuft.plugins);
-      this.browSkins.push(tuft.skin);
+      this.furParts.push({ ...tuft, face: true });
     }
     // A small, happy smile.
     const smile = [];
@@ -217,8 +197,12 @@ export class Tuft {
       ),
     );
 
-    // Soft, rubbery arms and legs (tubes, reshaped every frame).
-    const limb = material(colors.limbs, { shine: 0.28, power: 20 });
+    // Soft, rubbery arms and legs (tubes, reshaped every frame), in a color to go with the
+    // fur (see setFur).
+    const limb = material('#ffffff', { shine: 0.28, power: 20 });
+    this.limbMaterial = limb;
+    // The mittens: the same, unless you're wearing gloves.
+    this.mittMaterial = material('#ffffff', { shine: 0.28, power: 20 });
     /** @param {string} name */
     const noodle = (name) => {
       const points = Array.from({ length: LIMB_SEGMENTS + 1 }, () => new Vector3());
@@ -239,7 +223,7 @@ export class Tuft {
       const palm = MeshBuilder.CreateSphere('tuftMitt', { diameter: 0.15, segments: 16 }, scene);
       palm.scaling.set(0.95, 0.8, 1.2);
       palm.position.z = 0.03;
-      add(palm, limb, hand);
+      add(palm, this.mittMaterial, hand);
       const thumb = MeshBuilder.CreateCapsule(
         'tuftThumb',
         { radius: 0.028, height: 0.09, tessellation: 10 },
@@ -247,42 +231,15 @@ export class Tuft {
       );
       thumb.position.set(-side * 0.055, 0.035, 0.02);
       thumb.rotation.set(0.9, 0, -side * 0.6);
-      add(thumb, limb, hand);
+      add(thumb, this.mittMaterial, hand);
       return hand;
     });
-    // Sneakers: a white sole with a toe cap, a colored upper with a stripe, laces, and a
-    // heel tab.
-    const upper = material(colors.shoes, { shine: 0.25, power: 40 });
-    const white = material('#f7f6f2', { shine: 0.15 });
-    const accent = material(colors.shoeAccent, { shine: 0.25 });
-    this.shoes = [-1, 1].map((side) => {
+    // Where the shoes go (TuftOutfit puts sneakers or boots in them).
+    this.shoes = [-1, 1].map(() => {
       const shoe = new TransformNode('tuftShoe', scene);
       shoe.parent = this.root;
-      /** @param {number[]} size @param {number} r @param {number[]} at @param {StandardMaterial} mat */
-      const piece = (size, r, [x, y, z], mat) => {
-        const mesh = roundedMesh('tuftShoePart', size, r, scene);
-        mesh.position.set(x, y, z);
-        return add(mesh, mat, shoe);
-      };
-      piece([0.165, 0.04, 0.285], 0.02, [0, 0.02, 0.03], white); // sole
-      piece([0.145, 0.1, 0.23], 0.05, [0, 0.085, 0.02], upper); // upper
-      piece([0.14, 0.055, 0.09], 0.027, [0, 0.055, 0.125], white); // toe cap
-      piece([0.01, 0.028, 0.15], 0.005, [side * 0.068, 0.08, 0.0], white); // side stripe
-      piece([0.07, 0.05, 0.03], 0.012, [0, 0.12, -0.095], accent); // heel tab
-      for (let i = 0; i < 3; i++) {
-        const lace = MeshBuilder.CreateCapsule(
-          'tuftLace',
-          { radius: 0.009, height: 0.075, tessellation: 6 },
-          scene,
-        );
-        lace.rotation.z = Math.PI / 2;
-        lace.position.set(0, 0.137 - i * 0.008, 0.025 + i * 0.03);
-        add(lace, white, shoe, false);
-      }
       return shoe;
     });
-
-    this.setColors(colors);
 
     // Animation state.
     this.phase = 0; // walk cycle, radians
@@ -301,8 +258,48 @@ export class Tuft {
     };
     this.localVelocity = new Vector3();
     this.sunRay = new Ray(new Vector3(), new Vector3(0, 1, 0), 80);
-    this.skin = skin;
-    this.fur = fur;
+
+    this.outfit = new TuftOutfit(this);
+    this.wear(DEFAULT_OUTFIT);
+  }
+
+  /**
+   * @param {string} hex
+   * @param {{ shine?: number, power?: number }} [finish] shine: how strong the highlight is
+   *   (0..1); power: how small and sharp it is.
+   */
+  material(hex, { shine = 0.1, power = 32 } = {}) {
+    const mat = new StandardMaterial(`tuft${hex}`, this.scene);
+    mat.diffuseColor = Color3.FromHexString(hex);
+    mat.specularColor = new Color3(shine, shine, shine);
+    mat.specularPower = power;
+    return mat;
+  }
+
+  /**
+   * Attaches a mesh to Tuft: it fades with Tuft and (unless told not to) casts a shadow.
+   *
+   * @template {Mesh} T
+   * @param {T} mesh
+   * @param {import('@babylonjs/core').Material} mat
+   * @param {TransformNode} parent
+   */
+  add(mesh, mat, parent, castShadow = true) {
+    mesh.material = mat;
+    mesh.parent = parent;
+    mesh.isPickable = false;
+    if (castShadow) this.shadows.addShadowCaster(mesh);
+    this.meshes.push(mesh);
+    return mesh;
+  }
+
+  /**
+   * Puts on an outfit (see wardrobe.js): fur colors, and clothes.
+   *
+   * @param {import('./wardrobe.js').Outfit} outfit
+   */
+  wear(outfit) {
+    this.outfit.wear(outfit);
   }
 
   /**
@@ -376,18 +373,21 @@ export class Tuft {
   }
 
   /**
-   * @param {{ furTop: string, furBottom: string, cheeks: string }} colors
+   * Colors the fur, and the limbs and eyebrows to go with it.
+   *
+   * @param {import('./wardrobe.js').FurColor} fur
    */
-  setColors(colors) {
+  setFur(fur) {
     for (const plugin of this.bodyPlugins) {
-      plugin.top = Color3.FromHexString(colors.furTop);
-      plugin.bottom = Color3.FromHexString(colors.furBottom);
-      plugin.cheek = Color3.FromHexString(colors.cheeks);
+      plugin.top = Color3.FromHexString(fur.top);
+      plugin.bottom = Color3.FromHexString(fur.bottom);
+      plugin.cheek = Color3.FromHexString(fur.cheeks);
     }
     for (const plugin of this.browPlugins) {
-      plugin.top = Color3.FromHexString(colors.brows);
+      plugin.top = Color3.FromHexString(fur.brows);
       plugin.bottom = plugin.top;
     }
+    this.limbMaterial.diffuseColor = Color3.FromHexString(fur.limbs);
   }
 
   /** @param {number} opacity 0..1: fades Tuft so the camera can see past. */
@@ -400,13 +400,11 @@ export class Tuft {
     // layer is only partly covered by strands, about 40%, hence counting fewer layers.)
     /** @param {number} total @param {number} layers */
     const perLayer = (total, layers) => 1 - Math.pow(1 - total, 1 / (layers * 0.4));
-    const { shells } = config.tuft.fur;
-    this.bodyPlugins[1].opacity = perLayer(opacity, shells);
-    this.browPlugins.forEach((plugin, i) => {
-      plugin.opacity = i % 2 ? perLayer(face, config.tuft.browFur.shells) : 1;
-    });
-    if (this.skin.material) this.skin.material.alpha = opacity;
-    for (const skin of this.browSkins) if (skin.material) skin.material.alpha = face;
+    for (const part of this.furParts) {
+      const amount = part.face ? face : opacity;
+      part.plugins[1].opacity = perLayer(amount, part.shells);
+      if (part.skin.material) part.skin.material.alpha = amount;
+    }
     for (const mesh of this.meshes) {
       if (isFur(mesh)) continue;
       mesh.visibility = this.face.includes(mesh) ? face : opacity;
@@ -518,6 +516,8 @@ export class Tuft {
     const open = this.blinker.update(dt);
     for (const eye of this.eyes) eye.scaling.y = 0.1 + 0.9 * open;
 
+    this.outfit.update(); // sleeves and shorts follow the arms and legs
+
     this.lightFur(dt);
   }
 
@@ -543,7 +543,7 @@ export class Tuft {
     const sunColor = Color3.FromHexString(sun.color).scale(sun.intensity * this.shade);
     const sky = Color3.FromHexString(fill.skyColor).scale(fill.intensity);
     const ground = Color3.FromHexString(fill.groundColor).scale(fill.intensity);
-    for (const plugin of [...this.bodyPlugins, ...this.browPlugins]) {
+    for (const plugin of this.furParts.flatMap((part) => part.plugins)) {
       plugin.sunDirection.copyFrom(ray.direction);
       plugin.sunColor.copyFrom(sunColor);
       plugin.skyColor.copyFrom(sky);
@@ -575,24 +575,4 @@ export class Tuft {
  */
 function isFur(mesh) {
   return mesh.getVerticesData?.('furShell') != null;
-}
-
-/**
- * A mesh from roundedBox, centered on its middle.
- *
- * @param {string} name
- * @param {number[]} size
- * @param {number} radius
- * @param {import('@babylonjs/core').Scene} scene
- */
-function roundedMesh(name, [width, height, depth], radius, scene) {
-  const shape = roundedBox({ width, height, depth, radius, segments: 3 });
-  const mesh = new Mesh(name, scene);
-  const data = new VertexData();
-  data.positions = shape.positions;
-  data.normals = shape.normals;
-  data.uvs = shape.uvs;
-  data.indices = shape.indices;
-  data.applyToMesh(mesh);
-  return mesh;
 }

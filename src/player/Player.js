@@ -125,6 +125,11 @@ export class Player {
     this.velocity = { x: 0, z: 0 };
   }
 
+  /** @param {import('./wardrobe.js').Outfit} outfit */
+  wear(outfit) {
+    this.tuft.wear(outfit);
+  }
+
   /** @param {number} opacity 0 (invisible) to 1 (solid). The shadow stays either way. */
   setOpacity(opacity) {
     this.tuft.setOpacity(opacity);

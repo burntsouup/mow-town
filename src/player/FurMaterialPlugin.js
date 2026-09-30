@@ -42,6 +42,13 @@ export class FurMaterialPlugin extends MaterialPluginBase {
     this.drag = new Vector3(); // how far the tips trail (local meters)
     this.wobble = 0; // meters: the body's surface ripples gently, like jelly
     this.time = 0; // seconds, for the ripple
+    /**
+     * Where clothes hide the fur (see clothesMath.furCover): a band between two levels (a
+     * shirt, shorts), and everything above a hat's line.
+     *
+     * @type {ReturnType<typeof import('./clothesMath.js').furCover>}
+     */
+    this.cover = { band: null, cap: null };
     this.sunDirection = new Vector3(0, 1, 0); // toward the sun (world)
     this.sunColor = new Color3(1, 1, 1); // its color times its strength (dim it in shade)
     this.skyColor = new Color3(0.4, 0.45, 0.5); // light from above...
@@ -84,6 +91,8 @@ export class FurMaterialPlugin extends MaterialPluginBase {
       uniform vec3 furDrag;
       uniform float furWobble;
       uniform float furTime;
+      uniform vec4 furBand;
+      uniform vec2 furCap;
       uniform vec3 furSunDirection;
       uniform vec3 furSunColor;
       uniform vec3 furSkyColor;
@@ -105,6 +114,8 @@ export class FurMaterialPlugin extends MaterialPluginBase {
         { name: 'furDrag', size: 3, type: 'vec3' },
         { name: 'furWobble', size: 1, type: 'float' },
         { name: 'furTime', size: 1, type: 'float' },
+        { name: 'furBand', size: 4, type: 'vec4' },
+        { name: 'furCap', size: 2, type: 'vec2' },
         { name: 'furSunDirection', size: 3, type: 'vec3' },
         { name: 'furSunColor', size: 3, type: 'vec3' },
         { name: 'furSkyColor', size: 3, type: 'vec3' },
@@ -132,6 +143,15 @@ export class FurMaterialPlugin extends MaterialPluginBase {
     uniformBuffer.updateVector3('furDrag', this.drag);
     uniformBuffer.updateFloat('furWobble', this.wobble);
     uniformBuffer.updateFloat('furTime', this.time);
+    const { band, cap } = this.cover;
+    uniformBuffer.updateFloat4(
+      'furBand',
+      band?.from.height ?? 99,
+      band?.from.tilt ?? 0,
+      band?.to.height ?? 0,
+      band?.to.tilt ?? 0,
+    );
+    uniformBuffer.updateFloat2('furCap', cap?.height ?? 99, cap?.tilt ?? 0);
     uniformBuffer.updateVector3('furSunDirection', this.sunDirection);
     uniformBuffer.updateColor3('furSunColor', this.sunColor);
     uniformBuffer.updateColor3('furSkyColor', this.skyColor);
@@ -186,6 +206,11 @@ export class FurMaterialPlugin extends MaterialPluginBase {
           float furCoverage = 1.0;
           if (vFurShell > 0.0) { // shell 0 is solid skin
             if (furAlong > 1.0) discard;
+            // No fur under clothes. (A level is y - tilt × z: see clothesMath.js.)
+            float furAboveFrom = vFurBase.y - furBand.y * vFurBase.z - furBand.x;
+            float furBelowTo = furBand.z - (vFurBase.y - furBand.w * vFurBase.z);
+            if (furAboveFrom > 0.0 && furBelowTo > 0.0) discard;
+            if (vFurBase.y - furCap.y * vFurBase.z > furCap.x) discard;
             vec3 furJitter = vec3(furHash(furId + 7.0), furHash(furId + 19.0), furHash(furId + 31.0)) - 0.5;
             // How far from the strand, measured along the skin (ignoring depth into it), so
             // strands come out round wherever the skin cuts through the grid.
