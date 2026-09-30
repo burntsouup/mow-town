@@ -126,6 +126,10 @@ export const config = {
       softness: 0.12,
       sheen: 0.15,
     },
+    // The body is soft, like jelly: springs (stiffness: how quick the wobble; damping: how
+    // fast it settles) make it lag and sway when you start, stop and turn (lean: radians per
+    // m/s² of change in speed, up to maxLean), and its surface ripples (ripple: meters).
+    jelly: { stiffness: 90, damping: 7, lean: 0.012, maxLean: 0.2, ripple: 0.004 },
     // stride: meters each foot travels either side of its hip; lift: how high feet step;
     // bob/squash: how much the body bounces and squishes per step; armSwing: arms vs feet;
     // fullAt: the speed (m/s) that counts as a full walk.

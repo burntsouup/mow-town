@@ -40,6 +40,8 @@ export class FurMaterialPlugin extends MaterialPluginBase {
     this.cheekRadius = 0.08;
     this.opacity = 1;
     this.drag = new Vector3(); // how far the tips trail (local meters)
+    this.wobble = 0; // meters: the body's surface ripples gently, like jelly
+    this.time = 0; // seconds, for the ripple
     this.sunDirection = new Vector3(0, 1, 0); // toward the sun (world)
     this.sunColor = new Color3(1, 1, 1); // its color times its strength (dim it in shade)
     this.skyColor = new Color3(0.4, 0.45, 0.5); // light from above...
@@ -80,6 +82,8 @@ export class FurMaterialPlugin extends MaterialPluginBase {
       uniform vec2 furRange;
       uniform float furOpacity;
       uniform vec3 furDrag;
+      uniform float furWobble;
+      uniform float furTime;
       uniform vec3 furSunDirection;
       uniform vec3 furSunColor;
       uniform vec3 furSkyColor;
@@ -99,6 +103,8 @@ export class FurMaterialPlugin extends MaterialPluginBase {
         { name: 'furRange', size: 2, type: 'vec2' },
         { name: 'furOpacity', size: 1, type: 'float' },
         { name: 'furDrag', size: 3, type: 'vec3' },
+        { name: 'furWobble', size: 1, type: 'float' },
+        { name: 'furTime', size: 1, type: 'float' },
         { name: 'furSunDirection', size: 3, type: 'vec3' },
         { name: 'furSunColor', size: 3, type: 'vec3' },
         { name: 'furSkyColor', size: 3, type: 'vec3' },
@@ -124,6 +130,8 @@ export class FurMaterialPlugin extends MaterialPluginBase {
     uniformBuffer.updateFloat2('furRange', this.range.bottom, this.range.top);
     uniformBuffer.updateFloat('furOpacity', this.opacity);
     uniformBuffer.updateVector3('furDrag', this.drag);
+    uniformBuffer.updateFloat('furWobble', this.wobble);
+    uniformBuffer.updateFloat('furTime', this.time);
     uniformBuffer.updateVector3('furSunDirection', this.sunDirection);
     uniformBuffer.updateColor3('furSunColor', this.sunColor);
     uniformBuffer.updateColor3('furSkyColor', this.skyColor);
@@ -140,9 +148,13 @@ export class FurMaterialPlugin extends MaterialPluginBase {
           varying vec3 vFurBase;
           varying vec3 vFurNormal;
           varying float vFurShell;`,
-        // The tips trail behind and droop a little (combed down); the roots stay put.
+        // The whole surface ripples gently (skin and fur together, since they share furBase),
+        // and the tips trail behind and droop a little (combed down).
         CUSTOM_VERTEX_UPDATE_POSITION: `
           #ifdef FURSHELLS
+            float furRipple = sin(furTime * 4.0 + furBase.y * 9.0 + furBase.x * 5.0)
+              + 0.6 * sin(furTime * 2.7 - furBase.z * 7.0 + furBase.y * 4.0);
+            positionUpdated += normal * furWobble * furRipple;
             positionUpdated += (furDrag + vec3(0.0, -0.012, 0.0)) * furShell * furShell;
           #endif`,
         CUSTOM_VERTEX_MAIN_END: `

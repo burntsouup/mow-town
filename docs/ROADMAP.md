@@ -322,6 +322,17 @@ shadows was expensive, so the fur lights itself (a wrapped sun plus sky and grou
 one ray a frame to tell whether Tuft stands in shade). Fading needs care too: 16 faint layers
 still stack up to nearly solid, so each layer gets only its share of the opacity.
 
+At the second checkpoint, the body was "too circular; it should be more fluid". An egg looks
+like a ball once it's furry, so the body became a soft gumdrop: fuller low down, narrower on
+top, flatter underneath, with gentle lumps. Any sharp corner in the shape's math shows up as
+a crease in the fur, so every curve in it is smooth. It moves like jelly too: it sways back
+when you set off, sloshes forward when you stop, leans into turns and ripples a little as it
+walks, using springs that overshoot and settle. While reshaping it, we found the solid skin
+under the fur hadn't been drawn at all since the polish (a divide by zero in the fur layers
+put it at "not a number"), which is why the fur looked thin and seamy from some angles. And
+the eyebrows now sit on the head: the top slopes back, so brows placed straight above the
+eyes floated in front of it.
+
 ### 3. Wardrobe and saving
 
 - [ ] Fur colors, hats, glasses, gloves, shirts, shorts and shoes
