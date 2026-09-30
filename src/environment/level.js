@@ -3,7 +3,7 @@ import { buildFrontYard } from './FrontYard.js';
 import { DRIVEWAY, frontLawn, HOUSE, SIDEWALK, SPOTS } from './frontYardLayout.js';
 import { Greybox } from './greybox.js';
 import { buildNextDoor } from './NextDoor.js';
-import { NEXT_HOUSE, nextDoorLawn } from './nextDoorLayout.js';
+import { NEXT_HOUSE, NEXT_SPOTS, nextDoorLawn } from './nextDoorLayout.js';
 import { leafyMesh } from './foliage.js';
 import { buildHouse, buildTree } from './props.js';
 import { COLORS, LAYER, SEAM_OVERLAP } from './style.js';
@@ -79,6 +79,26 @@ export function createLevel(scene, shadows) {
     standSpot,
     closetSpot: { x: SPOTS.coatStand.x, z: SPOTS.coatStand.z }, // the coat stand by the door
     jobs,
+    // Birds wheeling round high up, and butterflies over the flower beds (see Wildlife).
+    wildlife: {
+      flights: [
+        {
+          birds: 5,
+          flight: { center: { x: 5, z: 0 }, radius: 55, height: 24, speed: 0.07, phase: 0 },
+        },
+        {
+          birds: 3,
+          flight: { center: { x: -10, z: 12 }, radius: 80, height: 32, speed: -0.05, phase: 2 },
+        },
+      ],
+      butterflies: [
+        { x: SPOTS.flowerBed.x, y: 0.15, z: SPOTS.flowerBed.z, range: 1.4 },
+        { x: SPOTS.flowerBed.x, y: 0.15, z: SPOTS.flowerBed.z, range: 1.8 },
+        { x: NEXT_SPOTS.islandBed.x, y: 0.15, z: NEXT_SPOTS.islandBed.z, range: 1.8 },
+        { x: NEXT_SPOTS.islandBed.x, y: 0.15, z: NEXT_SPOTS.islandBed.z, range: 2.2 },
+        { x: -3.5, y: 0.3, z: 0.6, range: 1.2 }, // round the bushes by our front door
+      ],
+    },
     lawns: { frontLawn: frontLawn(), nextDoor: nextDoorLawn() },
   };
 }

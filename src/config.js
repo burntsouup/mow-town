@@ -282,6 +282,8 @@ export const config = {
     coins: 0.16, // "ka-ching" when you're paid
     steps: { grass: 0.05, path: 0.04 }, // footsteps, at full stride
     pop: 0.1, // trying something on in the closet
+    birds: 0.035, // birdsong in the distance
+    birdsongEvery: [4, 11], // seconds between bursts of birdsong, at random in this range
     muteKey: 'KeyM',
   },
   job: {
