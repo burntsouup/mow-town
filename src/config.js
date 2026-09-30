@@ -13,6 +13,11 @@ export const config = {
     maxPixelRatio: 2,
     highRefreshAbove: 75,
     highRefreshPixelRatio: 1.5,
+    // If it still can't keep up while you play (see watchFrameRate in game/Game.js): every
+    // windowFrames frames, if more than slowShare of them took slowFactor times the screen's
+    // frame time, twice in a row, render step pixels per CSS pixel softer, down to
+    // minPixelRatio.
+    adaptive: { windowFrames: 120, slowFactor: 1.4, slowShare: 0.25, step: 0.25, minPixelRatio: 1 },
     shadowMapSize: 2048,
     // Reflections of the sky in shiny things (see environment/reflections.js): the picture's
     // size, pixels per side.

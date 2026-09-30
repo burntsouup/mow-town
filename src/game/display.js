@@ -6,7 +6,8 @@
  * A 120 Hz screen leaves only 8.3 ms to draw each frame, and on a Retina MacBook the grass
  * alone takes about that at full resolution. So on fast screens we render a little below
  * the screen's own sharpness (at 1.5 pixels per CSS pixel instead of 2), which the eye barely
- * notices but halves the pixels to fill.
+ * notices but halves the pixels to fill. And if it still can't keep up (a slower machine),
+ * it steps the resolution down a little at a time while you play.
  *
  * @typedef {{ maxPixelRatio: number, highRefreshAbove: number,
  *   highRefreshPixelRatio: number }} DisplaySettings
@@ -40,4 +41,34 @@ export function pixelRatioFor(devicePixelRatio, refreshRate, settings) {
       ? Math.min(settings.maxPixelRatio, settings.highRefreshPixelRatio)
       : settings.maxPixelRatio;
   return Math.max(0.5, Math.min(devicePixelRatio || 1, cap));
+}
+
+/**
+ * Whether the game is struggling to keep up with the screen: too many frames in a stretch
+ * took much longer than the screen's own frame time. Long hitches (loading a shader, the
+ * tab waking up) are ignored; they aren't about the resolution.
+ *
+ * @param {number[]} frameMs Milliseconds between recent frames.
+ * @param {number} refreshRate The screen's frames per second.
+ * @param {{ slowFactor: number, slowShare: number }} settings slowFactor: a frame this many
+ *   times the screen's frame time counts as slow; slowShare: this share of slow frames is
+ *   too many.
+ */
+export function isStruggling(frameMs, refreshRate, { slowFactor, slowShare }) {
+  if (refreshRate <= 0) return false;
+  const budget = 1000 / refreshRate;
+  const frames = frameMs.filter((ms) => ms > 0 && ms < 100);
+  if (frames.length < 30) return false;
+  const slow = frames.filter((ms) => ms > budget * slowFactor).length;
+  return slow / frames.length > slowShare;
+}
+
+/**
+ * A step down in resolution, but not below the floor.
+ *
+ * @param {number} pixelRatio
+ * @param {{ step: number, minPixelRatio: number }} settings
+ */
+export function lowerPixelRatio(pixelRatio, { step, minPixelRatio }) {
+  return Math.min(pixelRatio, Math.max(minPixelRatio, pixelRatio - step));
 }
