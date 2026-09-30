@@ -11,7 +11,7 @@ import {
   VertexData,
 } from '@babylonjs/core';
 import { config } from '../config.js';
-import { roundedBox } from '../math/roundedBox.js';
+import { roundedMesh } from '../environment/toyMeshes.js';
 import {
   bodyBand,
   CLOTHES,
@@ -484,23 +484,3 @@ export class TuftOutfit {
 
 /** The pompom's size (radii, meters). */
 const POMPOM = { x: 0.06, y: 0.055, z: 0.06 };
-
-/**
- * A mesh from roundedBox, centered on its middle.
- *
- * @param {string} name
- * @param {number[]} size
- * @param {number} radius
- * @param {import('@babylonjs/core').Scene} scene
- */
-function roundedMesh(name, [width, height, depth], radius, scene) {
-  const shape = roundedBox({ width, height, depth, radius, segments: 3 });
-  const mesh = new Mesh(name, scene);
-  const data = new VertexData();
-  data.positions = shape.positions;
-  data.normals = shape.normals;
-  data.uvs = shape.uvs;
-  data.indices = shape.indices;
-  data.applyToMesh(mesh);
-  return mesh;
-}
