@@ -11,8 +11,9 @@ you play as Tuft, a fuzzy critter you can dress up (at the coat stand by the fro
 "Dress up Tuft" on the start screen). Mow our front lawn for money, with tips for neat
 stripes and for trimming the edges with a string trimmer; buy a 30-inch deck at the
 garage-sale table; then push the mower next door and mow the Parkers' bigger, L-shaped
-lawn. Your money, deck, job and outfit are saved between visits. Next up (v0.4, "Bigger
-machines"): a riding mower and a large property built for it. See
+lawn. Your money, deck, job and outfit are saved between visits. In progress (v0.4,
+"Looking amazing"): lighting, grass, trees and buildings that look as good as Tuft; then
+v0.5, "Bigger machines". See
 [docs/ROADMAP.md](docs/ROADMAP.md) for what's done and next.
 
 mow-town started as a copy of [p-washer](https://github.com/burntsouup/p-washer) v0.2.0 (a

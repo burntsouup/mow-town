@@ -409,14 +409,56 @@ went straight to `main` without a PR by mistake; each commit passed `npm run che
 New machines or lawns, buying clothes with money (starter items are free), saving the state
 of half-mowed lawns.
 
+## v0.4 — "Looking amazing"
+
+Goal: the whole world looks as good as Tuft. The game is one idea (a lawn under your nose),
+so the grass, the houses and the trees have to be a pleasure to look at.
+
+Approach: stay on Babylon.js (it isn't the limit: it has image-based lighting, ambient
+occlusion, soft shadows, bloom and custom shaders), keep building the art in code, and use
+free CC0 textures and a sky HDRI where they beat code. Same budget as v0.3: 120 fps at the
+1.5× render on an M3 MacBook; every milestone measures its cost. A checkpoint after each
+milestone, to look at before and after screenshots.
+
+### 1. Lighting and atmosphere
+
+- [ ] Sky lighting from an HDRI (soft light and reflections from every direction)
+- [ ] Ambient occlusion: soft darkening where things meet and in corners
+- [ ] Softer, crisper shadows; a gentle glow on bright highlights
+- [ ] A sky with a sun disc, soft clouds and haze
+
+### 2. Grass
+
+- [ ] Real blades up close, clumps and color variety, wind
+- [ ] Light glowing through backlit blades; glossier stripes
+- [ ] Wildflowers (clover, dandelions) that the mower takes down
+
+### 3. Trees, hedges and flowers
+
+- [ ] Fluffy, leafy canopies and bark; leafy hedges and bushes; real flowers
+
+### 4. Buildings and street
+
+- [ ] Siding, brick, porches, gutters, windows with reflections and curtains, street lamps
+
+### 5. Life, polish and playtest
+
+- [ ] Birds, butterflies, a better backdrop; frame rate on budget; playtest
+
+### v0.4 success checklist
+
+- [ ] Screenshots from where you play look like a finished game
+- [ ] The grass is a pleasure to look at, mowed and unmowed
+- [ ] It runs as smoothly as v0.3
+
 ## Later (ideas, not commitments)
 
-- **v0.4, "Bigger machines":** a riding mower, a large property built for it, and a real
+- **v0.5, "Bigger machines":** a riding mower, a large property built for it, and a real
   shop with more than one thing in it
-- **v0.5, "Mow-town":** a street of clients, jobs you pick, lawns that grow back day by day,
+- **v0.6, "Mow-town":** a street of clients, jobs you pick, lawns that grow back day by day,
   and a reputation that unlocks bigger clients
-- **v0.6, "Pride in the craft":** clients asking for patterns, bagging or blowing clippings,
+- **v0.7, "Pride in the craft":** clients asking for patterns, bagging or blowing clippings,
   an edger, a golden-hour aerial view
-- **v0.7, "Co-op":** two players on one lawn (why cutting runs in fixed, deterministic steps)
+- **v0.8, "Co-op":** two players on one lawn (why cutting runs in fixed, deterministic steps)
 - **v1.0, "A full summer":** about a dozen properties, 5–6 tools and upgrades, a big finale,
   an art and sound pass, settings and gamepad support
