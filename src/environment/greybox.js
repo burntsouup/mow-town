@@ -8,6 +8,8 @@ import {
   VertexData,
 } from '@babylonjs/core';
 import { roundedBox } from '../math/roundedBox.js';
+import { GroundShadePlugin } from './GroundShadePlugin.js';
+import { GLOSSY } from './style.js';
 import {
   createAsphaltTexture,
   createConcreteTexture,
@@ -41,6 +43,8 @@ export class Greybox {
     this.shadows = shadows;
     /** @type {Map<string, StandardMaterial>} */
     this.materials = new Map();
+    /** @type {Map<string, GroundShadePlugin>} Each solid color's soft shading (see there). */
+    this.groundShades = new Map();
   }
 
   /**
@@ -68,18 +72,107 @@ export class Greybox {
 
   /**
    * Matte material for a hex color, shared between every mesh that uses the same color.
+   * Things built from it get a little darker toward the ground (see GroundShadePlugin).
    *
    * @param {string} hex e.g. '#b8b0a0'
    */
   material(hex) {
     let material = this.materials.get(hex);
     if (!material) {
-      material = new StandardMaterial(`mat${hex}`, this.scene);
-      material.diffuseColor = Color3.FromHexString(hex);
-      material.specularColor = Color3.Black(); // no plastic-looking highlight
+      material = this.plainMaterial(hex);
+      const gloss = GLOSSY[hex];
+      if (gloss) {
+        // Glass and water: a sharp glint of sun, and the sky reflected (see reflections.js).
+        material.specularColor = new Color3(0.9, 0.9, 0.9);
+        material.specularPower = 160;
+        material.metadata = { gloss };
+      }
+      this.groundShades.set(hex, new GroundShadePlugin(material));
       this.materials.set(hex, material);
     }
     return material;
+  }
+
+  /**
+   * A matte material for flat things on the ground (painted lines), which mustn't darken
+   * toward the ground: they're on it.
+   *
+   * @param {string} hex
+   */
+  flatMaterial(hex) {
+    const key = `flat:${hex}`;
+    let material = this.materials.get(key);
+    if (!material) {
+      material = this.plainMaterial(hex);
+      this.materials.set(key, material);
+    }
+    return material;
+  }
+
+  /** @param {string} hex */
+  plainMaterial(hex) {
+    const material = new StandardMaterial(`mat${hex}`, this.scene);
+    material.diffuseColor = Color3.FromHexString(hex);
+    material.specularColor = Color3.Black(); // no plastic-looking highlight
+    return material;
+  }
+
+  /**
+   * House walls of this color get a little darker just under their eaves, in the roof's
+   * shade (see GroundShadePlugin).
+   *
+   * @param {string} hex
+   * @param {number} height Meters: where the eaves are.
+   */
+  shadeUnderEaves(hex, height) {
+    this.material(hex);
+    const plugin = this.groundShades.get(hex);
+    if (plugin) plugin.eaveHeight = height;
+  }
+
+  /**
+   * A soft, dark strip on the ground along the foot of a wall (or a hedge): the shade where
+   * the ground meets it, which the sun's shadows alone don't give. Dark along the line,
+   * fading out to both sides (the half under the wall is hidden).
+   *
+   * @param {string} name
+   * @param {number[]} from [x, z]
+   * @param {number[]} to [x, z]
+   * @param {number} width Meters across.
+   * @param {number} [y] Height of the ground there (a few mm up, above the surface).
+   */
+  groundShade(name, [x1, z1], [x2, z2], width, y = 0.04) {
+    let material = this.materials.get('groundShadeStrip');
+    if (!material) {
+      const texture = new DynamicTexture(
+        'groundShadeStrip',
+        { width: 4, height: 64 },
+        this.scene,
+        false,
+      );
+      const context = texture.getContext();
+      const gradient = context.createLinearGradient(0, 0, 0, 64);
+      gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.42)');
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, 4, 64);
+      texture.hasAlpha = true;
+      texture.update();
+      material = new StandardMaterial('groundShadeStripMat', this.scene);
+      material.diffuseColor = Color3.Black();
+      material.specularColor = Color3.Black();
+      material.opacityTexture = texture;
+      material.disableLighting = true;
+      this.materials.set('groundShadeStrip', material);
+    }
+    const length = Math.hypot(x2 - x1, z2 - z1);
+    const strip = MeshBuilder.CreateGround(name, { width: length, height: width }, this.scene);
+    strip.position.set((x1 + x2) / 2, y, (z1 + z2) / 2);
+    strip.rotation.y = -Math.atan2(z2 - z1, x2 - x1);
+    strip.material = material;
+    strip.isPickable = false;
+    return strip;
   }
 
   /**
@@ -315,7 +408,7 @@ export class Greybox {
     mesh.position.set(x, y, z);
     mesh.receiveShadows = true;
     if (!surface) {
-      mesh.material = this.material(color);
+      mesh.material = this.flatMaterial(color);
       return mesh;
     }
     mesh.material = this.surface(surface);

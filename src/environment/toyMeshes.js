@@ -1,5 +1,6 @@
 import { Color3, Mesh, StandardMaterial, VertexData } from '@babylonjs/core';
 import { roundedBox } from '../math/roundedBox.js';
+import { GroundShadePlugin } from './GroundShadePlugin.js';
 
 /**
  * Small helpers for building "toy" props in code (the mower, the trimmer, the sale table,
@@ -40,5 +41,8 @@ export function plastic(scene, hex, { shine = 0.35, power = 48 } = {}) {
   material.diffuseColor = Color3.FromHexString(hex);
   material.specularColor = new Color3(shine, shine, shine);
   material.specularPower = power;
+  // Glossy plastic reflects the sky a little (see reflections.js); matte things don't.
+  if (shine >= 0.3) material.metadata = { gloss: shine * 0.45 };
+  new GroundShadePlugin(material); // a little darker toward the ground
   return material;
 }

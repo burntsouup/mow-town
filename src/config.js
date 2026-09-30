@@ -14,6 +14,9 @@ export const config = {
     highRefreshAbove: 75,
     highRefreshPixelRatio: 1.5,
     shadowMapSize: 2048,
+    // Reflections of the sky in shiny things (see environment/reflections.js): the picture's
+    // size, pixels per side.
+    reflections: { size: 128 },
     // Sky dome gradient. The horizon color is also the fog color so distant ground fades out.
     // sunGlow: added around the sun; sunSize: the sun disc's radius (radians); cloudShade:
     // the undersides of clouds; cloudDrift: how fast they drift round (radians/second).

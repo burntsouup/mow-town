@@ -8,6 +8,7 @@ import { Clippings } from '../effects/Clippings.js';
 import { Footsteps } from '../effects/Footsteps.js';
 import { createLevel } from '../environment/level.js';
 import { applyColorGrading, createLighting } from '../environment/lighting.js';
+import { createSkyReflections } from '../environment/reflections.js';
 import { createSky } from '../environment/sky.js';
 import { Lawn } from '../lawn/Lawn.js';
 import { stripeNeatness } from '../lawn/neatness.js';
@@ -117,6 +118,12 @@ export class Game {
       dressUp: () => this.openCloset(),
       startOver: () => this.startOver(),
     };
+    // Once everything's built: shiny things reflect the sky.
+    createSkyReflections(this.scene, [
+      this.sky.dome,
+      ...this.sky.clouds.getChildMeshes(),
+      this.level.ground,
+    ]);
     this.storage = browserStorage();
     this.load();
 
