@@ -303,7 +303,17 @@ export const config = {
     revealKey: 'KeyV', // view the lawn from above (it also plays when the job is done)
     // The aerial shot: seconds to fly up (and back), seconds to hold, meters up and back
     // from the lawn's middle, and how far (radians) it swings across the lawn meanwhile.
-    reveal: { flyTime: 2.2, holdTime: 4, height: 14, distance: 11, swing: 0.3, skipAfter: 1 },
+    // It turns to look along your stripes (they show best that way), up to maxTurn radians
+    // from straight out from the street.
+    reveal: {
+      flyTime: 2.2,
+      holdTime: 4,
+      height: 14,
+      distance: 11,
+      swing: 0.3,
+      maxTurn: 0.8,
+      skipAfter: 1,
+    },
     resetKey: 'KeyR', // after completion: redo the job (or, after the last one, start over)
     nextKey: 'KeyN', // after completion: move on to the next job
   },
