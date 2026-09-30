@@ -6,13 +6,14 @@ A small, satisfying 3D lawn-mowing game. Grab the mower, push it across a shaggy
 watch the stripes appear. Built with [Babylon.js](https://www.babylonjs.com/) and plain
 JavaScript.
 
-**Status:** v0.2, "A little mowing business" (released as 0.2.0): mow our front lawn for
-money, with tips for neat stripes and for trimming the edges with a string trimmer; buy a
-30-inch deck at the sale table by the garage; then push the mower next door and mow the
-Parkers' bigger, L-shaped lawn. In progress (v0.3, "Looking good"): a softer, toy-like
-world, and you play as Tuft, a fuzzy critter you can dress up (at the coat stand by the
-front door, or "Dress up Tuft" on the start screen). Your money, deck, job and outfit are
-saved between visits. See [docs/ROADMAP.md](docs/ROADMAP.md) for what's done and next.
+**Status:** v0.3, "Looking good" (released as 0.3.0): a soft, toy-like neighborhood, and
+you play as Tuft, a fuzzy critter you can dress up (at the coat stand by the front door, or
+"Dress up Tuft" on the start screen). Mow our front lawn for money, with tips for neat
+stripes and for trimming the edges with a string trimmer; buy a 30-inch deck at the
+garage-sale table; then push the mower next door and mow the Parkers' bigger, L-shaped
+lawn. Your money, deck, job and outfit are saved between visits. Next up (v0.4, "Bigger
+machines"): a riding mower and a large property built for it. See
+[docs/ROADMAP.md](docs/ROADMAP.md) for what's done and next.
 
 mow-town started as a copy of [p-washer](https://github.com/burntsouup/p-washer) v0.2.0 (a
 pressure-washing game), stripped down to its base systems: the game loop, input, camera,
