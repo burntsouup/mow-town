@@ -364,6 +364,9 @@ blank (#15), so every roof shares one shingle texture, scaled through its UVs. S
 icospheres get expensive fast (a subdivision-3 puff is 642 vertices), so small puffs use
 fewer subdivisions, unless they're seen up close (`smooth`). A half cylinder (`arc: 0.5`) is
 built on its -z side.
+**Walls (v0.4 milestone 4):** siding, brick and stone are patterns worked out from each
+pixel's world position (`WallPatternPlugin`), not textures: no texture coordinates to line
+up across faces or rotated houses, and no pictures to load.
 **Props and the HUD (v0.3 milestone 4):** props built outside the level kit (the mower,
 the trimmer, the sale table, Tuft's clothes) share `toyMeshes.js`: `roundedMesh`, and a
 `plastic` material with a bright, tight highlight, which is most of what makes a shape read

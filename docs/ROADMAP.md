@@ -475,9 +475,17 @@ fewer, bigger clusters. A see-through canopy full of leaves looked like broken g
 cost a lot to draw, so leaves now vanish when a tree is in the way, leaving a faint ghost of
 its core. About 490,000 leaf and flower points in all, for about 0.3 ms a frame.
 
-### 4. Buildings and street
+### 4. Buildings and street ✅
 
-- [ ] Siding, brick, porches, gutters, windows with reflections and curtains, street lamps
+- [x] Siding, brick, porches, gutters, windows with reflections and curtains, street lamps
+
+**Findings:** walls got their texture from each pixel's position in the world rather than
+from pictures: lap siding (a thin shadow under every board), brick chimneys and stone
+foundations, a few sums a pixel, lining up on every face of every house however it's turned.
+The details that made houses read as houses were small and cheap: gutters with downspouts,
+a little roof over the front door, a doormat and a lantern, curtains behind the glass, and a
+row of windows across the garage door. Every house on the street shares them. Street lamps
+and a fire hydrant make the street a street. The cost didn't register (well under 0.1 ms).
 
 ### 5. Life, polish and playtest
 
