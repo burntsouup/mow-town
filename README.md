@@ -37,6 +37,7 @@ player movement, jobs, tuning panel, HUD, and synthesized audio.
 | Hold mouse    | Run the trimmer (its head goes where you look)                  |
 | Hold F        | Highlight the grass that's left                                 |
 | V             | View the lawn from above                                        |
+| L             | Watch a timelapse of your mow (it also plays when a job's done) |
 | N             | Next job (once this one's done)                                 |
 | R             | Mow it again (once it's done)                                   |
 | M             | Mute / unmute                                                   |
