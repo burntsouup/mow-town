@@ -11,12 +11,13 @@
  *
  * @param {{ positions: ArrayLike<number>, normals: ArrayLike<number>,
  *   indices: ArrayLike<number> }} surface The skin.
- * @param {{ shells: number, length: number }} fur shells: how many layers above the skin
- *   (the skin itself comes first, as shell 0); length: meters from the skin to the tips.
+ * @param {{ shells: number, length: number, skin?: boolean }} fur shells: how many layers
+ *   above the skin; length: meters from the skin to the tips; skin: include the skin itself
+ *   first, as shell 0 (default yes; leave it out to draw the skin as its own mesh).
  * @returns {{ positions: number[], normals: number[], indices: number[], furBase: number[],
  *   furShell: number[] }}
  */
-export function furShells(surface, { shells, length }) {
+export function furShells(surface, { shells, length, skin = true }) {
   const count = surface.positions.length / 3;
   /** @type {number[]} */
   const positions = [];
@@ -28,7 +29,7 @@ export function furShells(surface, { shells, length }) {
   const furBase = [];
   /** @type {number[]} */
   const furShell = [];
-  for (let shell = 0; shell <= shells; shell++) {
+  for (let shell = skin ? 0 : 1; shell <= shells; shell++) {
     const out = shell / shells;
     const first = positions.length / 3;
     for (let i = 0; i < count; i++) {

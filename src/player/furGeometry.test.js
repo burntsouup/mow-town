@@ -9,6 +9,12 @@ const triangle = {
 };
 
 describe('furShells', () => {
+  it('can leave the skin out, for drawing it separately', () => {
+    const shells = furShells(triangle, { shells: 2, length: 0.02, skin: false });
+    expect(shells.furShell).toEqual([0.5, 0.5, 0.5, 1, 1, 1]);
+    expect(shells.indices).toEqual([0, 2, 1, 3, 5, 4]);
+  });
+
   const fur = furShells(triangle, { shells: 4, length: 0.02 });
 
   it('makes one copy of the surface for the skin, then one per shell', () => {
