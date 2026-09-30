@@ -24,7 +24,7 @@ import { DebugOverlay } from '../ui/DebugOverlay.js';
 import { Hud } from '../ui/Hud.js';
 import { TuningPanel } from '../ui/TuningPanel.js';
 import { Celebration } from './Celebration.js';
-import { pixelRatioFor, refreshRateFrom } from './display.js';
+import { isStruggling, lowerPixelRatio, pixelRatioFor, refreshRateFrom } from './display.js';
 import { Input } from './Input.js';
 import { JobList } from './jobList.js';
 import { countTowards, jobReceipt, receiptTotal } from './pay.js';
@@ -100,6 +100,9 @@ export class Game {
     this.time = 0;
     this.refreshRate = 0; // the screen's, in Hz, measured when the game starts
     this.pixelRatio = window.devicePixelRatio || 1; // pixels rendered per CSS pixel
+    /** @type {number[]} Recent frame times (ms), to see if we're keeping up. */
+    this.frameTimes = [];
+    this.strugglingWindows = 0; // stretches of frames in a row that missed the screen
     this.hud = new Hud(hudRoot, this.input);
     this.debugOverlay = new DebugOverlay(this.engine, this.scene, hudRoot);
     this.tuning = new TuningPanel(this);
@@ -183,6 +186,7 @@ export class Game {
       this.refreshRate = refreshRateFrom(frameMs.slice(4)); // the first few are still settling
       this.applyPixelRatio();
       this.engine.runRenderLoop(() => {
+        this.watchFrameRate(this.engine.getDeltaTime());
         const dt = toDeltaSeconds(this.engine.getDeltaTime(), config.loop.maxDeltaSeconds);
         this.update(dt);
         this.input.endFrame();
@@ -190,6 +194,27 @@ export class Game {
       });
     };
     requestAnimationFrame(measure);
+  }
+
+  /**
+   * If frames keep missing the screen's refresh (a slower machine), renders a little softer:
+   * checked every so many frames, and only after two struggling stretches in a row, so a
+   * one-off hitch doesn't count (see display.js).
+   *
+   * @param {number} frameMs
+   */
+  watchFrameRate(frameMs) {
+    const settings = config.render.adaptive;
+    if (document.hidden) return;
+    this.frameTimes.push(frameMs);
+    if (this.frameTimes.length < settings.windowFrames) return;
+    const struggling = isStruggling(this.frameTimes, this.refreshRate, settings);
+    this.frameTimes = [];
+    this.strugglingWindows = struggling ? this.strugglingWindows + 1 : 0;
+    if (this.strugglingWindows < 2) return;
+    this.strugglingWindows = 0;
+    this.pixelRatio = lowerPixelRatio(this.pixelRatio, settings);
+    this.engine.setHardwareScalingLevel(1 / this.pixelRatio);
   }
 
   /** Renders at the resolution the screen can keep up with (see display.js). */
@@ -223,8 +248,18 @@ export class Game {
     this.updateFootsteps();
     this.updateReveal(dt);
     this.updateJob(dt);
-    // Finish off leftovers and send cut grass to the GPU.
-    for (const lawn of Object.values(this.lawns)) lawn.update(dt);
+    // Finish off leftovers and send cut grass to the GPU. Real blades grow round you, a
+    // little ahead, where the camera's looking.
+    const feet = this.player.position;
+    const ahead = config.grass.blades.ahead;
+    const aheadX = feet.x + Math.sin(this.camera.yaw) * ahead;
+    const aheadZ = feet.z + Math.cos(this.camera.yaw) * ahead;
+    // (Not in the aerial view: from up there, the layers look right on their own.)
+    const bladesAt = this.reveal.isActive ? null : { x: aheadX, z: aheadZ };
+    for (const lawn of Object.values(this.lawns)) {
+      lawn.follow(bladesAt);
+      lawn.update(dt);
+    }
     if (this.input.wasPressed(config.audio.muteKey)) this.audio.toggleMute();
     this.audio.update(
       dt,

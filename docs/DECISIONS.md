@@ -467,3 +467,20 @@ offers on Apple GPUs gave nonsense (25 ms for a 4 ms frame).
 came out washed out and too bright), on top of costing the most.
 **Revisit when:** there's frame time to spare (a lighter grass for far away, or WebGPU),
 then real ambient occlusion and bloom are worth another look.
+
+## 34. Grass: layers everywhere, real blades near you
+
+**Why:** shells (see #16) are cheap for a whole lawn and make cutting just a texture write,
+but they look like stacked coins up close, where the player's eye is. Real blades
+everywhere would be far too many. So within a few meters of a spot just ahead of you, long
+grass is real geometry (`GrassBlades`): one fixed patch of 90,000 five-point blades, placed,
+sized and bent in the vertex shader from the same grass map the layers read, so cutting
+still works the same way. The patch moves a whole cell at a time, so blades never slide.
+Toward its edge the blades thin out while the layers' blades thin in (each keeps a share
+set by a random number per blade and the distance), so there's no line where one meets the
+other. Mowed grass stays layers: it's short enough to look fine, and swapping it made a ring
+show. Both share their colors, stripes and glow (`grassShading.js`).
+**Gotchas:** a blade's lighting uses a straight-up normal, like the layers, or the two
+don't match. Sines are dear when they run for every layer of every pixel: work out anything
+you can after the cheap test that throws most pixels away.
+**Revisit when:** frame time allows a bigger patch, or blades should cast shadows.

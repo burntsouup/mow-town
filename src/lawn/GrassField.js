@@ -5,10 +5,13 @@ import {
   StandardMaterial,
   Color3,
   Texture,
+  Vector3,
   VertexData,
 } from '@babylonjs/core';
 import { config } from '../config.js';
+import { GrassBlades } from './GrassBlades.js';
 import { GrassMaterialPlugin } from './GrassMaterialPlugin.js';
+import { grassVariationData } from './grassNoise.js';
 
 /** The bottom shell floats this far above the ground so the two don't flicker. */
 const BASE_HEIGHT = 0.004;
@@ -47,7 +50,21 @@ export class GrassField {
     const material = new StandardMaterial('grassMat', scene);
     material.diffuseColor = Color3.White(); // the plugin supplies the grass colors
     material.specularColor = Color3.Black();
-    this.plugin = new GrassMaterialPlugin(material, this.texture, area);
+    /**
+     * What the layers and the real blades near you share (see grassShading.js): the time
+     * (for the wind), the sun, the "show what's left" highlight, and where the blades are.
+     */
+    this.state = {
+      size: { width: area.width, depth: area.depth },
+      time: 0,
+      sunDirection: new Vector3(...config.render.sun.direction).normalize(),
+      highlight: 0,
+      uncutAbove: 1, // grass taller than this (0..1) still counts as uncut
+      near: { x: 0, z: 0, radius: 0 },
+    };
+    const variety = varietyTexture(scene);
+    this.plugin = new GrassMaterialPlugin(material, this.texture, variety, this.state);
+    this.blades = new GrassBlades(scene, this.texture, variety, this.state, area);
 
     this.mesh = new Mesh('grass', scene);
     this.mesh.material = material;
@@ -92,9 +109,15 @@ export class GrassField {
     this.shellCount = count;
   }
 
-  /** Call once per frame: follows the tuning panel and sends changed grass to the GPU. */
-  update() {
+  /**
+   * Call once per frame: follows the tuning panel, moves the wind on, and sends changed grass
+   * to the GPU.
+   *
+   * @param {number} dt Seconds since the previous frame.
+   */
+  update(dt) {
     const settings = config.grass;
+    this.state.time += dt;
     if (settings.shellCount !== this.shellCount) this.buildShells(settings.shellCount);
     this.mesh.scaling.y = settings.maxHeight;
     this.upload();
@@ -133,4 +156,34 @@ export class GrassField {
     const { center, width, depth } = this.area;
     return { x: x - center[0] + width / 2, z: z - center[1] + depth / 2 };
   }
+}
+
+/** @type {WeakMap<import('@babylonjs/core').Scene, RawTexture>} */
+const varietyTextures = new WeakMap();
+
+/**
+ * The lawns' shared variety texture (see grassNoise.js), made once per scene.
+ *
+ * @param {import('@babylonjs/core').Scene} scene
+ */
+function varietyTexture(scene) {
+  let texture = varietyTextures.get(scene);
+  if (!texture) {
+    const size = 128;
+    texture = new RawTexture(
+      grassVariationData(size, 7),
+      size,
+      size,
+      Constants.TEXTUREFORMAT_RGBA,
+      scene,
+      true,
+      false,
+      Texture.TRILINEAR_SAMPLINGMODE,
+      Constants.TEXTURETYPE_UNSIGNED_BYTE,
+    );
+    texture.wrapU = Texture.WRAP_ADDRESSMODE;
+    texture.wrapV = Texture.WRAP_ADDRESSMODE;
+    varietyTextures.set(scene, texture);
+  }
+  return texture;
 }
