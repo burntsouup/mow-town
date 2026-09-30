@@ -459,8 +459,9 @@ the ground and under the eaves), soft dark strips on the ground at the foot of w
 that thickens with the square of distance, a per-pixel sky (`skyColor`, tested) with clouds
 painted in code, and reflections of that sky taken once (`createSkyReflections`) for anything
 whose material says it's glossy.
-**How we measure:** render 60 frames back to back and wait for the last (`throughput` in
-the browser console notes), at 1440 × 900 and the 1.5× render. The GPU timer queries Chrome
+**How we measure:** in the dev build's console, render 60 frames back to back with
+`game.scene.render()`, then wait for the last one with a one-pixel `readPixels`, at
+1440 × 900 and the 1.5× render; the time divided by 60 is the frame cost. The GPU timer queries Chrome
 offers on Apple GPUs gave nonsense (25 ms for a 4 ms frame).
 **Gotcha:** SSAO in "prepass" mode switched off the materials' own color grading (the scene
 came out washed out and too bright), on top of costing the most.
