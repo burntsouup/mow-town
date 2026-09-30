@@ -69,7 +69,7 @@ export const config = {
       shoulderOffset: 0.9,
       pivotHeight: 1.7,
       pitch: 0.42,
-      playerOpacity: 0.45,
+      playerOpacity: 0.6,
     },
     // While carrying the string trimmer: higher and a little closer, looking down at the head
     // in front of you (pitch: the least it tips down to when you take it out).
@@ -79,7 +79,7 @@ export const config = {
       pivotHeight: 1.9,
       pitch: 0.8,
       minPitch: 0.45, // ...and the least it looks down while you carry it
-      playerOpacity: 0.55,
+      playerOpacity: 0.8,
     },
   },
   player: {
@@ -94,17 +94,38 @@ export const config = {
   // Tuft, the character (see player/Tuft.js).
   tuft: {
     colors: {
-      furTop: '#ffd166',
+      furTop: '#ffc452',
       furBottom: '#ff7b54',
+      cheeks: '#ff9a8a',
+      eyes: '#2f8fb0', // irises
       limbs: '#ffb27d',
-      brows: '#b5532f',
+      brows: '#c8552e',
       mouth: '#5a2436',
       shoes: '#4c6ef5',
+      shoeAccent: '#ff6b6b',
     },
     // shells: layers of fur; length: meters from skin to tips; density: strands per meter;
-    // thickness: strand width at the root (0..1 of its spacing); trail: how far the tips
-    // lag behind per m/s of speed.
-    fur: { shells: 14, length: 0.07, density: 55, thickness: 0.55, trail: 0.006 },
+    // thickness: strand width at the root (0..1 of its spacing); softness: how blurry each
+    // strand's edge is (fluffy, not spiky); sheen: the glow around the silhouette; trail:
+    // how far the tips lag behind per m/s of speed.
+    fur: {
+      shells: 16,
+      length: 0.08,
+      density: 150,
+      thickness: 0.45,
+      softness: 0.12,
+      sheen: 0.2,
+      trail: 0.006,
+    },
+    // The eyebrow tufts: shorter, finer fur.
+    browFur: {
+      shells: 10,
+      length: 0.028,
+      density: 320,
+      thickness: 0.45,
+      softness: 0.12,
+      sheen: 0.15,
+    },
     // stride: meters each foot travels either side of its hip; lift: how high feet step;
     // bob/squash: how much the body bounces and squishes per step; armSwing: arms vs feet;
     // fullAt: the speed (m/s) that counts as a full walk.
