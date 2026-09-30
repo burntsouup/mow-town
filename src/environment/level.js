@@ -131,6 +131,66 @@ function buildStreet(kit) {
     });
     kit.shadows.removeShadowCaster(curb);
   }
+  // Street lamps along both sidewalks, by the curb.
+  for (const x of [-13.5, 8.1, 31]) buildStreetLamp(kit, x, SIDEWALK.front + 0.4);
+  for (const x of [-22, 0, 22]) buildStreetLamp(kit, x, FAR_SIDEWALK.back - 0.4);
+  buildHydrant(kit, 12.4, SIDEWALK.front + 0.45);
+}
+
+/**
+ * An old-fashioned street lamp: a dark green post on a stepped base, and a lantern on top
+ * with a pale glass and a little cap.
+ *
+ * @param {Greybox} kit
+ * @param {number} x
+ * @param {number} z
+ */
+function buildStreetLamp(kit, x, z) {
+  const green = COLORS.lampPost;
+  kit.rounded('lampBase', { size: [0.34, 0.3, 0.34], at: [x, 0, z], color: green, radius: 0.06 });
+  kit.cylinder('lampPost', { diameter: 0.12, height: 3.3, at: [x, 0.25, z], color: green });
+  kit.rounded('lampCollar', { size: [0.2, 0.1, 0.2], at: [x, 3.5, z], color: green, radius: 0.04 });
+  kit.rounded('lampGlass', {
+    size: [0.3, 0.42, 0.3],
+    at: [x, 3.6, z],
+    color: COLORS.lanternGlass,
+    radius: 0.06,
+    solid: false,
+  });
+  kit.rounded('lampCap', { size: [0.42, 0.1, 0.42], at: [x, 4.02, z], color: green, radius: 0.05 });
+  kit.puff('lampFinial', {
+    radius: 0.06,
+    at: [x, 4.1, z],
+    color: green,
+    smooth: true,
+    solid: false,
+  });
+  kit.contactShadow(x, z, 0.3, LAYER.sidewalk + 0.01);
+}
+
+/**
+ * A red fire hydrant on the sidewalk, with a domed cap and a nozzle on each side.
+ *
+ * @param {Greybox} kit
+ * @param {number} x
+ * @param {number} z
+ */
+function buildHydrant(kit, x, z) {
+  const red = COLORS.hydrant;
+  kit.cylinder('hydrantBase', { diameter: 0.32, height: 0.08, at: [x, 0, z], color: red });
+  kit.cylinder('hydrant', { diameter: 0.24, height: 0.5, at: [x, 0.08, z], color: red });
+  kit.puff('hydrantCap', { radius: 0.13, at: [x, 0.5, z], color: red, squash: 0.7, smooth: true });
+  for (const side of [-1, 1]) {
+    const nozzle = kit.cylinder('hydrantNozzle', {
+      diameter: 0.09,
+      height: 0.12,
+      at: [x + side * 0.15, 0.3, z],
+      color: COLORS.hydrantCap,
+    });
+    nozzle.rotation.z = Math.PI / 2;
+    nozzle.position.y = 0.34;
+  }
+  kit.contactShadow(x, z, 0.3, LAYER.sidewalk + 0.01);
 }
 
 /**
