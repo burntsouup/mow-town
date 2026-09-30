@@ -291,6 +291,9 @@ export const config = {
   },
   job: {
     completeAt: 0.98, // fraction of the lawn that counts as done; the rest is finished for you
+    // A checkerboard's second pass, across the first: the fraction of the lawn mowed across
+    // that counts as done (the mower can't cross quite everywhere it reached the first time).
+    crossDoneAt: 0.9,
     // The edges: lawn within this many meters of things you trim around (the fence, trees,
     // beds, toys). They're left long when the lawn is done, for the string trimmer, and count
     // as done at edgesDoneAt (then the last bits shrink away).
@@ -319,11 +322,13 @@ export const config = {
   },
   money: {
     // What each job pays when it's done, in dollars, by job id (see the level's jobs).
-    jobPay: { frontLawn: 40, nextDoor: 65 },
+    jobPay: { frontLawn: 40, nextDoor: 65, frontCheckerboard: 60, nextDoorDiagonal: 90 },
     stripesTip: 10, // dollars, at most, for neat stripes
+    patternTip: 20, // ...and for a pattern the client asked for (see lawn/patterns.js)
     edgesTip: 10, // dollars for trimming the edges
-    // How neat the stripes are (0..1, see lawn/neatness.js): the tip starts above tipFrom
-    // and is the whole amount at tipFull. Tidy rows score ~0.95; a random scribble ~0.35.
+    // How neat the stripes are (0..1, see lawn/neatness.js), or how well they match the
+    // pattern asked for (lawn/patterns.js): the tip starts above tipFrom and is the whole
+    // amount at tipFull. Tidy rows score ~0.95; a random scribble ~0.35.
     tipFrom: 0.6,
     tipFull: 0.9,
     neatnessPatch: 1.5, // meters: stripes are judged in square patches this big

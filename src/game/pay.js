@@ -1,31 +1,39 @@
 // @ts-check
+import { PATTERNS } from '../lawn/patterns.js';
 
 /**
  * What a finished job pays: its price, plus tips for good work. Pure logic, no Babylon.
  *
  * @typedef {{ label: string, amount: number, tip?: 'stripes' | 'edges', pending?: boolean }}
- *   PayLine One line on the receipt. tip says which tip it is (they show with a plus sign);
- *   pending marks a tip you can still earn, which doesn't count toward the total yet.
- * @typedef {{ jobPay: Record<string, number>, stripesTip: number, tipFrom: number,
- *   tipFull: number, edgesTip: number }} PaySettings jobPay: dollars by job id. stripesTip:
- *   the most the neat-stripes tip can be. tipFrom/tipFull: the neatness (0..1) where the tip
- *   starts, and where it's the whole amount. edgesTip: dollars for trimming the edges.
+ *   PayLine One line on the receipt. tip says which tip it is (they show with a plus sign;
+ *   'stripes' is the one for the lawn's pattern); pending marks a tip you can still earn,
+ *   which doesn't count toward the total yet.
+ * @typedef {{ jobPay: Record<string, number>, stripesTip: number, patternTip: number,
+ *   tipFrom: number, tipFull: number, edgesTip: number }} PaySettings jobPay: dollars by
+ *   job id. stripesTip: the most the neat-stripes tip can be; patternTip: the same for a
+ *   pattern a client asked for (see lawn/patterns.js). tipFrom/tipFull: the neatness (0..1)
+ *   where the tip starts, and where it's the whole amount. edgesTip: dollars for trimming
+ *   the edges.
+ * @typedef {{ id: string, shortName?: string, title: string,
+ *   pattern?: import('../lawn/patterns.js').PatternId }} PaidJob
  */
 
 /**
- * @param {{ id: string, shortName?: string, title: string }} job
- * @param {{ neatness: number, edgesDone: boolean }} work neatness: 0..1, see
- *   lawn/neatness.js. edgesDone: the edges are trimmed (if not, that tip is still pending).
+ * @param {PaidJob} job
+ * @param {{ neatness: number, edgesDone: boolean }} work neatness: how well the lawn
+ *   matches the job's pattern (plain stripes if it doesn't ask for one), 0..1: see
+ *   lawn/patterns.js. edgesDone: the edges are trimmed (if not, that tip is still pending).
  * @param {PaySettings} settings
  * @returns {PayLine[]}
  */
 export function jobReceipt(job, work, settings) {
   const neat = (work.neatness - settings.tipFrom) / (settings.tipFull - settings.tipFrom);
-  const tip = Math.round(settings.stripesTip * Math.min(1, Math.max(0, neat)));
+  const tip = Math.round(biggestPatternTip(job, settings) * Math.min(1, Math.max(0, neat)));
+  const pattern = PATTERNS[job.pattern ?? 'stripes'];
   return [
     { label: job.shortName ?? job.title, amount: settings.jobPay[job.id] ?? 0 },
     {
-      label: `Neat stripes (${Math.floor(work.neatness * 100)}%)`,
+      label: `${pattern.tipLabel} (${Math.floor(work.neatness * 100)}%)`,
       amount: tip,
       tip: 'stripes',
     },
@@ -36,6 +44,16 @@ export function jobReceipt(job, work, settings) {
       ...(work.edgesDone ? {} : { pending: true }),
     },
   ];
+}
+
+/**
+ * The most a job's stripes (or pattern) tip can be.
+ *
+ * @param {PaidJob} job
+ * @param {Pick<PaySettings, 'stripesTip' | 'patternTip'>} settings
+ */
+export function biggestPatternTip(job, settings) {
+  return job.pattern && job.pattern !== 'stripes' ? settings.patternTip : settings.stripesTip;
 }
 
 /**

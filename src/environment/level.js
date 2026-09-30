@@ -3,7 +3,7 @@ import { buildFrontYard } from './FrontYard.js';
 import { DRIVEWAY, frontLawn, HOUSE, SIDEWALK, SPOTS } from './frontYardLayout.js';
 import { Greybox } from './greybox.js';
 import { buildNextDoor } from './NextDoor.js';
-import { NEXT_HOUSE, NEXT_SPOTS, nextDoorLawn } from './nextDoorLayout.js';
+import { NEXT_HOUSE, NEXT_LAWN, NEXT_SPOTS, nextDoorLawn } from './nextDoorLayout.js';
 import { leafyMesh } from './foliage.js';
 import { buildHouse, buildTree } from './props.js';
 import { COLORS, LAYER, SEAM_OVERLAP } from './style.js';
@@ -69,6 +69,31 @@ export function createLevel(scene, shadows) {
       hint: 'Next door: along the sidewalk, past the hedge',
       doneTitle: 'Lawn mowed!',
       summary: "The Parkers' lawn mowed in",
+    },
+    // A week later, the grass has grown back, and there's lawn art to try.
+    {
+      id: 'frontCheckerboard',
+      lawn: 'frontLawn',
+      pattern: 'checkerboard',
+      name: 'a checkerboard on our lawn',
+      shortName: 'Checkerboard lawn',
+      title: 'Mow a checkerboard',
+      hint: 'Mow stripes one way, then again across them',
+      doneTitle: 'Checkerboard done!',
+      summary: 'Checkerboard mowed in',
+    },
+    {
+      id: 'nextDoorDiagonal',
+      lawn: 'nextDoor',
+      pattern: 'diagonal',
+      name: 'diagonal stripes for the Parkers',
+      shortName: "Parkers' diagonals",
+      title: 'Diagonal stripes for the Parkers',
+      hint: 'Start along the string line, then follow your stripes',
+      doneTitle: 'Diagonals done!',
+      summary: "The Parkers' diagonals mowed in",
+      // At 45° across their front yard, clear of the tree, the gnome and the island bed.
+      guide: { from: [9.2, SIDEWALK.back - 0.2], to: [19.8, NEXT_LAWN.front.back + 0.2] },
     },
   ];
 

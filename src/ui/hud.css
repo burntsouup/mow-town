@@ -85,10 +85,37 @@ kbd {
   text-align: center;
 }
 
-.objective-title {
+.objective-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   margin-bottom: 6px;
+}
+
+.objective-title {
   font-size: 17px;
   font-weight: 800;
+}
+
+/* The pattern a client asked for, as a little picture of it. */
+.pattern-icon {
+  display: block;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px var(--line);
+}
+
+.pattern-icon[hidden] {
+  display: none;
+}
+
+.pattern-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .objective-hint {
