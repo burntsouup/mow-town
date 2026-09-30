@@ -439,11 +439,26 @@ match what you see. Measured by rendering 60 frames back to back at the 1.5× re
 content, not light: the flat-looking grass in the distance, faceted trees and clay-like
 bushes, and plain walls. That's the next three milestones.
 
-### 2. Grass
+### 2. Grass ✅
 
-- [ ] Real blades up close, clumps and color variety, wind
-- [ ] Light glowing through backlit blades; glossier stripes
-- [ ] Wildflowers (clover, dandelions) that the mower takes down
+- [x] Real blades up close, clumps and color variety, wind
+- [x] Light glowing through backlit blades
+- [x] Wildflowers (dandelions and daisies) that the mower takes down
+
+**Findings:** the layers (shells) the lawn is drawn with look like a flat carpet a few meters
+out and like stacked coins up close. Far away, variety fixed it: patches of drier and lusher
+grass from a tiling noise texture, blades in clumps, and waves of wind you can see rolling
+across long grass even in the distance. Up close, only real geometry would do: within 4.5 m
+of a spot just ahead of you, long grass is drawn as actual blades (90,000 thin ribbons built
+in the vertex shader from the lawn's own grass map), thinning out as the layers take over so
+there's no seam. The first try swapped mowed grass too, and a ring showed where the two
+met; mowed grass is short enough that layers look fine, so now it stays layers, and mowing
+visibly cuts the blades down to stubble. Blades seen from the side show more of their dark
+lower parts than layers seen from above, so their colors start a little lighter to match.
+Cost: about 1.5 ms a frame at the 1.5× render (sines and texture reads, in every layer of
+every pixel, add up; the layers skip pixels that miss every blade before doing the wind).
+As a safety net for slower machines, the game now steps its resolution down a little if
+frames keep missing the screen's refresh.
 
 ### 3. Trees, hedges and flowers
 
