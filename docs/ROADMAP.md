@@ -420,12 +420,24 @@ free CC0 textures and a sky HDRI where they beat code. Same budget as v0.3: 120 
 1.5× render on an M3 MacBook; every milestone measures its cost. A checkpoint after each
 milestone, to look at before and after screenshots.
 
-### 1. Lighting and atmosphere
+### 1. Lighting and atmosphere ✅
 
-- [ ] Sky lighting from an HDRI (soft light and reflections from every direction)
-- [ ] Ambient occlusion: soft darkening where things meet and in corners
-- [ ] Softer, crisper shadows; a gentle glow on bright highlights
-- [ ] A sky with a sun disc, soft clouds and haze
+- [x] A smooth sky with a sun disc, and soft, painted cumulus clouds
+- [x] Reflections of the sky in glass, water, glossy plastic and Tuft's eyes
+- [x] Soft shading where things meet (a cheap stand-in for ambient occlusion)
+- [x] Distance haze, a punchier sun and smoother shadows
+
+**Findings:** the textbook screen effects were too expensive here: ambient occlusion cost
+about 4 ms a frame and bloom about 2 ms (the grass is many layers deep, and anything that
+redraws it doubles its cost), as did a 4096 shadow map (2 ms) and contact-hardening shadows.
+Cheap fakes got most of the look instead: shading from each pixel's height (darker toward
+the ground and under the eaves), soft dark strips round the foot of each house, and haze that
+thickens with distance, which is what makes the houses across the street look far away. The
+sky HDRI wasn't needed: reflections come from a picture of our own sky, taken once, so they
+match what you see. Measured by rendering 60 frames back to back at the 1.5× render
+(1440 × 900): 4.45 ms before, 4.56 ms after, in the lawn view. What still looks basic is
+content, not light: the flat-looking grass in the distance, faceted trees and clay-like
+bushes, and plain walls. That's the next three milestones.
 
 ### 2. Grass
 

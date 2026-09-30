@@ -448,3 +448,21 @@ keeps your outfit.
 inside a try/catch, and the game plays on without saving.
 **Revisit when:** there's more to save (half-mowed lawns, a street of clients), or saves
 should move between devices.
+
+## 33. Looking amazing on a frame budget: fakes over screen effects
+
+**Why:** at 120 fps there are 8.3 ms a frame, and the lawn already takes about half. Screen
+effects that redraw the scene (ambient occlusion, bloom) cost 2-4 ms each here, because the
+grass and fur are many layers deep. So the look comes from cheap tricks that do most of the
+same job: shading from each pixel's height in the world (`GroundShadePlugin`: darker toward
+the ground and under the eaves), soft dark strips on the ground at the foot of walls, haze
+that thickens with the square of distance, a per-pixel sky (`skyColor`, tested) with clouds
+painted in code, and reflections of that sky taken once (`createSkyReflections`) for anything
+whose material says it's glossy.
+**How we measure:** render 60 frames back to back and wait for the last (`throughput` in
+the browser console notes), at 1440 × 900 and the 1.5× render. The GPU timer queries Chrome
+offers on Apple GPUs gave nonsense (25 ms for a 4 ms frame).
+**Gotcha:** SSAO in "prepass" mode switched off the materials' own color grading (the scene
+came out washed out and too bright), on top of costing the most.
+**Revisit when:** there's frame time to spare (a lighter grass for far away, or WebGPU),
+then real ambient occlusion and bloom are worth another look.
