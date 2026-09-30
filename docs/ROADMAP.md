@@ -409,7 +409,7 @@ went straight to `main` without a PR by mistake; each commit passed `npm run che
 New machines or lawns, buying clothes with money (starter items are free), saving the state
 of half-mowed lawns.
 
-## v0.4 — "Looking amazing"
+## v0.4 — "Looking amazing" ✅ (released as 0.4.0)
 
 Goal: the whole world looks as good as Tuft. The game is one idea (a lawn under your nose),
 so the grass, the houses and the trees have to be a pleasure to look at.
@@ -487,11 +487,11 @@ a little roof over the front door, a doormat and a lantern, curtains behind the 
 row of windows across the garage door. Every house on the street shares them. Street lamps
 and a fire hydrant make the street a street. The cost didn't register (well under 0.1 ms).
 
-### 5. Life, polish and playtest
+### 5. Life, polish and playtest ✅
 
 - [x] Birds, butterflies and distant birdsong; rolling hills on the horizon
 - [x] Frame rate on budget, findings recorded here
-- [ ] Playtest
+- [x] Playtest ("feels good")
 
 **Findings:** birds wheel round in loose V's and butterflies wander the flower beds, their
 paths worked out straight from the time (nothing to simulate). A bird sings somewhere
@@ -506,9 +506,9 @@ and pushes on `main`.
 
 ### v0.4 success checklist
 
-- [ ] Screenshots from where you play look like a finished game
-- [ ] The grass is a pleasure to look at, mowed and unmowed
-- [ ] It runs as smoothly as v0.3
+- [x] Screenshots from where you play look like a finished game
+- [x] The grass is a pleasure to look at, mowed and unmowed
+- [x] It runs as smoothly as v0.3
 
 ## Later (ideas, not commitments)
 
