@@ -73,6 +73,41 @@ export function cloudBlobs(random, heaps) {
 }
 
 /**
+ * A ring of rolling hills round the world, far off: a strip from the foot of the hills (at
+ * `radius`, below the ground) up to their crests (further out, at heights that rise and fall
+ * with `noise`), shaded from the haze at the foot to the hills' own color at the top.
+ *
+ * @param {{ radius: number, depth: number, height: number, steps: number,
+ *   noise: (angle: number) => number, foot: number[], top: number[] }} options radius: where
+ *   the foot is (meters from the middle); depth: how much further out the crests are;
+ *   height: the tallest crest (meters); noise: 0..1 for each angle round (radians); foot,
+ *   top: RGB colors.
+ * @returns {{ positions: number[], colors: number[], indices: number[] }}
+ */
+export function hillRing({ radius, depth, height, steps, noise, foot, top }) {
+  /** @type {number[]} */
+  const positions = [];
+  /** @type {number[]} */
+  const colors = [];
+  /** @type {number[]} */
+  const indices = [];
+  for (let i = 0; i <= steps; i++) {
+    const angle = (i / steps) * Math.PI * 2;
+    const [c, s] = [Math.cos(angle), Math.sin(angle)];
+    const crest = height * (0.35 + 0.65 * noise(angle));
+    const out = radius + depth * (0.6 + 0.4 * noise(angle + 1.3));
+    positions.push(c * radius, -2, s * radius, c * out, crest, s * out);
+    colors.push(foot[0], foot[1], foot[2], 1, top[0], top[1], top[2], 1);
+    if (i < steps) {
+      const a = i * 2;
+      // Seen from the middle, looking out (Babylon's front faces wind clockwise).
+      indices.push(a, a + 3, a + 1, a, a + 2, a + 3);
+    }
+  }
+  return { positions, colors, indices };
+}
+
+/**
  * @param {number} edge0
  * @param {number} edge1
  * @param {number} x

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createRandom } from '../math/noise.js';
-import { cloudBlobs, skyColor } from './skyMath.js';
+import { cloudBlobs, hillRing, skyColor } from './skyMath.js';
 
 const SKY = {
   zenith: /** @type {[number, number, number]} */ ([0.2, 0.5, 0.9]),
@@ -55,5 +55,36 @@ describe('cloudBlobs', () => {
     const top = (/** @type {{ y: number, radius: number }} */ b) => b.y - b.radius;
     const heaps = blobs.filter((_, i) => i % 3 === 0);
     expect(top(heaps[2])).toBeLessThan(Math.min(top(heaps[0]), top(heaps[4])));
+  });
+});
+
+describe('hillRing', () => {
+  const ring = hillRing({
+    radius: 150,
+    depth: 40,
+    height: 20,
+    steps: 32,
+    noise: (angle) => 0.5 + 0.5 * Math.sin(angle * 3),
+    foot: [0.8, 0.85, 0.9],
+    top: [0.5, 0.6, 0.5],
+  });
+
+  it('goes all the way round: a foot and a crest at every step, closing up', () => {
+    expect(ring.positions).toHaveLength(33 * 2 * 3);
+    expect(ring.indices).toHaveLength(32 * 6);
+    const [x0, , z0] = ring.positions.slice(0, 3);
+    const [x1, , z1] = ring.positions.slice(-6, -3);
+    expect(x1).toBeCloseTo(x0, 6);
+    expect(z1).toBeCloseTo(z0, 6);
+  });
+
+  it('keeps its feet below the ground and its crests up to the height, further out', () => {
+    for (let i = 0; i < ring.positions.length; i += 6) {
+      const [fx, fy, fz, cx, cy, cz] = ring.positions.slice(i, i + 6);
+      expect(fy).toBeLessThan(0);
+      expect(cy).toBeGreaterThan(0);
+      expect(cy).toBeLessThanOrEqual(20);
+      expect(Math.hypot(cx, cz)).toBeGreaterThan(Math.hypot(fx, fz));
+    }
   });
 });
