@@ -261,7 +261,7 @@ so a best case: expect a real run to take roughly 1.5× longer. Each lawn has it
 Saving (money and the upgrade reset when you reload), more than one upgrade, a riding mower,
 regrowth, time pressure or client ratings, bagging clippings, multiplayer.
 
-## v0.3 — "Looking good"
+## v0.3 — "Looking good" ✅ (released as 0.3.0)
 
 Goal: the game looks like one charming little toy world, and you play as your own fuzzy
 critter.
@@ -383,17 +383,26 @@ the closet gets a little hop and a bubbly pop. Footsteps puff grass bits on a la
 on paths, and patter softly (a swish on grass, a sneaker pad on paths); the lawn's own grass
 map says which is underfoot.
 
-### 6. Tuning + playtest
+### 6. Tuning + playtest ✅
 
-- [ ] Frame rate on the budget above, findings recorded here
-- [ ] Playtest
+- [x] Frame rate on the budget above, findings recorded here
+- [x] Playtest
+
+**Findings:** with Tuft in view at the start, about 233k vertices are drawn (mostly grass
+and the level); a full outfit adds under 1k, and every style you aren't wearing is switched
+off, so it costs nothing. In the embedded browser, frames took the same time as before the
+wardrobe (within its noise). The playtest verdict was "feels good". One thing to watch: in
+the see-through mowing view, clothes fade like the fur, so they look a bit like tinted
+plastic (they have to fade, or the shirt would hide the mower). Process note: milestone 4
+went straight to `main` without a PR by mistake; each commit passed `npm run check` and
+`main`'s CI, and milestone 5 went back to a PR.
 
 ### v0.3 success checklist
 
-- [ ] The game looks charming, not basic, from every angle you'd play from
-- [ ] Tuft is lovable, and fun to watch walking, pushing and trimming
-- [ ] Dressing Tuft up is fun, and it's still dressed that way next time
-- [ ] It runs as smoothly as v0.2
+- [x] The game looks charming, not basic, from every angle you'd play from
+- [x] Tuft is lovable, and fun to watch walking, pushing and trimming
+- [x] Dressing Tuft up is fun, and it's still dressed that way next time
+- [x] It runs as smoothly as v0.2
 
 ## Deliberately not in v0.3
 
