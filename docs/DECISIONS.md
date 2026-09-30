@@ -484,3 +484,21 @@ show. Both share their colors, stripes and glow (`grassShading.js`).
 don't match. Sines are dear when they run for every layer of every pixel: work out anything
 you can after the cheap test that throws most pixels away.
 **Revisit when:** frame time allows a bigger patch, or blades should cast shadows.
+
+## 35. Plants: a dark core under real leaves
+
+**Why:** faceted balls read as clay, not leaves. The stylized-tree trick: scatter little
+clusters of leaves over a plant's rough shape (a few overlapping balls, `leafCards`), and
+light every leaf as if the plant were one ball (its normal points out from the plant's
+middle, not along the leaf), so the crowd shades softly from light on top to dark
+underneath. A darker core inside fills the gaps. The same code makes trees, bushes, the hedge,
+the flower beds' clumps and the treeline on the horizon (fewer, bigger clusters far off).
+Flowers are flat, cupped heads with a round middle and petal lobes (`flowerHeads`).
+**Gotchas:** leaves as pictures on see-through squares (alpha testing) go wrong with
+mipmaps: smaller copies of the texture blur the see-through edges, so whole squares turn
+up, dark. Real triangles avoid it and are faster on Apple GPUs, which can't skip hidden
+pixels once a shader may throw some away. A see-through canopy of thousands of leaves looks
+like broken glass and is slow to blend, so leaves vanish instead of fading
+(`seeThroughOpacity: 0`).
+**Revisit when:** plants should rustle more (bushes that part as you walk through), or
+leaves change color with the seasons.

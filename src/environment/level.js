@@ -4,6 +4,7 @@ import { DRIVEWAY, frontLawn, HOUSE, SIDEWALK, SPOTS } from './frontYardLayout.j
 import { Greybox } from './greybox.js';
 import { buildNextDoor } from './NextDoor.js';
 import { NEXT_HOUSE, nextDoorLawn } from './nextDoorLayout.js';
+import { leafyMesh } from './foliage.js';
 import { buildHouse, buildTree } from './props.js';
 import { COLORS, LAYER, SEAM_OVERLAP } from './style.js';
 import { createRandom } from '../math/noise.js';
@@ -190,32 +191,55 @@ function buildBackdrop(kit) {
     );
     const treeX = x + facing * (4 + random() * 2.5); // on the other side from the garage
     const treeZ = (frontZ + sidewalkEdge) / 2 + (random() - 0.5) * 3;
-    scenery.push(...buildTree(kit, circle(treeX, treeZ, 0.6), 0.8 + random() * 0.35, index + 9));
+    scenery.push(
+      ...buildTree(kit, circle(treeX, treeZ, 0.6), 0.8 + random() * 0.35, index + 9, true),
+    );
   };
   for (let i = 0; i < 7; i++) place(-54 + i * 18, FAR_SIDEWALK.front - 9.5, 1, i);
   place(-32, HOUSE.front, -1, 2);
   place(NEXT_HOUSE.right + 14, HOUSE.front, -1, 4);
 
-  // A line of trees along the horizon, both ways, fading into the haze.
+  // A line of trees along the horizon, both ways, fading into the haze: dark cores under
+  // big leaves (small leaves would be lost at this distance).
   const puffs = [];
+  /** @type {import('./foliageMath.js').Blob[][]} */
+  const treeline = [];
   for (const [z, count] of [
     [-62, 26],
     [48, 26],
   ]) {
     for (let i = 0; i < count; i++) {
       const radius = 4 + random() * 3;
+      const squash = 0.8 + random() * 0.3;
+      const x = -130 + (i / (count - 1)) * 260 + (random() - 0.5) * 6;
+      const tz = z + (random() - 0.5) * 8;
       puffs.push(
         kit.puff('treeline', {
-          radius,
-          at: [-130 + (i / (count - 1)) * 260 + (random() - 0.5) * 6, 0, z + (random() - 0.5) * 8],
-          color: '#4f7f3a',
-          squash: 0.8 + random() * 0.3,
+          radius: radius * 0.9,
+          at: [x, 0, tz],
+          color: '#4a7a36',
+          squash,
           solid: false,
         }),
       );
+      treeline.push([{ x, y: radius * squash, z: tz, radius, squash }]);
     }
   }
   scenery.push(kit.merge('treeline', puffs));
+  scenery.push(
+    kit.addSolid(
+      leafyMesh(kit.scene, 'treelineLeaves', treeline, {
+        color: '#5b8c42',
+        density: 1.1,
+        size: 1.4,
+        seed: 77,
+        leaves: 3,
+        softness: 0.9,
+      }),
+      null,
+      false,
+    ),
+  );
 
   for (const mesh of scenery) {
     kit.shadows.removeShadowCaster(mesh);
