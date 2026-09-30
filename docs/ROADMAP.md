@@ -308,9 +308,19 @@ soft fur. The first pupils sat just inside the eye whites, so the eyes looked bl
 eyebrows tilted inward read as cross, so they tilt the other way now. A walk that looks
 planted needs the feet to slide back in a straight line while down (not on a curve), then
 swing forward in an arc. From the mowing camera (behind and above), Tuft still hides the
-mower, so Tuft goes see-through there as the capsule did, but by dithering (the fur's
-layers would sort badly as transparent), and the face fades first so no eyes show through
-the back of its head. Glancing around and celebrating come in milestone 5.
+mower, so Tuft goes see-through there as the capsule did, and the face fades first so no
+eyes show through the back of its head. Glancing around and celebrating come in milestone 5.
+
+At the checkpoint, the first Tuft was "not quite right": it should look polished, like the
+Reflect monsters. The fixes: much finer strands (150 per meter) with soft, blurry edges,
+blended layer over layer instead of cut out (spiky, grainy fur became fluffy); glossy eyes
+with an iris and sparkles; fuzzy eyebrows; rounder, rubbery limbs, mittens with thumbs and
+detailed sneakers. Blending exposed that Babylon's "update alpha" shader hook only exists for
+materials with a diffuse texture, so the fur's alpha was never applied (it looked fine only
+because it was opaque). Lighting every one of 20+ layers with Babylon's full lights and
+shadows was expensive, so the fur lights itself (a wrapped sun plus sky and ground light, and
+one ray a frame to tell whether Tuft stands in shade). Fading needs care too: 16 faint layers
+still stack up to nearly solid, so each layer gets only its share of the opacity.
 
 ### 3. Wardrobe and saving
 

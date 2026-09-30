@@ -381,8 +381,16 @@ toward the tips). Limbs are tubes reshaped every frame along a curve (`limbCurve
 back in a straight line while planted (so they stay put on the ground) and swing forward in
 an arc (`footOffset`); the body bobs once per step, squashes, breathes when still and leans
 in to push. Hands hold the mower's and trimmer's handles (`gripPoints`) while you use them.
-**See-through:** the fur fades by dithering (skipping a scattered share of pixels) rather
-than blending, because its layers would sort badly as ordinary transparency, and the face
-fades first.
+**Soft fur:** strands have blurry edges and are blended, layer over layer, over a separate
+solid skin. That sorts correctly without any per-frame work because the shells are drawn
+from the skin outward with back faces hidden, and the body is round, so the outer layers
+always land on top. The fur lights itself (a "wrapped" sun that bends a little round the
+edges, plus sky and ground light, and one ray a frame toward the sun to dim it in shade),
+because Babylon's full lighting in every layer cost more than the rest of the scene.
+**See-through:** fading splits the opacity across the layers (16 faint layers would still
+stack up to solid), the skin is drawn before the fur, and the face fades first.
+**Gotcha:** Babylon's `CUSTOM_FRAGMENT_UPDATE_ALPHA` hook only exists in the shader when the
+material has a diffuse texture, so the fur's alpha is applied in `CUSTOM_FRAGMENT_BEFORE_FOG`
+instead, on `color.a`.
 **Revisit when:** the walk needs to react to slopes or stairs (plant feet by raycasting), or
 Tuft needs more expressions (a mouth that opens).
