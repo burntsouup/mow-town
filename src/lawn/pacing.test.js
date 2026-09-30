@@ -29,7 +29,10 @@ const tidyRun = (along) => (tidyRuns[along] ??= mowFrontLawn({ along }));
 /** @param {number} seconds */
 const minutes = (seconds) => (seconds / 60).toFixed(1);
 
-describe('pacing (front lawn, best case)', () => {
+// These simulate whole lawns, row by row: a few seconds each, more on a busy machine.
+const SLOW = { timeout: 30_000 };
+
+describe('pacing (front lawn, best case)', SLOW, () => {
   // A guard against tuning changes that make the lawn a slog (or over in a flash). Real
   // players take longer than this bot: expect roughly 1.5×.
   it('a tidy player can finish the lawn in 3 to 5.5 minutes', () => {
@@ -77,7 +80,7 @@ describe('pacing (front lawn, best case)', () => {
   });
 });
 
-describe("pacing (the Parkers' lawn next door, best case)", () => {
+describe("pacing (the Parkers' lawn next door, best case)", SLOW, () => {
   const { width, length } = config.shop.wideDeck;
   /** @param {import('./GrassGrid.js').Deck} deck @param {'x' | 'z'} along */
   const mowNextDoor = (deck, along) =>
