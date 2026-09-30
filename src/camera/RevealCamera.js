@@ -47,8 +47,14 @@ export class RevealCamera {
     this.angle = lawn.revealAngle;
   }
 
-  start() {
-    this.timeline.start();
+  /** @param {number} [holdTime] Seconds to hold the aerial view (default: the usual). */
+  start(holdTime) {
+    this.timeline.start(holdTime);
+  }
+
+  /** True while it's all the way up, holding the aerial view. */
+  get isOverhead() {
+    return this.timeline.isOverhead;
   }
 
   /** Head back to the player now. */

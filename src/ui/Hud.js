@@ -23,12 +23,14 @@ import './hud.css';
  *   moneyCounting: boolean,
  *   receipt: import('../game/pay.js').PayLine[] | null,
  *   closetOpen: boolean,
+ *   timelapse: { speed: number, seconds: number, total: number } | null,
  * }} HudState hasMower: the player has grabbed the mower at least once; stageHint: a hint
  *   for where you are in the job (like "now mow across"), over the job's own; progress is 0..1
  *   for display; elapsed is seconds on the job; nextJob is the one after this (null if this
  *   is the last); showCard: the "Job complete" card is up (it tucks away after a while);
  *   edges is 0..1 for display; money is what to show in the wallet (it counts up); receipt
- *   is what the job paid, once it's done; closetOpen: you're dressing up (see Closet).
+ *   is what the job paid, once it's done; closetOpen: you're dressing up (see Closet);
+ *   timelapse: while a timelapse plays, how fast and how far through (seconds of mowing).
  */
 
 /**
@@ -90,6 +92,20 @@ export class Hud {
 
     this.wallet = element('div', 'wallet');
 
+    // While a timelapse plays: a "fast forward" badge, with the mowing time ticking by.
+    this.timelapseBadge = element('div', 'timelapse-badge');
+    this.timelapseBadge.innerHTML = `
+      <span class="timelapse-icon" aria-hidden="true">▶▶</span>
+      <span class="timelapse-speed"></span>
+      <span class="timelapse-bar"><span class="timelapse-fill"></span></span>
+      <span class="timelapse-clock"></span>`;
+    /** @param {string} selector */
+    const part = (selector) =>
+      /** @type {HTMLElement} */ (this.timelapseBadge.querySelector(selector));
+    this.timelapseSpeed = part('.timelapse-speed');
+    this.timelapseFill = part('.timelapse-fill');
+    this.timelapseClock = part('.timelapse-clock');
+
     this.playPrompt = element('div', 'play-prompt');
     this.playPrompt.innerHTML = `
       <h1>mow-town</h1>
@@ -105,6 +121,7 @@ export class Hud {
         <dt>Hold mouse</dt><dd>Run the trimmer (it cuts where you look)</dd>
         <dt>Hold F</dt><dd>Highlight the grass that's left</dd>
         <dt>V</dt><dd>View the lawn from above</dd>
+        <dt>L</dt><dd>Watch a timelapse of your mow</dd>
         <dt>N</dt><dd>Next job (once this one's done)</dd>
         <dt>R</dt><dd>Mow it again (once it's done)</dd>
         <dt>M</dt><dd>Mute / unmute</dd>
@@ -139,15 +156,15 @@ export class Hud {
     root.append(
       this.objective,
       this.wallet,
+      this.timelapseBadge,
       this.toast,
       this.prompt,
       this.completeCard,
       this.playPrompt,
     );
     // Hidden until the first update says otherwise (the game waits a moment before starting).
-    for (const panel of [this.objective, this.wallet, this.toast, this.prompt, this.completeCard]) {
-      panel.hidden = true;
-    }
+    const panels = [this.objective, this.wallet, this.toast, this.prompt, this.completeCard];
+    for (const panel of [...panels, this.timelapseBadge]) panel.hidden = true;
     /** What's currently on screen, so we only touch the page when something changes. */
     this.shown = /** @type {Record<string, unknown>} */ ({});
   }
@@ -251,6 +268,19 @@ export class Hud {
     );
 
     this.set('receipt', state.receipt, () => this.showReceipt(state.receipt));
+
+    const { timelapse } = state;
+    this.set('timelapse', screen === 'playing' && timelapse !== null, (shown) => {
+      this.timelapseBadge.hidden = !shown;
+    });
+    if (timelapse) {
+      const speed = `${Math.round(timelapse.speed)}×`;
+      this.set('timelapseSpeed', speed, () => (this.timelapseSpeed.textContent = speed));
+      const clock = formatDuration(timelapse.seconds);
+      this.set('timelapseClock', clock, () => (this.timelapseClock.textContent = clock));
+      const percent = Math.floor((100 * timelapse.seconds) / Math.max(timelapse.total, 1e-3));
+      this.set('timelapseFill', percent, () => (this.timelapseFill.style.width = `${percent}%`));
+    }
   }
 
   /** @param {import('../game/pay.js').PayLine[] | null} lines */
@@ -335,7 +365,7 @@ function element(tag, className) {
  */
 function showWithKeys(element, text) {
   // Split on the game's one-letter keys, standing alone: odd pieces are the keys.
-  const pieces = text.split(/\b([EFMNQRTV])\b/);
+  const pieces = text.split(/\b([EFLMNQRTV])\b/);
   element.replaceChildren(
     ...pieces.map((piece, i) => {
       if (i % 2 === 0) return piece;

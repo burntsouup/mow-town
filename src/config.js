@@ -320,6 +320,20 @@ export const config = {
     resetKey: 'KeyR', // after completion: redo the job (or, after the last one, start over)
     nextKey: 'KeyN', // after completion: move on to the next job
   },
+  // The timelapse (see game/Timelapse.js): your whole mow played back, sped up, from the air.
+  timelapse: {
+    key: 'KeyL', // watch it any time
+    afterJob: true, // it plays as part of the aerial view when a job's done
+    duration: 10, // seconds a replay aims to take...
+    minSpeed: 4, // ...but never slower than this many times real speed
+    maxSpeed: 40, // ...or faster than this
+    minSeconds: 5, // seconds of mowing it takes to be worth a replay
+    linger: 2.5, // seconds to look at the finished lawn before flying back down
+    // Seconds of recorded time per step of Tuft's animation: short enough that he never
+    // moves the 0.5 m a step that looks like a teleport (so he still walks), long enough to
+    // be cheap (each step costs ~0.4 ms).
+    slice: 0.2,
+  },
   money: {
     // What each job pays when it's done, in dollars, by job id (see the level's jobs).
     jobPay: { frontLawn: 40, nextDoor: 65, frontCheckerboard: 60, nextDoorDiagonal: 90 },

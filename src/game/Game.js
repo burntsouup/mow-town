@@ -30,6 +30,7 @@ import { Celebration } from './Celebration.js';
 import { isStruggling, lowerPixelRatio, pixelRatioFor, refreshRateFrom } from './display.js';
 import { Input } from './Input.js';
 import { JobList } from './jobList.js';
+import { Timelapse } from './Timelapse.js';
 import { countTowards, jobReceipt, receiptTotal } from './pay.js';
 import { readSave, resetProgress, writeSave } from './save.js';
 import { toDeltaSeconds } from './time.js';
@@ -88,8 +89,15 @@ export class Game {
       },
     });
     this.reveal = new RevealCamera(this.scene, this.camera);
+    this.timelapse = new Timelapse({
+      reveal: this.reveal,
+      player: this.player,
+      mower: this.mower,
+      trimmer: this.trimmer,
+    });
     this.grassCut = 0; // grass cut this frame (see GrassGrid.cutDeck)
     this.cutRate = 0; // grass cut per second, smoothed so effects don't flicker
+    this.replayCutRate = 0; // ...by the mower in the timelapse
     this.grassTrimmed = 0; // grass cut by the string trimmer this frame
     this.trimRate = 0; // ...per second, smoothed
     this.clippings = new Clippings(this.scene, this.mower.model.chute);
@@ -241,26 +249,34 @@ export class Game {
    * @param {number} dt Seconds since the previous frame.
    */
   update(dt) {
-    // Walk relative to where the camera looks, unless you're pushing the mower. While
-    // trimming, you face the trimmer's head.
-    if (!this.mower.isHeld) this.player.update(dt, this.camera.yaw, this.trimmer.faceYaw);
-    this.updateShop(); // before the mower, which would otherwise take the E key
-    this.updateCloset(); // (the same)
-    this.updateMowing(dt);
+    // The timelapse moves Tuft and the mower itself, and nothing gets cut meanwhile.
+    const replay = this.timelapse.isActive;
+    if (!replay) {
+      // Walk relative to where the camera looks, unless you're pushing the mower. While
+      // trimming, you face the trimmer's head.
+      if (!this.mower.isHeld) this.player.update(dt, this.camera.yaw, this.trimmer.faceYaw);
+      this.updateShop(); // before the mower, which would otherwise take the E key
+      this.updateCloset(); // (the same)
+      this.updateMowing(dt);
+    }
     this.camera.mode = this.mower.isHeld ? 'mowing' : this.trimmer.isOut ? 'trimming' : 'walking';
     this.camera.update(dt); // follow the player to their new position
     this.sky.update(dt);
     this.wildlife.update(dt);
     this.updateBirdsong(dt);
-    if (this.closet.isOpen) this.player.setOpacity(1); // the closet has its own camera
-    this.updateTrimming(dt); // aims with the camera, so after it moves
-    // Tuft's hands go wherever the mower or trimmer handles ended up.
-    let hands = null;
-    if (this.mower.isHeld) hands = this.mower.gripPoints();
-    else if (this.trimmer.isOut) hands = this.trimmer.gripPoints();
-    this.player.animate(dt, hands, this.mower.isHeld ? 1 : 0);
-    this.updateFootsteps();
+    // The closet and the aerial view have their own cameras, so no need to see through Tuft.
+    if (this.closet.isOpen || this.reveal.isActive) this.player.setOpacity(1);
+    if (!replay) this.updateTrimming(dt); // aims with the camera, so after it moves
+    if (!this.timelapse.isPlaying) {
+      // Tuft's hands go wherever the mower or trimmer handles ended up.
+      let hands = null;
+      if (this.mower.isHeld) hands = this.mower.gripPoints();
+      else if (this.trimmer.isOut) hands = this.trimmer.gripPoints();
+      this.player.animate(dt, hands, this.mower.isHeld ? 1 : 0);
+    }
+    if (!replay) this.updateFootsteps();
     this.updateReveal(dt);
+    if (replay) this.showReplayClippings(dt);
     this.updateJob(dt);
     // Finish off leftovers and send cut grass to the GPU. Real blades grow round you, a
     // little ahead, where the camera's looking.
@@ -311,7 +327,9 @@ export class Game {
       elapsed: job.elapsed,
       nextJob: this.jobs.upcoming,
       revealing: this.reveal.isActive,
-      showCard: this.reveal.isActive || this.cardTime > 0,
+      // (Not over the timelapse: it pops back in once the replay's done.)
+      showCard: !this.timelapse.isPlaying && (this.reveal.isActive || this.cardTime > 0),
+      timelapse: this.timelapse.status,
       edges: Math.min(1, this.lawn.edgeProgress / config.job.edgesDoneAt),
       edgesDone: this.edgesDone,
       money: this.moneyShown,
@@ -349,22 +367,47 @@ export class Game {
   }
 
   /**
-   * The aerial view: V plays it any time. While it plays, the controls are paused; any key
-   * or click (after a moment) cuts it short.
+   * The aerial view: V plays it any time, and L the timelapse of how this lawn was mowed.
+   * While either plays, the controls are paused; any key or click (after a moment) cuts it
+   * short.
    *
    * @param {number} dt
    */
   updateReveal(dt) {
-    const { reveal, input } = this;
-    if (!reveal.isActive && input.isPointerLocked && input.wasPressed(config.job.revealKey)) {
-      reveal.frame(this.lawn);
-      reveal.start();
+    const { reveal, input, timelapse } = this;
+    if (!reveal.isActive && input.isPointerLocked) {
+      if (input.wasPressed(config.job.revealKey)) {
+        reveal.frame(this.lawn);
+        reveal.start();
+      } else if (input.wasPressed(config.timelapse.key)) {
+        if (timelapse.canPlay(this.lawn)) timelapse.start(this.lawn);
+        else this.toast('Mow a bit more first: then L plays it back, sped up');
+      }
     }
     if (reveal.isActive && reveal.time > config.job.reveal.skipAfter && input.anyPressed) {
-      reveal.skip();
+      if (timelapse.isActive) timelapse.skip();
+      else reveal.skip();
     }
     reveal.update(dt);
+    timelapse.update(dt);
     input.blocked = reveal.isActive;
+  }
+
+  /**
+   * Clippings fly from the mower as it zips round in the timelapse too (the engine doesn't
+   * strain meanwhile: that's for real cutting).
+   *
+   * @param {number} dt
+   */
+  showReplayClippings(dt) {
+    this.grassCut = 0;
+    this.grassTrimmed = 0;
+    this.cutRate = smoothTowards(this.cutRate, 0, dt, 10);
+    const rate = dt > 0 ? this.timelapse.cutThisFrame / dt : 0;
+    this.replayCutRate = smoothTowards(this.replayCutRate, rate, dt, 10);
+    this.clippings.update(this.replayCutRate);
+    this.trimRate = 0;
+    this.trimmer.updateSpray(0);
   }
 
   /**
@@ -376,7 +419,7 @@ export class Game {
     this.time += dt;
     const job = this.jobs.currentJob;
     const working = this.grassCut > 0 || this.grassTrimmed > 0;
-    const event = job.update(dt, this.jobWork(), working);
+    const event = this.timelapse.isPlaying ? null : job.update(dt, this.jobWork(), working);
     if (event === 'completed') {
       this.neatness = patternScore(this.lawn.grid, this.pattern, config.money.neatnessPatch);
       this.pay();
@@ -384,11 +427,17 @@ export class Game {
       this.celebration.play(this.lawn.field.mesh);
       this.player.cheer();
       this.audio.playChime();
-      this.reveal.frame(this.lawn);
-      this.reveal.start(); // and fly up to show off the stripes
+      // Fly up to show off the stripes, replaying the whole mow if there's one to replay.
+      if (config.timelapse.afterJob && this.timelapse.canPlay(this.lawn)) {
+        this.timelapse.start(this.lawn);
+      } else {
+        this.reveal.frame(this.lawn);
+        this.reveal.start();
+      }
     }
     // Trimming the edges (before or after the lawn is done) earns a tip.
-    if (!this.edgesDone && this.lawn.edgeProgress >= config.job.edgesDoneAt) {
+    const replaying = this.timelapse.isPlaying; // (the replay's lawn isn't the real one)
+    if (!this.edgesDone && !replaying && this.lawn.edgeProgress >= config.job.edgesDoneAt) {
       this.edgesDone = true;
       this.lawn.finishEdges();
       this.audio.playDing();
@@ -608,7 +657,12 @@ export class Game {
     this.grassTrimmed = 0;
     for (const lawn of Object.values(this.lawns)) {
       if (this.trimmer.isRunning) {
-        this.grassTrimmed += lawn.trim(dt, this.trimmer.from, this.trimmer.head);
+        const feet = this.player.position;
+        const actors = {
+          player: { x: feet.x, z: feet.z, yaw: this.player.root.rotation.y },
+          mower: this.mower.deckPose,
+        };
+        this.grassTrimmed += lawn.trim(dt, this.trimmer.from, this.trimmer.head, actors);
       } else {
         lawn.liftTrimmer();
       }
