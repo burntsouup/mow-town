@@ -1,106 +1,151 @@
+/* The HUD, in the game's soft-toy style: cream cards with rounded corners and soft shadows,
+   chunky striped progress bars (like a freshly mowed lawn), and keys drawn as keycaps. */
+
 /* Without this, elements with their own `display` would ignore the `hidden` attribute. */
 [hidden] {
   display: none !important;
 }
 
-.interaction-prompt {
-  position: absolute;
-  bottom: 18%;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 8px 16px;
-  border-radius: 8px;
-  background: rgb(20 24 30 / 0.7);
-  font-size: 16px;
-  font-weight: 600;
-  white-space: nowrap;
+#hud {
+  --card: rgb(255 250 240 / 0.94);
+  --ink: #3b2f25;
+  --ink-soft: #7a6a58;
+  --line: #eadfcc;
+  --green: #4fae4a;
+  --green-light: #8fd46a;
+  --gold: #f2b53a;
+  --shadow: 0 6px 18px rgb(40 30 10 / 0.22);
 }
 
-/* A short message under the objective, like "deck fitted". It pops in. */
-.toast {
+/* A card: the building block for every panel. */
+.interaction-prompt,
+.toast,
+.objective,
+.wallet,
+.job-complete,
+.play-prompt {
+  border: 2px solid rgb(255 255 255 / 0.8);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.3em;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow:
+    inset 0 -2px 0 rgb(0 0 0 / 0.14),
+    0 0 0 1px var(--line);
+  font: inherit;
+  font-weight: 800;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* "Press E to grab the mower", near the bottom. */
+.interaction-prompt {
   position: absolute;
-  top: 118px;
+  bottom: 16%;
   left: 50%;
   transform: translateX(-50%);
-  padding: 8px 16px;
-  border-radius: 8px;
-  background: rgb(20 24 30 / 0.7);
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+  animation: pop-in 0.25s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+/* A short message under the objective, like "deck fitted": a yellow note that pops in. */
+.toast {
+  position: absolute;
+  top: 124px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 18px;
+  border-radius: 14px;
+  background: #fff3b8;
   font-size: 16px;
-  font-weight: 600;
-  color: #ffd76a;
+  font-weight: 700;
   white-space: nowrap;
   animation: pop-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
 
-/* Job objective and progress bar, top center. */
+/* The job, and how much of it is done, top center. */
 .objective {
   position: absolute;
   top: 14px;
   left: 50%;
   transform: translateX(-50%);
-  width: 300px;
-  padding: 8px 14px 10px;
-  border-radius: 10px;
-  background: rgb(20 24 30 / 0.6);
+  width: 310px;
+  padding: 10px 16px 12px;
+  border-radius: 18px;
   text-align: center;
 }
 
 .objective-title {
   margin-bottom: 6px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 800;
 }
 
 .objective-hint {
-  margin: -3px 0 6px;
+  margin: -4px 0 7px;
   font-size: 12px;
-  opacity: 0.75;
+  color: var(--ink-soft);
 }
 
 .progress-bar {
-  height: 8px;
-  border-radius: 4px;
-  background: rgb(255 255 255 / 0.18);
+  height: 12px;
+  border-radius: 999px;
+  background: var(--line);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.12);
   overflow: hidden;
 }
 
+/* Stripes, like a mowed lawn. */
 .progress-fill {
   width: 0;
   height: 100%;
-  border-radius: 4px;
-  background: linear-gradient(90deg, #6ec6ff, #b8f0ff);
+  border-radius: 999px;
+  background: repeating-linear-gradient(-45deg, var(--green) 0 8px, var(--green-light) 8px 16px);
   transition: width 0.25s ease-out;
 }
 
 .progress-label {
   margin-top: 4px;
   font-size: 12px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  opacity: 0.8;
+  color: var(--ink-soft);
 }
 
 .objective.is-complete > .progress-bar .progress-fill,
 .edges-row.is-complete .progress-fill {
-  background: linear-gradient(90deg, #7be495, #d4ffb0);
+  background: repeating-linear-gradient(-45deg, var(--gold) 0 8px, #ffd97a 8px 16px);
 }
 
 .edges-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 6px;
   font-size: 11px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  opacity: 0.85;
+  color: var(--ink-soft);
 }
 
 .edges-bar {
   flex: 1;
-  height: 5px;
+  height: 7px;
 }
 
 .edges-name,
 .edges-label {
-  min-width: 30px;
+  min-width: 34px;
 }
 
 .edges-name {
@@ -111,38 +156,48 @@
   text-align: right;
 }
 
-/* Your money, top right. It glows gold and swells while counting up. */
+/* Your money, top right, with a gold coin. It glows and swells while counting up. */
 .wallet {
   position: absolute;
   top: 14px;
   right: 16px;
-  padding: 6px 14px;
-  border-radius: 10px;
-  background: rgb(20 24 30 / 0.6);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px 6px 8px;
+  border-radius: 999px;
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: #c9f2b0;
+  color: #2f7a2c;
   transition:
     transform 0.2s ease-out,
     color 0.2s;
   transform-origin: top right;
 }
 
+.wallet::before {
+  content: '';
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffe9a3, var(--gold) 60%, #c98a1c);
+  box-shadow: inset 0 0 0 2px rgb(201 138 28 / 0.5);
+}
+
 .wallet.is-counting {
-  color: #ffd76a;
+  color: #c98a1c;
   transform: scale(1.15);
 }
 
-/* "Job complete!" card. It pops in, and clicks pass through so you can keep playing. */
+/* "Job complete!" card with its receipt. It pops in, and clicks pass through. */
 .job-complete {
   position: absolute;
-  top: 26%;
+  top: 24%;
   left: 50%;
   transform: translateX(-50%);
-  padding: 18px 32px;
-  border-radius: 14px;
-  background: rgb(20 24 30 / 0.75);
+  padding: 18px 30px 16px;
+  border-radius: 22px;
   text-align: center;
   animation: pop-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
@@ -153,9 +208,10 @@
 }
 
 .job-complete h2 {
-  margin: 0 0 6px;
-  font-size: 32px;
-  color: #b8f7c6;
+  margin: 0 0 4px;
+  font-size: 34px;
+  font-weight: 900;
+  color: var(--green);
 }
 
 .job-complete p {
@@ -164,12 +220,17 @@
 }
 
 .job-complete-hint {
-  opacity: 0.75;
+  color: var(--ink-soft);
 }
 
+/* The receipt: like a till slip, with a dashed line above the total. */
 .receipt {
-  margin: 10px auto 8px;
-  border-collapse: collapse;
+  margin: 12px auto 8px;
+  padding: 8px 14px;
+  border-collapse: separate;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 0 0 1px var(--line);
   font-size: 15px;
   font-variant-numeric: tabular-nums;
 }
@@ -181,17 +242,19 @@
 .receipt td:last-child {
   padding-left: 28px;
   text-align: right;
+  font-weight: 700;
 }
 
 .receipt-pending td {
-  opacity: 0.55;
+  color: var(--ink-soft);
+  opacity: 0.7;
 }
 
 .receipt-total td {
   padding-top: 6px;
-  border-top: 1px solid rgb(255 255 255 / 0.3);
-  font-weight: 700;
-  color: #ffd76a;
+  border-top: 2px dashed var(--line);
+  font-weight: 900;
+  color: #2f7a2c;
 }
 
 @keyframes pop-in {
@@ -205,30 +268,38 @@
   }
 }
 
+/* The start screen. */
 .play-prompt {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  min-width: 260px;
-  padding: 20px 28px;
-  border-radius: 12px;
-  background: rgb(20 24 30 / 0.72);
+  min-width: 300px;
+  max-height: calc(100% - 32px);
+  overflow-y: auto;
+  padding: 20px 28px 18px;
+  border-radius: 24px;
   text-align: center;
-  backdrop-filter: blur(4px);
 }
 
 .play-prompt h1 {
-  margin: 0 0 4px;
-  font-size: 28px;
-  letter-spacing: 0.02em;
+  margin: 0 0 6px;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  color: var(--green);
 }
 
 .play-prompt-action {
-  margin: 0 0 16px;
+  display: inline-block;
+  margin: 0 0 14px;
+  padding: 7px 20px;
+  border-radius: 999px;
+  background: var(--green);
+  color: #fff;
   font-size: 18px;
-  font-weight: 600;
-  color: #9fd4ff;
+  font-weight: 800;
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.15);
 }
 
 /* The start screen's buttons (the rest of the HUD lets clicks through; these don't). */
@@ -241,16 +312,17 @@
 .play-prompt-buttons {
   display: flex;
   justify-content: center;
-  margin: -6px 0 16px;
+  margin: -4px 0 16px;
 }
 
 .play-prompt-button {
   padding: 8px 18px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 999px;
   background: #ffc452;
   color: #3a2308;
-  font-weight: 700 !important;
+  font-weight: 800 !important;
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.14);
 }
 
 .play-prompt-button:hover {
@@ -262,29 +334,39 @@
   padding: 0;
   border: 0;
   background: none;
-  color: rgb(255 255 255 / 0.55);
+  color: var(--ink-soft);
   font-size: 12px !important;
   text-decoration: underline;
 }
 
 .play-prompt-reset:hover {
-  color: #fff;
+  color: var(--ink);
 }
 
 .controls {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 4px 14px;
+  gap: 5px 12px;
   margin: 0;
   text-align: left;
+  font-size: 13px;
 }
 
+/* Each key as a keycap. */
 .controls dt {
-  font-weight: 600;
-  text-align: right;
-  opacity: 0.85;
+  justify-self: end;
+  align-self: start;
+  padding: 0 7px;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow:
+    inset 0 -2px 0 rgb(0 0 0 / 0.14),
+    0 0 0 1px var(--line);
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .controls dd {
   margin: 0;
+  align-self: center;
 }

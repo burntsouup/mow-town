@@ -174,13 +174,13 @@ export class Hud {
 
     const toastText = screen === 'playing' ? state.toast : null;
     this.set('toast', toastText, () => {
-      this.toast.textContent = toastText ?? '';
+      showWithKeys(this.toast, toastText ?? '');
       this.toast.hidden = !toastText;
     });
 
     const promptText = screen === 'playing' ? state.prompt : null;
     this.set('prompt', promptText, () => {
-      this.prompt.textContent = promptText ?? '';
+      showWithKeys(this.prompt, promptText ?? '');
       this.prompt.hidden = !promptText;
     });
 
@@ -196,7 +196,7 @@ export class Hud {
     else if (complete) hint = state.nextJob ? 'Press N for the next job' : 'Press R to start over';
     else if (!state.hasMower) hint = "It's parked on the driveway";
     this.set('hint', hint, () => {
-      this.objectiveHint.textContent = hint;
+      showWithKeys(this.objectiveHint, hint);
       this.objectiveHint.hidden = !hint;
     });
 
@@ -233,9 +233,12 @@ export class Hud {
         this.completeTitle.textContent = neat ? 'Nice stripes!' : 'Job complete!';
         this.jobSummary.textContent = job.summary;
         this.jobTime.textContent = formatDuration(state.elapsed);
-        this.completeHint.textContent = next
-          ? `Press N for the next job: ${next.name ?? next.title}. R to redo this one.`
-          : 'Press R to start over: the grass grows back.';
+        showWithKeys(
+          this.completeHint,
+          next
+            ? `Press N for the next job: ${next.name ?? next.title}. R to redo this one.`
+            : 'Press R to start over: the grass grows back.',
+        );
       },
     );
 
@@ -250,7 +253,6 @@ export class Hud {
     for (const line of [...lines, { label: 'Total', amount: receiptTotal(lines), total: true }]) {
       const row = this.receipt.insertRow();
       if ('total' in line) row.className = 'receipt-total';
-      row.insertCell().textContent = line.label;
       const pending = 'pending' in line && line.pending;
       if (pending) row.className = 'receipt-pending';
       row.insertCell().textContent = pending ? `${line.label} (trim them: Q)` : line.label;
@@ -281,4 +283,23 @@ function element(tag, className) {
   const el = document.createElement(tag);
   el.className = className;
   return el;
+}
+
+/**
+ * Shows text with the keys it mentions ("Press E to grab the mower") drawn as keycaps.
+ *
+ * @param {HTMLElement} element
+ * @param {string} text
+ */
+function showWithKeys(element, text) {
+  // Split on the game's one-letter keys, standing alone: odd pieces are the keys.
+  const pieces = text.split(/\b([EFMNQRTV])\b/);
+  element.replaceChildren(
+    ...pieces.map((piece, i) => {
+      if (i % 2 === 0) return piece;
+      const key = document.createElement('kbd');
+      key.textContent = piece;
+      return key;
+    }),
+  );
 }

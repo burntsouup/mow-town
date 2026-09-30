@@ -19,9 +19,14 @@ body {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  color: #fff;
+  color: #3b2f25;
+  /* Rounded letters suit the toy look (SF Rounded on Apple devices, then fallbacks). */
   font:
-    14px/1.4 system-ui,
+    14px/1.4 ui-rounded,
+    'SF Pro Rounded',
+    'Nunito',
+    'Segoe UI',
+    system-ui,
     sans-serif;
 }
 
@@ -32,6 +37,7 @@ body {
   padding: 2px 6px;
   border-radius: 4px;
   background: rgb(0 0 0 / 0.45);
+  color: #fff;
   font-variant-numeric: tabular-nums;
 }
 
@@ -40,4 +46,5 @@ body {
   max-width: 32rem;
   text-align: center;
   font-size: 18px;
+  color: #fff;
 }
