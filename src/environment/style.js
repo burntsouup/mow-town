@@ -33,7 +33,8 @@ export const COLORS = {
   theirRoof: '#5d6b7c',
   theirDoor: '#f2b93b',
   hedge: '#3f7a33',
-  shed: '#9a7a58',
+  shed: '#c0573f', // barn red
+  shedBatten: '#a8472f',
   shedRoof: '#5d5249',
   stone: '#c7c0b4',
   water: '#8cc3e3',
@@ -41,6 +42,11 @@ export const COLORS = {
   gnomeCoat: '#3d6fb5',
   gnomeFace: '#f1c9a5',
   gnomeBeard: '#f4f1ea',
+  gnomeNose: '#f2a08a',
+  gnomeBoot: '#5a3a28',
+  bird: '#4c7fd9',
+  birdBelly: '#f3c6a0',
+  birdBeak: '#f2a33a',
 };
 export const FLOWER_COLORS = ['#e84a5f', '#f7c948', '#f4f1ea', '#b565d9', '#ff8f3d'];
 

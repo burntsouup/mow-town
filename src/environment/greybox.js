@@ -161,15 +161,26 @@ export class Greybox {
    *
    * @param {string} name
    * @param {{ radius: number, at: number[], color: string, squash?: number, solid?: boolean,
-   *   shade?: number, shadow?: boolean }} options squash < 1 flattens it; shade: how much
-   *   darker the bottom is (0..1); shadow: whether it casts one (tiny things needn't).
+   *   shade?: number, shadow?: boolean, smooth?: boolean }} options squash < 1 flattens
+   *   it; shade: how much darker the bottom is (0..1); shadow: whether it casts one (tiny
+   *   things needn't); smooth: full detail even though it's small (seen up close).
    */
   puff(
     name,
-    { radius, at: [x, y, z], color, squash = 1, solid = true, shade = 0.35, shadow = true },
+    {
+      radius,
+      at: [x, y, z],
+      color,
+      squash = 1,
+      solid = true,
+      shade = 0.35,
+      shadow = true,
+      smooth = false,
+    },
   ) {
     // Small puffs need far fewer triangles to look round (and there can be a lot of them).
-    const subdivisions = radius < 0.1 ? 1 : radius < 0.3 ? 2 : 3;
+    let subdivisions = radius < 0.1 ? 1 : radius < 0.3 ? 2 : 3;
+    if (smooth) subdivisions = 3;
     const mesh = MeshBuilder.CreateIcoSphere(
       name,
       { radius, subdivisions, flat: false },
