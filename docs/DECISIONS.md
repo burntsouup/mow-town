@@ -505,3 +505,17 @@ like broken glass and is slow to blend, so leaves vanish instead of fading
 (`seeThroughOpacity: 0`).
 **Revisit when:** plants should rustle more (bushes that part as you walk through), or
 leaves change color with the seasons.
+
+## 36. Show it off before bigger machines
+
+**Why:** a look at the other lawn-mowing games (September 2026) showed a niche that's real
+but has no hit. Lawn Mowing Simulator (2021) is a realistic work sim with real mower brands,
+and its sequel launched to mixed reviews; the Roblox mowing games reach millions of players
+with simple mow-earn-upgrade loops and short visits; and Grass (Cosmic Dog, not out yet) is
+a cozy co-op lawn care game. So co-op alone won't make mow-town stand out, but charm and
+moments worth sharing can: Tuft and the wardrobe, lawn art, the aerial reveal, and playing
+in a browser from a link. Patterns, a replay, music and a postcard build on what's already
+there, and they make everything after them (machines, clients, co-op) shareable too. The
+riding mower moves to v0.6.
+**Revisit when:** playtests show people don't want to share what they made, or the
+cozy co-op games move into the same space.
