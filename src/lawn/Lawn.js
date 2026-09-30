@@ -33,14 +33,14 @@ export class Lawn {
     this.cutter = new DeckCutter(this.grid);
     this.trimCutter = new TrimCutter(this.grid);
     // Anything taller than this in the grass map (half a byte of slack) still needs mowing.
-    this.field.plugin.uncutAbove = config.grass.cutHeight + MOWED_TOLERANCE + 0.5 / 255;
+    this.field.state.uncutAbove = config.grass.cutHeight + MOWED_TOLERANCE + 0.5 / 255;
     /** Which leftovers are shrinking away: the lawn away from the edges, and the edges. */
     this.finishing = { inner: false, edges: false };
   }
 
   /** @param {number} amount 0..1: how strongly to highlight grass that still needs mowing. */
   setHighlight(amount) {
-    this.field.plugin.highlight = amount;
+    this.field.state.highlight = amount;
   }
 
   /**
@@ -70,6 +70,15 @@ export class Lawn {
   /** Mows the whole lawn at once (a job you'd already finished, on a later visit). */
   mowAll() {
     this.grid.shrinkRemaining(Infinity);
+  }
+
+  /**
+   * Draws real blades of grass round a spot near you (see GrassBlades), or none.
+   *
+   * @param {{ x: number, z: number } | null} spot World meters.
+   */
+  follow(spot) {
+    this.field.blades.follow(spot);
   }
 
   /** Grows all the grass back, ready to mow again. */
@@ -159,6 +168,6 @@ export class Lawn {
       const left = this.grid.shrinkRemaining(dt / config.job.finishFadeTime, this.finishing);
       if (!left) this.finishing = { inner: false, edges: false };
     }
-    this.field.update();
+    this.field.update(dt);
   }
 }

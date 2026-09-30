@@ -223,8 +223,18 @@ export class Game {
     this.updateFootsteps();
     this.updateReveal(dt);
     this.updateJob(dt);
-    // Finish off leftovers and send cut grass to the GPU.
-    for (const lawn of Object.values(this.lawns)) lawn.update(dt);
+    // Finish off leftovers and send cut grass to the GPU. Real blades grow round you, a
+    // little ahead, where the camera's looking.
+    const feet = this.player.position;
+    const ahead = config.grass.blades.ahead;
+    const aheadX = feet.x + Math.sin(this.camera.yaw) * ahead;
+    const aheadZ = feet.z + Math.cos(this.camera.yaw) * ahead;
+    // (Not in the aerial view: from up there, the layers look right on their own.)
+    const bladesAt = this.reveal.isActive ? null : { x: aheadX, z: aheadZ };
+    for (const lawn of Object.values(this.lawns)) {
+      lawn.follow(bladesAt);
+      lawn.update(dt);
+    }
     if (this.input.wasPressed(config.audio.muteKey)) this.audio.toggleMute();
     this.audio.update(
       dt,

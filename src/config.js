@@ -165,7 +165,26 @@ export const config = {
     cutHeight: 0.3, // height after mowing, as a fraction of maxHeight (~3.5 cm)
     stripes: 0.18, // how much lighter/darker mowed grass looks leaning away/toward you
     mowLean: 0.35, // how far mowed blade tips lean the way the mower went (in blade widths)
-    colors: { root: '#27401c', tip: '#86ad4d', longTip: '#5e8c38' },
+    // Colors: root and tip of a blade, tip of long grass; dry and lush: the patches some of
+    // the lawn drifts toward (see grassNoise.js); the wildflowers.
+    colors: {
+      root: '#27401c',
+      tip: '#86ad4d',
+      longTip: '#5e8c38',
+      dry: '#b3b54c',
+      lush: '#2f6a2c',
+      dandelion: '#f7c52a',
+      daisy: '#f8f5ec',
+    },
+    varietySize: 18, // meters before the patches of lighter and darker grass repeat
+    // Wind: how far long blades sway (in blade widths) and how fast the waves roll (per s).
+    wind: { strength: 0.35, speed: 1.2 },
+    backlight: 0.8, // how much the tips glow when you look toward the sun
+    flowers: 0.003, // share of blades that are wildflowers, where they grow (long grass only)
+    // Real blades near you (see lawn/GrassBlades.js): within radius meters (thinning out over
+    // its outer 45%), one every spacing meters, width meters across at the root; centered
+    // ahead meters in front of you, where the camera's looking.
+    blades: { radius: 4.5, spacing: 0.03, width: 0.012, ahead: 1.5 },
   },
   mower: {
     // 'mouse': the mower turns toward where you look (A/D swing the view too).
