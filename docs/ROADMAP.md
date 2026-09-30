@@ -473,7 +473,7 @@ Real triangles (each leaf a pointed diamond) fixed it, stay crisp at any distanc
 skip the per-pixel cutting-out that's slow on Apple GPUs. Far trees and the treeline get
 fewer, bigger clusters. A see-through canopy full of leaves looked like broken glass and
 cost a lot to draw, so leaves now vanish when a tree is in the way, leaving a faint ghost of
-its core. About 630,000 leaf points in all, for about 0.3 ms a frame.
+its core. About 490,000 leaf and flower points in all, for about 0.3 ms a frame.
 
 ### 4. Buildings and street
 
