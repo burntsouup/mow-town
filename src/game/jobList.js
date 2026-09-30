@@ -60,6 +60,16 @@ export class JobList {
     return this.current;
   }
 
+  /**
+   * Picks up where you left off last visit: on this job, starting it fresh.
+   *
+   * @param {number} index
+   */
+  resume(index) {
+    this.resetAll();
+    this.index = Math.min(Math.max(Math.round(index), 0), this.jobs.length - 1);
+  }
+
   /** Makes the current job start over (its lawn is reset elsewhere). */
   redoCurrent() {
     this.currentJob.reset();

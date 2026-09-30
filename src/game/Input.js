@@ -21,9 +21,11 @@ export class Input {
     this.blocked = false;
     /** Whether any key or mouse button went down this frame, even while blocked. */
     this.anyPressed = false;
+    /** Clicking the game captures the mouse (not while dressing up: you drag to turn Tuft). */
+    this.lockOnClick = true;
 
     canvas.addEventListener('click', () => {
-      if (!this.isPointerLocked) this.lockPointer();
+      if (!this.isPointerLocked && this.lockOnClick) this.lockPointer();
     });
     document.addEventListener('pointerlockchange', () => {
       this.isPointerLocked = document.pointerLockElement === canvas;
@@ -78,6 +80,11 @@ export class Input {
         // Nothing to do; stay on the "click to play" screen.
       }
     }
+  }
+
+  /** Lets go of the mouse (shows the cursor again). */
+  unlockPointer() {
+    if (this.isPointerLocked) document.exitPointerLock();
   }
 
   releaseAll() {

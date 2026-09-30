@@ -1,6 +1,6 @@
 import { Mesh } from '@babylonjs/core';
 import { buildFrontYard } from './FrontYard.js';
-import { DRIVEWAY, frontLawn, HOUSE, SIDEWALK } from './frontYardLayout.js';
+import { DRIVEWAY, frontLawn, HOUSE, SIDEWALK, SPOTS } from './frontYardLayout.js';
 import { Greybox } from './greybox.js';
 import { buildNextDoor } from './NextDoor.js';
 import { NEXT_HOUSE, nextDoorLawn } from './nextDoorLayout.js';
@@ -76,6 +76,7 @@ export function createLevel(scene, shadows) {
     spawn,
     mowerSpot,
     standSpot,
+    closetSpot: { x: SPOTS.coatStand.x, z: SPOTS.coatStand.z }, // the coat stand by the door
     jobs,
     lawns: { frontLawn: frontLawn(), nextDoor: nextDoorLawn() },
   };

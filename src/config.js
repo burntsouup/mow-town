@@ -93,16 +93,10 @@ export const config = {
   },
   // Tuft, the character (see player/Tuft.js).
   tuft: {
+    // Fur, limb and clothes colors are in player/wardrobe.js (you pick them in the closet).
     colors: {
-      furTop: '#ffc452',
-      furBottom: '#ff7b54',
-      cheeks: '#ff9a8a',
       eyes: '#2f8fb0', // irises
-      limbs: '#ffb27d',
-      brows: '#c8552e',
       mouth: '#5a2436',
-      shoes: '#4c6ef5',
-      shoeAccent: '#ff6b6b',
     },
     // shells: layers of fur; length: meters from skin to tips; density: strands per meter;
     // thickness: strand width at the root (0..1 of its spacing); softness: how blurry each
@@ -125,6 +119,15 @@ export const config = {
       thickness: 0.45,
       softness: 0.12,
       sheen: 0.15,
+    },
+    // A beanie's pompom: a little furry ball.
+    pompomFur: {
+      shells: 10,
+      length: 0.03,
+      density: 280,
+      thickness: 0.5,
+      softness: 0.12,
+      sheen: 0.2,
     },
     // The body is soft, like jelly: springs (stiffness: how quick the wobble; damping: how
     // fast it settles) make it lag and sway when you start, stop and turn (lean: radians per
@@ -180,6 +183,15 @@ export const config = {
     // in meters), so it can't get as close to things.
     wideDeck: { price: 50, width: 0.76, length: 0.5, colliderRadius: 0.42 },
     toastTime: 3, // seconds a message like "deck fitted" stays up
+  },
+  // The closet (the coat stand by the front door, or "Dress up" on the start screen).
+  closet: {
+    range: 1.4, // meters from the coat stand that you can press E to dress up
+    // The camera orbits Tuft (drag to turn it, scroll to zoom): distance in meters, height
+    // as an angle down from straight above (radians), turn: how far round from straight in
+    // front (radians), shift: how far Tuft sits left of the middle (meters, to make room for
+    // the panel).
+    camera: { distance: 3.1, height: 1.32, turn: 0.4, shift: 0.6, near: 1.4, far: 5 },
   },
   trimmer: {
     key: 'KeyQ', // takes the string trimmer out, or puts it away

@@ -231,6 +231,46 @@
   color: #9fd4ff;
 }
 
+/* The start screen's buttons (the rest of the HUD lets clicks through; these don't). */
+.play-prompt button {
+  font: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.play-prompt-buttons {
+  display: flex;
+  justify-content: center;
+  margin: -6px 0 16px;
+}
+
+.play-prompt-button {
+  padding: 8px 18px;
+  border: 0;
+  border-radius: 10px;
+  background: #ffc452;
+  color: #3a2308;
+  font-weight: 700 !important;
+}
+
+.play-prompt-button:hover {
+  background: #ffd47a;
+}
+
+.play-prompt-reset {
+  margin-top: 14px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: rgb(255 255 255 / 0.55);
+  font-size: 12px !important;
+  text-decoration: underline;
+}
+
+.play-prompt-reset:hover {
+  color: #fff;
+}
+
 .controls {
   display: grid;
   grid-template-columns: auto 1fr;

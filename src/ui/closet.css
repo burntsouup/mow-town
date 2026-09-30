@@ -1,0 +1,145 @@
+/* The closet: a panel on the right for dressing Tuft up. Unlike the rest of the HUD, you can
+   click it. */
+.closet {
+  position: absolute;
+  top: 50%;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  max-height: calc(100% - 48px);
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgb(20 24 30 / 0.78);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+  transform: translateY(-50%);
+  animation: slide-in 0.3s cubic-bezier(0.2, 1.2, 0.4, 1);
+}
+
+.closet h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.closet-hint {
+  margin: 2px 0 10px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.closet-slots {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.closet-slot {
+  padding: 7px 0;
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+}
+
+.closet-slot-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.closet-slot-name {
+  flex: 0 0 64px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.closet-style {
+  flex: 1;
+  font-weight: 600;
+  text-align: center;
+}
+
+.closet button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.closet-arrow {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.12);
+  font-size: 18px !important;
+  line-height: 1;
+}
+
+.closet-arrow:hover {
+  background: rgb(255 255 255 / 0.24);
+}
+
+.closet-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.closet-swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 2px solid rgb(255 255 255 / 0.25);
+  border-radius: 50%;
+  transition: transform 0.12s ease-out;
+}
+
+.closet-swatch:hover {
+  transform: scale(1.15);
+}
+
+.closet-swatch.is-picked {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.3);
+  transform: scale(1.2);
+}
+
+.closet-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.closet-button {
+  flex: 1;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.14);
+  font-weight: 700 !important;
+}
+
+.closet-button:hover {
+  background: rgb(255 255 255 / 0.24);
+}
+
+.closet-button.is-primary {
+  background: #7be495;
+  color: #10331b !important;
+}
+
+.closet-button.is-primary:hover {
+  background: #97f0ad;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translate(30px, -50%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}

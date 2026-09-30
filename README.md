@@ -9,8 +9,10 @@ JavaScript.
 **Status:** v0.2, "A little mowing business" (released as 0.2.0): mow our front lawn for
 money, with tips for neat stripes and for trimming the edges with a string trimmer; buy a
 30-inch deck at the sale table by the garage; then push the mower next door and mow the
-Parkers' bigger, L-shaped lawn. Next up (v0.3): a riding mower and large properties. See
-[docs/ROADMAP.md](docs/ROADMAP.md) for what's done and next.
+Parkers' bigger, L-shaped lawn. In progress (v0.3, "Looking good"): a softer, toy-like
+world, and you play as Tuft, a fuzzy critter you can dress up (at the coat stand by the
+front door, or "Dress up Tuft" on the start screen). Your money, deck, job and outfit are
+saved between visits. See [docs/ROADMAP.md](docs/ROADMAP.md) for what's done and next.
 
 mow-town started as a copy of [p-washer](https://github.com/burntsouup/p-washer) v0.2.0 (a
 pressure-washing game), stripped down to its base systems: the game loop, input, camera,
@@ -18,26 +20,30 @@ player movement, jobs, tuning panel, HUD, and synthesized audio.
 
 ## Controls (current)
 
-| Input         | Action                                              |
-| ------------- | --------------------------------------------------- |
-| Click         | Capture the mouse and play                          |
-| Mouse         | Look around                                         |
-| WASD / arrows | Move                                                |
-| Shift         | Run                                                 |
-| E             | Grab the mower / let go (or buy, at the sale stand) |
-| W / S         | Push / pull the mower                               |
-| Mouse         | Steer the mower (default: it heads where you look)  |
-| A / D         | Steer the mower (with "A / D keys" steering)        |
-| Q             | Take out / put away the string trimmer              |
-| Hold mouse    | Run the trimmer (its head goes where you look)      |
-| Hold F        | Highlight the grass that's left                     |
-| V             | View the lawn from above                            |
-| N             | Next job (once this one's done)                     |
-| R             | Mow it again (once it's done)                       |
-| M             | Mute / unmute                                       |
-| T             | Tuning panel (live sliders; "Copy changes")         |
-| Esc           | Release the mouse                                   |
-| `` ` `` (key) | Toggle the Babylon Inspector (dev builds only)      |
+| Input         | Action                                                          |
+| ------------- | --------------------------------------------------------------- |
+| Click         | Capture the mouse and play                                      |
+| Mouse         | Look around                                                     |
+| WASD / arrows | Move                                                            |
+| Shift         | Run                                                             |
+| E             | Grab the mower / let go (or buy, or dress up at the coat stand) |
+| W / S         | Push / pull the mower                                           |
+| Mouse         | Steer the mower (default: it heads where you look)              |
+| A / D         | Steer the mower (with "A / D keys" steering)                    |
+| Q             | Take out / put away the string trimmer                          |
+| Hold mouse    | Run the trimmer (its head goes where you look)                  |
+| Hold F        | Highlight the grass that's left                                 |
+| V             | View the lawn from above                                        |
+| N             | Next job (once this one's done)                                 |
+| R             | Mow it again (once it's done)                                   |
+| M             | Mute / unmute                                                   |
+| T             | Tuning panel (live sliders; "Copy changes")                     |
+| Esc           | Release the mouse (or finish dressing up)                       |
+| Drag / scroll | Turn Tuft round / zoom, while dressing up                       |
+| `` ` `` (key) | Toggle the Babylon Inspector (dev builds only)                  |
+
+The start screen also has **Dress up Tuft** and **Start over** (which resets your money,
+deck and jobs, but keeps your outfit).
 
 **Dev tip:** in dev builds, type `game` in the browser console to inspect the running game,
 e.g. `game.scene.meshes` or `game.camera.yaw`.
@@ -67,10 +73,11 @@ npm run dev      # opens http://localhost:5173 with live reload
 src/
   main.js              Entry point: creates the Game
   config.js            Every tunable number lives here
-  game/                Game loop, keyboard/mouse input, jobs and pay, tuning helpers
+  game/                Game loop, keyboard/mouse input, jobs and pay, saving, tuning helpers
   environment/         The level (level.js): our yard, next door, lighting + sky, the shape
                        kit (greybox.js) and surfaces painted in code
-  player/              The player character (movement.js is the tested, pure part)
+  player/              Tuft, the player character: fur, face, walk, and outfits (movement.js,
+                       tuftMath.js, wardrobe.js and clothesMath.js are the tested, pure parts)
   camera/              Third-person camera and the aerial reveal (*Math.js: tested, pure)
   lawn/                The grass: GrassGrid + cutters and neatness (tested, pure), renderer
   mower/               The push mower (mowerMath.js is the tested, pure handling)
@@ -79,7 +86,7 @@ src/
   audio/               Synthesized sounds (audioMix.js is the tested, pure part)
   effects/             Grass clippings and particle textures drawn in code
   math/                Small pure helpers: seeded noise, rectangles, ground shapes
-  ui/                  HTML overlay: HUD, prompts, "click to play", tuning panel
+  ui/                  HTML overlay: HUD, prompts, "click to play", the closet, tuning panel
 docs/
   ROADMAP.md           Milestones and checklists (our plan)
   DECISIONS.md         Why things are the way they are

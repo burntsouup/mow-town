@@ -12,9 +12,11 @@ import { stripeNeatness } from '../lawn/neatness.js';
 import { grassSpeedFactor } from '../mower/mowerMath.js';
 import { PushMower } from '../mower/PushMower.js';
 import { Player } from '../player/Player.js';
+import { DEFAULT_OUTFIT } from '../player/wardrobe.js';
 import { SaleStand } from '../shop/SaleStand.js';
 import { buy } from '../shop/shop.js';
 import { StringTrimmer } from '../trimmer/StringTrimmer.js';
+import { Closet } from '../ui/Closet.js';
 import { DebugOverlay } from '../ui/DebugOverlay.js';
 import { Hud } from '../ui/Hud.js';
 import { TuningPanel } from '../ui/TuningPanel.js';
@@ -23,6 +25,7 @@ import { pixelRatioFor, refreshRateFrom } from './display.js';
 import { Input } from './Input.js';
 import { JobList } from './jobList.js';
 import { countTowards, jobReceipt, receiptTotal } from './pay.js';
+import { readSave, resetProgress, writeSave } from './save.js';
 import { toDeltaSeconds } from './time.js';
 
 /**
@@ -80,7 +83,7 @@ export class Game {
     this.reveal.frame(this.lawn); // the first job's lawn
     this.celebration = new Celebration(this.scene);
     this.highlight = 0; // 0..1, eases in and out while the highlight key is held
-    this.money = 0; // dollars earned (not saved yet: reloading starts over)
+    this.money = 0; // dollars earned
     this.moneyShown = 0; // what the HUD shows: counts up to `money` like a till
     /** @type {import('./pay.js').PayLine[] | null} What the current job paid, once done. */
     this.receipt = null;
@@ -96,8 +99,57 @@ export class Game {
     this.hud = new Hud(hudRoot, this.input);
     this.debugOverlay = new DebugOverlay(this.engine, this.scene, hudRoot);
     this.tuning = new TuningPanel(this);
+    /** What you're wearing (see player/wardrobe.js). */
+    this.outfit = DEFAULT_OUTFIT;
+    this.closet = new Closet(this.scene, hudRoot, {
+      change: (outfit) => {
+        this.outfit = outfit;
+        this.player.wear(outfit);
+      },
+      done: () => this.closeCloset(),
+    });
+    this.hud.actions = {
+      dressUp: () => this.openCloset(),
+      startOver: () => this.startOver(),
+    };
+    this.storage = browserStorage();
+    this.load();
 
     window.addEventListener('resize', () => this.engine.resize());
+  }
+
+  /** Picks up where you left off last visit (see save.js), if you've been here before. */
+  load() {
+    const progress = readSave(this.storage, {
+      jobs: this.level.jobs.length,
+      items: [this.stand.item.id],
+    });
+    if (!progress) return;
+    this.outfit = progress.outfit;
+    this.player.wear(this.outfit);
+    this.money = progress.money;
+    this.moneyShown = progress.money;
+    if (progress.owned.includes(this.stand.item.id)) {
+      this.stand.markSold();
+      this.fitWideDeck();
+      this.toldAboutDeck = true;
+    }
+    this.jobs.resume(progress.job);
+    // Lawns from jobs you'd already done are still mowed.
+    for (const job of this.level.jobs.slice(0, this.jobs.index)) {
+      if (job.lawn && job.lawn !== this.jobs.current.lawn) this.lawns[job.lawn]?.mowAll();
+    }
+    this.reveal.frame(this.lawn);
+  }
+
+  /** Saves your progress (see save.js): after you're paid, buy something, or dress up. */
+  save() {
+    writeSave(this.storage, {
+      money: this.money,
+      owned: this.stand.owned ? [this.stand.item.id] : [],
+      job: this.jobs.index,
+      outfit: this.outfit,
+    });
   }
 
   /**
@@ -144,9 +196,11 @@ export class Game {
     // trimming, you face the trimmer's head.
     if (!this.mower.isHeld) this.player.update(dt, this.camera.yaw, this.trimmer.faceYaw);
     this.updateShop(); // before the mower, which would otherwise take the E key
+    this.updateCloset(); // (the same)
     this.updateMowing(dt);
     this.camera.mode = this.mower.isHeld ? 'mowing' : this.trimmer.isOut ? 'trimming' : 'walking';
     this.camera.update(dt); // follow the player to their new position
+    if (this.closet.isOpen) this.player.setOpacity(1); // the closet has its own camera
     this.updateTrimming(dt); // aims with the camera, so after it moves
     // Tuft's hands go wherever the mower or trimmer handles ended up.
     let hands = null;
@@ -183,7 +237,8 @@ export class Game {
       prompt:
         this.mower.prompt ??
         this.stand.promptFor(this.player.position, this.money) ??
-        this.trimmer.prompt,
+        this.trimmer.prompt ??
+        (this.isNearCloset() ? 'Press E to dress up' : null),
       toast: this.toastTime > 0 ? this.toastText : null,
       hasMower: this.mower.everHeld,
       job: this.jobs.current,
@@ -198,6 +253,7 @@ export class Game {
       money: this.moneyShown,
       moneyCounting: this.moneyShown !== this.money,
       receipt: this.receipt,
+      closetOpen: this.closet.isOpen,
     });
     this.debugOverlay.update(dt);
   }
@@ -262,13 +318,17 @@ export class Game {
 
     if (!job.isComplete) return;
     if (this.input.wasPressed(config.job.nextKey)) {
-      if (this.jobs.next()) this.startJob();
+      if (this.jobs.next()) {
+        this.startJob();
+        this.save();
+      }
     } else if (this.input.wasPressed(config.job.resetKey)) {
       // The grass grows back (and mowing it again pays again). After the last job, every
       // lawn does, and it all starts over (your money and upgrades stay yours).
       if (this.jobs.allComplete) {
         this.jobs.resetAll();
         for (const lawn of Object.values(this.lawns)) lawn.reset();
+        this.save();
       } else {
         this.jobs.redoCurrent();
         this.lawn.reset();
@@ -297,6 +357,7 @@ export class Game {
     this.money += receiptTotal(receipt) - paidBefore;
     this.audio.playCoins(0.6); // just after the chime
     this.cardTime = config.job.cardTime;
+    this.save();
   }
 
   /**
@@ -318,12 +379,61 @@ export class Game {
     if (!bought) return;
     this.money = bought.money;
     stand.markSold();
-    const { wideDeck } = config.shop;
-    this.mower.fitDeck({ width: wideDeck.width, length: wideDeck.length }, wideDeck.colliderRadius);
+    this.fitWideDeck();
     this.celebration.play(this.mower.model.deck);
     this.audio.playCoins();
     this.audio.playClunk();
     this.toast('30-inch deck fitted to your mower!');
+    this.save();
+  }
+
+  fitWideDeck() {
+    const { wideDeck } = config.shop;
+    this.mower.fitDeck({ width: wideDeck.width, length: wideDeck.length }, wideDeck.colliderRadius);
+  }
+
+  /**
+   * Whether you can dress up here: at the coat stand by the front door, empty-handed (and not
+   * where E would grab the mower).
+   */
+  isNearCloset() {
+    const { x, z } = this.level.closetSpot;
+    const feet = this.player.position;
+    const near = Math.hypot(feet.x - x, feet.z - z) < config.closet.range;
+    return near && !this.mower.isHeld && !this.trimmer.isOut && !this.mower.isPlayerNear();
+  }
+
+  /** The coat stand: walk up and press E to dress up. */
+  updateCloset() {
+    const pressed = this.input.isPointerLocked && this.input.wasPressed(config.mower.grabKey);
+    if (pressed && this.isNearCloset()) this.openCloset();
+  }
+
+  /** Opens the closet (see Closet.js), from the start screen or the coat stand. */
+  openCloset() {
+    if (this.closet.isOpen || this.reveal.isActive) return;
+    if (this.mower.isHeld) this.mower.letGo();
+    if (this.trimmer.isOut) this.trimmer.putAway();
+    this.input.lockOnClick = false; // dragging turns Tuft round instead
+    this.input.unlockPointer();
+    // Turn to face the camera, so the closet's camera comes round to where the view was
+    // already clear (not into a wall).
+    const feet = this.player.position;
+    const yaw = this.camera.yaw + Math.PI;
+    this.player.placeAt(feet.x, feet.z, yaw);
+    this.closet.open(this.outfit, feet, yaw);
+  }
+
+  closeCloset() {
+    this.input.lockOnClick = true;
+    this.save();
+    this.input.lockPointer(); // straight back to playing (clicking Done lets us)
+  }
+
+  /** Forgets your money, deck and jobs (keeping your outfit), and starts afresh. */
+  startOver() {
+    resetProgress(this.storage, this.outfit);
+    window.location.reload();
   }
 
   /**
@@ -375,5 +485,17 @@ export class Game {
     }
     if (dt > 0) this.trimRate = smoothTowards(this.trimRate, this.grassTrimmed / dt, dt, 10);
     this.trimmer.updateSpray(this.trimRate);
+  }
+}
+
+/**
+ * The browser's localStorage, or null if it isn't allowed (some private windows throw just
+ * for looking at it).
+ */
+function browserStorage() {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
   }
 }
