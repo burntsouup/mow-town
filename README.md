@@ -82,7 +82,8 @@ src/
   player/              Tuft, the player character: fur, face, walk, and outfits (movement.js,
                        tuftMath.js, wardrobe.js and clothesMath.js are the tested, pure parts)
   camera/              Third-person camera and the aerial reveal (*Math.js: tested, pure)
-  lawn/                The grass: GrassGrid + cutters and neatness (tested, pure), renderer
+  lawn/                The grass: GrassGrid + cutters, neatness and lawn-art patterns (tested,
+                       pure), renderer
   mower/               The push mower (mowerMath.js is the tested, pure handling)
   trimmer/             The string trimmer (trimmerMath.js: tested, pure aiming)
   shop/                The sale stand by the garage (shop.js: tested, pure rules)

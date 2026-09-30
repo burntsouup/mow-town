@@ -524,15 +524,25 @@ fixed steps, synthesized sound), and they make everything after them shareable t
 Approach: art and music stay in code; the frame budget stays v0.4's. A checkpoint after
 each milestone.
 
-### 1. Lawn art
+### 1. Lawn art ✅
 
-- [ ] Mowing across your stripes leaves both passes in the grass, so checkerboards (and
+- [x] Mowing across your stripes leaves both passes in the grass, so checkerboards (and
       diamonds) show up
-- [ ] Clients ask for patterns: a checkerboard on our lawn, then diagonal stripes next door
+- [x] Clients ask for patterns: a checkerboard on our lawn, then diagonal stripes next door
       (the grass has grown back), with a string line to start the diagonals along
-- [ ] The objective shows the pattern asked for; the tip is for how well the lawn matches it
-- [ ] A checkerboard's job counts both passes
-- [ ] The aerial view picks the angle that shows your stripes best
+- [x] The objective shows the pattern asked for; the tip is for how well the lawn matches it
+- [x] A checkerboard's job counts both passes
+- [x] The aerial view picks the angle that shows your stripes best
+
+**Findings:** stripes only show when you look along them: grass leaning away looks
+lighter, toward you darker, and from the side it all looks the same. So a checkerboard
+seen straight from the street looks like plaid, and diagonal stripes look faint; seen
+diagonally, the checkerboard pops and the diagonals look like bold straight stripes. The
+aerial view now turns to look along your stripes (diagonally across a checkerboard), which
+matters as much as the pattern itself. A random scribble crosses most of a lawn too, so
+the checkerboard's second pass counts toward finishing the job, but only neat, square-on
+passes earn the tip (a scribble scores about 0.15). Not done yet: during the second pass,
+holding F can't show the bits you haven't crossed (the grass there is already short).
 
 ### 2. Timelapse
 
