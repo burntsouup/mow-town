@@ -460,9 +460,20 @@ every pixel, add up; the layers skip pixels that miss every blade before doing t
 As a safety net for slower machines, the game now steps its resolution down a little if
 frames keep missing the screen's refresh.
 
-### 3. Trees, hedges and flowers
+### 3. Trees, hedges and flowers ✅
 
-- [ ] Fluffy, leafy canopies and bark; leafy hedges and bushes; real flowers
+- [x] Fluffy, leafy canopies and bark; leafy hedges and bushes; real flowers
+
+**Findings:** every plant is now a dark core covered in little clusters of leaves, lit as if
+the whole plant were one ball (each leaf's normal points out from the plant's middle), which
+is what makes stylized trees look soft and full instead of like a heap of flat cards. Leaves
+started as pictures of leaves on see-through squares, which went wrong at a distance: the
+texture's smaller copies blur the see-through edges, and whole squares showed up black.
+Real triangles (each leaf a pointed diamond) fixed it, stay crisp at any distance, and
+skip the per-pixel cutting-out that's slow on Apple GPUs. Far trees and the treeline get
+fewer, bigger clusters. A see-through canopy full of leaves looked like broken glass and
+cost a lot to draw, so leaves now vanish when a tree is in the way, leaving a faint ghost of
+its core. About 630,000 leaf points in all, for about 0.3 ms a frame.
 
 ### 4. Buildings and street
 
