@@ -30,6 +30,7 @@ export class AudioSystem {
     this.muted = false;
     this.rpm = 0; // mower engine speed, 0 (stopped) .. 1 (full speed)
     this.trimmerRpm = 0; // the same for the string trimmer
+    this.random = createRandom(29); // so no two footsteps sound quite the same
     window.addEventListener('pointerdown', () => this.start());
   }
 
@@ -269,6 +270,57 @@ export class AudioSystem {
     envelope.connect(/** @type {GainNode} */ (this.master));
     thump.start(now);
     thump.stop(now + 0.25);
+  }
+
+  /**
+   * A footstep: a soft swish on grass, a muffled pad on paths (sneakers).
+   *
+   * @param {'grass' | 'path'} surface
+   * @param {number} strength 0..1: a gentle step to a running stomp.
+   */
+  playStep(surface, strength) {
+    if (!this.context || !this.master || !this.noise) return;
+    const context = this.context;
+    const now = context.currentTime;
+    const grass = surface === 'grass';
+    const source = context.createBufferSource();
+    source.buffer = this.noise;
+    source.playbackRate.value = 0.8 + 0.4 * this.random();
+    const filter = context.createBiquadFilter();
+    filter.type = grass ? 'lowpass' : 'bandpass';
+    filter.frequency.value = grass ? 1800 : 700 + 300 * this.random();
+    filter.Q.value = grass ? 0.7 : 1.4;
+    const length = grass ? 0.12 : 0.07;
+    const volume = config.audio.steps[surface] * (0.5 + 0.5 * strength);
+    const envelope = context.createGain();
+    envelope.gain.setValueAtTime(0.0001, now);
+    envelope.gain.exponentialRampToValueAtTime(volume, now + 0.008);
+    envelope.gain.exponentialRampToValueAtTime(0.0001, now + length);
+    source.connect(filter);
+    filter.connect(envelope);
+    envelope.connect(this.master);
+    // Start somewhere random in the noise, so no two steps are alike.
+    source.start(now, this.random() * 0.5, length + 0.02);
+  }
+
+  /** A soft, bubbly "pop" (trying something on in the closet). */
+  playPop() {
+    if (!this.context || !this.master) return;
+    const context = this.context;
+    const now = context.currentTime;
+    const tone = context.createOscillator();
+    tone.type = 'sine';
+    const pitch = 520 + 160 * this.random();
+    tone.frequency.setValueAtTime(pitch, now);
+    tone.frequency.exponentialRampToValueAtTime(pitch * 2.2, now + 0.07);
+    const envelope = context.createGain();
+    envelope.gain.setValueAtTime(0.0001, now);
+    envelope.gain.exponentialRampToValueAtTime(config.audio.pop, now + 0.01);
+    envelope.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+    tone.connect(envelope);
+    envelope.connect(this.master);
+    tone.start(now);
+    tone.stop(now + 0.16);
   }
 
   /** "Job complete!": a bright rising arpeggio (C, E, G, high C) with a soft shimmer. */

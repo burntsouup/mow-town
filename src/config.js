@@ -212,6 +212,9 @@ export const config = {
     trimmerSprayPerCut: 2500, // the same for the string trimmer's spray of grass bits
     maxTrimmerSpray: 600,
     clippingColors: ['#86b84a', '#5b8a30'], // each clipping is somewhere between these
+    // Puffs where Tuft's feet land (particles per step, at full speed): soft dust on paths
+    // (color, and alpha as two hex digits), bits of grass on a lawn.
+    footsteps: { dustPuffs: 5, dustColor: '#e9e1d2', dustAlpha: '66', grassBits: 5 },
   },
   audio: {
     master: 0.7,
@@ -242,6 +245,8 @@ export const config = {
     chime: 0.22, // "job complete" jingle
     ding: 0.14, // "edges done"
     coins: 0.16, // "ka-ching" when you're paid
+    steps: { grass: 0.05, path: 0.04 }, // footsteps, at full stride
+    pop: 0.1, // trying something on in the closet
     muteKey: 'KeyM',
   },
   job: {

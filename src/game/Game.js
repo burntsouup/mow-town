@@ -5,6 +5,7 @@ import { RevealCamera } from '../camera/RevealCamera.js';
 import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { config } from '../config.js';
 import { Clippings } from '../effects/Clippings.js';
+import { Footsteps } from '../effects/Footsteps.js';
 import { createLevel } from '../environment/level.js';
 import { applyColorGrading, createLighting, createSky } from '../environment/lighting.js';
 import { Lawn } from '../lawn/Lawn.js';
@@ -78,6 +79,7 @@ export class Game {
     this.grassTrimmed = 0; // grass cut by the string trimmer this frame
     this.trimRate = 0; // ...per second, smoothed
     this.clippings = new Clippings(this.scene, this.mower.model.chute);
+    this.footsteps = new Footsteps(this.scene);
     this.audio = new AudioSystem();
     this.jobs = new JobList(this.level.jobs, config.job.completeAt);
     this.reveal.frame(this.lawn); // the first job's lawn
@@ -106,6 +108,7 @@ export class Game {
         this.outfit = outfit;
         this.player.wear(outfit);
         this.player.cheer(false); // a little hop in the new look
+        this.audio.playPop();
       },
       done: () => this.closeCloset(),
     });
@@ -208,6 +211,7 @@ export class Game {
     if (this.mower.isHeld) hands = this.mower.gripPoints();
     else if (this.trimmer.isOut) hands = this.trimmer.gripPoints();
     this.player.animate(dt, hands, this.mower.isHeld ? 1 : 0);
+    this.updateFootsteps();
     this.updateReveal(dt);
     this.updateJob(dt);
     // Finish off leftovers and send cut grass to the GPU.
@@ -393,6 +397,19 @@ export class Game {
   fitWideDeck() {
     const { wideDeck } = config.shop;
     this.mower.fitDeck({ width: wideDeck.width, length: wideDeck.length }, wideDeck.colliderRadius);
+  }
+
+  /** A puff and a patter wherever Tuft's feet land: grass on a lawn, dust on paths. */
+  updateFootsteps() {
+    const { tuft } = this.player;
+    if (tuft.steps.length === 0) return;
+    const strength = Math.min(1, tuft.localVelocity.length() / config.player.runSpeed);
+    for (const step of tuft.steps) {
+      const onGrass = Object.values(this.lawns).some((lawn) => lawn.grassAt(step.x, step.z) > 0);
+      const surface = onGrass ? 'grass' : 'path';
+      this.footsteps.puff(step, surface, strength);
+      this.audio.playStep(surface, strength);
+    }
   }
 
   /**
