@@ -29,19 +29,19 @@ export const config = {
       cloudShade: '#cdd9ec',
       cloudDrift: 0.004,
     },
-    // Linear fog, in meters from the camera. Hides the edge of the world.
-    fog: { start: 45, end: 120 },
+    // Haze (see environment/sky.js): density per meter. About 20% at 50 m, 70% at 120 m.
+    fog: { density: 0.0095 },
     // Direction the sunlight travels: a late-afternoon sun, low enough for long shadows.
-    sun: { direction: [-0.55, -1, 0.7], intensity: 1.35, color: '#ffe0b3', shadowDarkness: 0.3 },
+    sun: { direction: [-0.55, -1, 0.7], intensity: 1.5, color: '#ffe0b3', shadowDarkness: 0.22 },
     // Soft light from the sky above and bounced light from the ground below. It's what
     // lights the shadows, so its blue keeps them cool next to the warm sun.
-    fill: { intensity: 0.7, skyColor: '#b9d3f2', groundColor: '#8a8a5e' },
+    fill: { intensity: 0.6, skyColor: '#b9d3f2', groundColor: '#8a8a5e' },
     // The final look (see applyColorGrading in environment/lighting.js). exposure/contrast:
     // 1 = unchanged. saturation: -100..100. Hues in degrees (40 = warm, 220 = blue);
     // densities 0..100. vignette: 0 = none.
     grading: {
-      exposure: 1.05,
-      contrast: 1.05,
+      exposure: 1.06,
+      contrast: 1.1,
       saturation: 6,
       highlights: { hue: 40, density: 18 },
       shadows: { hue: 215, density: 28 },

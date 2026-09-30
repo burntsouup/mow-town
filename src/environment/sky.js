@@ -59,10 +59,11 @@ export function createSky(scene) {
   const settings = config.render.sky;
   const horizon = Color3.FromHexString(settings.horizon);
   scene.clearColor = horizon.toColor4(1);
-  scene.fogMode = Scene.FOGMODE_LINEAR;
+  // Haze that thickens with distance (squared), so it barely touches the yard but softens
+  // the houses across the street and swallows the far ground: that's what makes far look far.
+  scene.fogMode = Scene.FOGMODE_EXP2;
   scene.fogColor = horizon;
-  scene.fogStart = config.render.fog.start;
-  scene.fogEnd = config.render.fog.end;
+  scene.fogDensity = config.render.fog.density;
 
   // A big inside-out sphere that always stays centered on the camera.
   const dome = MeshBuilder.CreateSphere(

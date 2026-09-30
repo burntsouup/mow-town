@@ -35,7 +35,7 @@ export function createLighting(scene) {
 
   const shadows = new ShadowGenerator(config.render.shadowMapSize, sun);
   shadows.usePercentageCloserFiltering = true; // soft-edged shadows
-  shadows.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
+  shadows.filteringQuality = ShadowGenerator.QUALITY_HIGH; // smoother edges, for free on an M3
   shadows.bias = 0.001; // prevents "shadow acne" stripes on lit surfaces
   shadows.normalBias = 0.02;
   shadows.darkness = sunSettings.shadowDarkness; // 0 = no sunlight in shadows; softer above
