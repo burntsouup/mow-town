@@ -362,7 +362,14 @@ casters would stretch it and blur the shadows up close.
 `roundedBox` provides UVs even where nothing uses them. A cloned `DynamicTexture` comes out
 blank (#15), so every roof shares one shingle texture, scaled through its UVs. Smooth
 icospheres get expensive fast (a subdivision-3 puff is 642 vertices), so small puffs use
-fewer subdivisions.
+fewer subdivisions, unless they're seen up close (`smooth`). A half cylinder (`arc: 0.5`) is
+built on its -z side.
+**Props and the HUD (v0.3 milestone 4):** props built outside the level kit (the mower,
+the trimmer, the sale table, Tuft's clothes) share `toyMeshes.js`: `roundedMesh`, and a
+`plastic` material with a bright, tight highlight, which is most of what makes a shape read
+as a toy. The HUD is cream cards with soft shadows, rounded lettering (`ui-rounded`: SF
+Rounded on Apple devices), striped progress bars and keycaps, so it belongs to the same
+world instead of floating over it as dark glass.
 **Revisit when:** code-built art hits its ceiling somewhere it matters (then consider CC0
 model packs for props, matched to this palette).
 

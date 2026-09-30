@@ -353,9 +353,21 @@ circles Tuft, and Tuft turns to face you first, so that camera lands where the v
 already clear (not inside the house). Saving is small: money, the deck, which job you're on
 (it starts fresh) and your outfit; lawns from jobs you'd finished come back mowed.
 
-### 4. Restyle the world
+### 4. Restyle the world ✅
 
-- [ ] The mower, the trimmer, the sale table, next door and the HUD, in the new style
+- [x] The mower, the trimmer, the sale table, next door and the HUD, in the new style
+
+**Findings:** the mower is on screen the whole time you mow, so it got the most care: a
+glossy domed deck, chunky rubber wheels with shiny hubs (their bolts show them turning), a
+shroud with a fuel cap, and a thick foam grip. Gloss (a bright, tight highlight) is most of
+what makes a shape read as a toy rather than a grey box. The sale table became a real
+garage sale (gingham cloth, a box of odds and ends); next door's shed is barn red with
+white Z-braced doors and a flower box, the birdbath is one smooth spun outline with a
+bluebird on it, and the gnome is round and cute. Small details seen up close (the gnome,
+the bird) need smooth spheres: the cheap low-detail puffs look faceted there. The HUD
+switched from dark glass to cream cards with rounded lettering, striped progress bars and
+keycaps. Restyling turned up two old bugs: the trimmer's guard sat beside its head, not
+toward you, and the receipt showed every line's label twice.
 
 ### 5. Character juice
 

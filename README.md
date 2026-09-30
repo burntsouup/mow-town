@@ -75,7 +75,7 @@ src/
   config.js            Every tunable number lives here
   game/                Game loop, keyboard/mouse input, jobs and pay, saving, tuning helpers
   environment/         The level (level.js): our yard, next door, lighting + sky, the shape
-                       kit (greybox.js) and surfaces painted in code
+                       kit (greybox.js), toy props (toyMeshes.js) and surfaces painted in code
   player/              Tuft, the player character: fur, face, walk, and outfits (movement.js,
                        tuftMath.js, wardrobe.js and clothesMath.js are the tested, pure parts)
   camera/              Third-person camera and the aerial reveal (*Math.js: tested, pure)
