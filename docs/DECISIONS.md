@@ -372,7 +372,7 @@ model packs for props, matched to this palette).
 than anything else on screen, and a round, furry body suits this game: fur is the grass's
 shell trick again (`furShells`, `FurMaterialPlugin`), and a body with no joints can be
 animated in code with no skeleton or rig. Tuft is our own design, inspired by the friendly
-monsters in Microsoft Reflect but not copied from them (an egg-shaped two-tone body, googly
+monsters in Microsoft Reflect but not copied from them (a gumdrop-shaped two-tone body, googly
 eyes, eyebrow tufts, a small smile, noodle limbs, mitts and sneakers; no giant mouth or
 medallion).
 **How:** strands sit on a 3D grid over the skin (no texture seams), taper, vary in length,
@@ -389,8 +389,15 @@ edges, plus sky and ground light, and one ray a frame toward the sun to dim it i
 because Babylon's full lighting in every layer cost more than the rest of the scene.
 **See-through:** fading splits the opacity across the layers (16 faint layers would still
 stack up to solid), the skin is drawn before the fur, and the face fades first.
-**Gotcha:** Babylon's `CUSTOM_FRAGMENT_UPDATE_ALPHA` hook only exists in the shader when the
+**Shape and jelly:** the body is a gumdrop, not an egg (`bodyPoint`): a furry egg reads as a
+ball. Its outline is built from smooth curves only (bell curves and sines), because any kink
+(an `abs()`, a `max()`) shows as a crease in the fur; its normals come from two tiny steps
+across the surface, so they always match the shape. It sways, sloshes and leans on springs
+(`springStep`: pulled toward a target, overshooting a little) driven by how fast Tuft speeds
+up, slows down and turns, and the fur shader adds a small ripple.
+**Gotchas:** Babylon's `CUSTOM_FRAGMENT_UPDATE_ALPHA` hook only exists in the shader when the
 material has a diffuse texture, so the fur's alpha is applied in `CUSTOM_FRAGMENT_BEFORE_FOG`
-instead, on `color.a`.
+instead, on `color.a`. `furShells` with 0 shells (the solid skin) once divided 0 by 0: every
+vertex was NaN, so the skin silently never drew; a test covers it now.
 **Revisit when:** the walk needs to react to slopes or stairs (plant feet by raycasting), or
 Tuft needs more expressions (a mouth that opens).

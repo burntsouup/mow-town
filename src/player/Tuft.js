@@ -19,13 +19,13 @@ import {
   advanceWalk,
   Blinker,
   bodyBob,
+  bodyPoint,
   ellipsoidPoint,
   footOffset,
   limbCurve,
+  springStep,
 } from './tuftMath.js';
 
-/** The egg-shaped body, relative to its bottom (which sits on the hips). Meters. */
-const BODY = { center: { x: 0, y: 0.5, z: 0 }, radii: { x: 0.42, y: 0.5, z: 0.4 } };
 /** Where the body sits: its bottom, above the feet. */
 const BODY_BASE = 0.45;
 const HIP = { x: 0.14, y: 0.52 };
@@ -33,10 +33,11 @@ const LIMB_SEGMENTS = 10;
 const LIMB_RADIUS = 0.045;
 
 /**
- * Tuft: a round, fluffy critter with big glossy eyes, rosy cheeks, eyebrow tufts, and soft
- * rubbery arms and legs ending in mittens and sneakers. Our own character, animated entirely
- * in code (no skeleton): each frame the body bobs and squashes, the feet step (planted, then
- * swung), and the arms swing, or reach for whatever you're holding.
+ * Tuft: a soft, fluffy gumdrop of a critter with big glossy eyes, rosy cheeks, eyebrow
+ * tufts, and soft rubbery arms and legs ending in mittens and sneakers. Our own character,
+ * animated entirely in code (no skeleton): each frame the body bobs, squashes and wobbles
+ * like jelly, the feet step (planted, then swung), and the arms swing, or reach for whatever
+ * you're holding.
  *
  * Everything hangs off `root`, at your feet; local +z is the way you face.
  */
@@ -93,9 +94,8 @@ export class Tuft {
     /** @type {Mesh[]} */
     this.browSkins = [];
     const body = this.furryEgg('tuft', {
-      center: BODY.center,
-      radii: BODY.radii,
-      segments: 22,
+      surfaceAt: bodyPoint,
+      segments: 24,
       fur: config.tuft.fur,
       parent: this.bodyNode,
     });
@@ -104,7 +104,7 @@ export class Tuft {
     shadows.addShadowCaster(skin);
     // Rosy cheeks, just under the eyes.
     const cheeks = [-1, 1].map((side) => {
-      const { point } = ellipsoidPoint(BODY.center, BODY.radii, { x: side * 0.5, y: 0.2, z: 1 });
+      const { point } = bodyPoint({ x: side * 0.5, y: 0.2, z: 1 });
       return new Vector3(point.x, point.y, point.z);
     });
     for (const plugin of this.bodyPlugins) {
@@ -123,17 +123,18 @@ export class Tuft {
     /** @type {TransformNode[]} */
     this.eyes = [];
     for (const side of [-1, 1]) {
-      const { point, normal } = ellipsoidPoint(BODY.center, BODY.radii, {
+      const { point, normal } = bodyPoint({
         x: side * 0.3,
         y: 0.55,
         z: 1,
       });
       const eye = new TransformNode('tuftEye', scene);
       eye.parent = this.bodyNode;
+      // Nestled into the fur, not stuck on top of it.
       eye.position.set(
-        point.x + normal.x * 0.07,
-        point.y + normal.y * 0.07,
-        point.z + normal.z * 0.07,
+        point.x + normal.x * 0.04,
+        point.y + normal.y * 0.04,
+        point.z + normal.z * 0.04,
       );
       // Look mostly straight ahead, turned out a touch.
       eye.lookAt(eye.position.add(new Vector3(side * 0.18, 0.05, 1)));
@@ -170,14 +171,22 @@ export class Tuft {
       );
       this.eyes.push(eye);
 
-      // A fuzzy eyebrow tuft above each eye.
+      // A fuzzy eyebrow tuft above each eye, lying on the head (the top slopes back, so a
+      // brow placed straight above the eye would float in front of it).
       const brow = new TransformNode('tuftBrow', scene);
       brow.parent = this.bodyNode;
-      brow.position.set(point.x * 1.05 + normal.x * 0.05, point.y + 0.2, point.z + normal.z * 0.03);
-      brow.rotation.set(0, -side * 0.35, -side * 0.22); // outer ends down: friendly, not cross
+      const browAt = bodyPoint({ x: side * 0.13, y: 0.36, z: 0.2 });
+      const browOut = 0.05;
+      brow.position.set(
+        browAt.point.x + browAt.normal.x * browOut,
+        browAt.point.y + browAt.normal.y * browOut,
+        browAt.point.z + browAt.normal.z * browOut,
+      );
+      // Tipped back along the head; outer ends down: friendly, not cross.
+      brow.rotation.set(-Math.asin(browAt.normal.y) * 0.7, -side * 0.35, -side * 0.22);
+      const browShape = { x: 0.085, y: 0.028, z: 0.035 };
       const tuft = this.furryEgg('tuftBrow', {
-        center: { x: 0, y: 0, z: 0 },
-        radii: { x: 0.085, y: 0.028, z: 0.035 },
+        surfaceAt: (d) => ellipsoidPoint({ x: 0, y: 0, z: 0 }, browShape, d),
         segments: 12,
         fur: config.tuft.browFur,
         parent: brow,
@@ -189,7 +198,7 @@ export class Tuft {
     const smile = [];
     for (let i = 0; i <= 12; i++) {
       const t = i / 6 - 1;
-      const { point, normal } = ellipsoidPoint(BODY.center, BODY.radii, {
+      const { point, normal } = bodyPoint({
         x: t * 0.26,
         y: 0.26 - 0.1 * (1 - t * t),
         z: 1,
@@ -284,35 +293,46 @@ export class Tuft {
     this.drag = new Vector3();
     this.toLocal = new Matrix(); // world → root space, reused every frame
     this.shade = 1; // 1 in the sun, less in shadow (the fur lights itself, see there)
+    // The jelly: the body's lean forward/back and side to side, and its squash, on springs.
+    this.jelly = {
+      pitch: { value: 0, velocity: 0 },
+      roll: { value: 0, velocity: 0 },
+      squash: { value: 0, velocity: 0 },
+    };
+    this.localVelocity = new Vector3();
     this.sunRay = new Ray(new Vector3(), new Vector3(0, 1, 0), 80);
     this.skin = skin;
     this.fur = fur;
   }
 
   /**
-   * A furry egg shape (the body, an eyebrow): a solid skin, and fur shells over it, both
+   * A furry blob (the body, an eyebrow): a solid skin, and fur shells over it, both
    * drawn with FurMaterialPlugin (the shells blended, see there).
    *
    * @param {string} name
-   * @param {{ center: { x: number, y: number, z: number },
-   *   radii: { x: number, y: number, z: number }, segments: number,
+   * @param {{ surfaceAt: (direction: { x: number, y: number, z: number }) =>
+   *   ReturnType<typeof bodyPoint>, segments: number,
    *   fur: { shells: number, length: number, density: number, thickness: number,
-   *     softness: number, sheen: number }, parent: TransformNode }} shape
+   *     softness: number, sheen: number }, parent: TransformNode }} shape surfaceAt: the
+   *   point on the surface in a direction from the middle, and its normal.
    */
-  furryEgg(name, { center, radii, segments, fur: settings, parent }) {
+  furryEgg(name, { surfaceAt, segments, fur: settings, parent }) {
     const scene = this.scene;
-    // A unit sphere, stretched into the egg; normals worked out for the stretched shape.
+    // A sphere's directions, each moved out to the surface (and facing the way it does).
     const sphere = MeshBuilder.CreateSphere(`${name}Sphere`, { diameter: 2, segments }, scene);
     const unit = sphere.getVerticesData('position') ?? [];
     const indices = sphere.getIndices() ?? [];
     sphere.dispose();
     const positions = [];
     const normals = [];
+    let bottom = Infinity;
+    let top = -Infinity;
     for (let i = 0; i < unit.length; i += 3) {
-      const [x, y, z] = [unit[i], unit[i + 1], unit[i + 2]];
-      positions.push(center.x + x * radii.x, center.y + y * radii.y, center.z + z * radii.z);
-      const n = new Vector3(x / radii.x, y / radii.y, z / radii.z).normalize();
-      normals.push(n.x, n.y, n.z);
+      const { point, normal } = surfaceAt({ x: unit[i], y: unit[i + 1], z: unit[i + 2] });
+      positions.push(point.x, point.y, point.z);
+      normals.push(normal.x, normal.y, normal.z);
+      bottom = Math.min(bottom, point.y);
+      top = Math.max(top, point.y);
     }
     const surface = { positions, normals, indices };
     /** @type {FurMaterialPlugin[]} */
@@ -341,7 +361,7 @@ export class Tuft {
       plugin.thickness = settings.thickness;
       plugin.softness = settings.softness;
       plugin.sheen = settings.sheen;
-      plugin.range = { bottom: center.y - radii.y, top: center.y + radii.y };
+      plugin.range = { bottom, top };
       plugins.push(plugin);
       mesh.material = material;
       this.meshes.push(mesh);
@@ -411,8 +431,21 @@ export class Tuft {
       const moved = position.subtract(this.lastPosition);
       moved.y = 0;
       distance = moved.length();
-      if (distance > 0.5) distance = 0; // a teleport, not a step
+      const teleported = distance > 0.5;
+      if (teleported) {
+        distance = 0; // not a step
+        moved.set(0, 0, 0);
+        this.localVelocity.set(0, 0, 0);
+      }
       const local = Vector3.TransformNormal(moved.scale(1 / dt), this.toLocal);
+      // Speeding up, slowing down or turning, the top of the body lags, then springs back.
+      const accel = local.subtract(this.localVelocity).scale(1 / dt);
+      this.localVelocity.copyFrom(local);
+      const { jelly } = settings;
+      const clampLean = (/** @type {number} */ v) =>
+        Math.max(-jelly.maxLean, Math.min(jelly.maxLean, v));
+      this.jelly.pitch = springStep(this.jelly.pitch, clampLean(-accel.z * jelly.lean), dt, jelly);
+      this.jelly.roll = springStep(this.jelly.roll, clampLean(accel.x * jelly.lean), dt, jelly);
       const trail = local.scale(-settings.fur.trail);
       this.drag = Vector3.Lerp(this.drag, trail, 1 - Math.exp(-8 * dt));
       for (const plugin of this.bodyPlugins) plugin.drag.copyFrom(this.drag);
@@ -429,9 +462,16 @@ export class Tuft {
     const breathe = Math.sin(this.time * 2.2) * (1 - w);
     const body = this.bodyNode;
     body.position.y = BODY_BASE + bob * settings.walk.bob * w;
-    const squash = settings.walk.squash * (bob - 0.5) * w + 0.012 * breathe;
+    const squashTarget = settings.walk.squash * (bob - 0.5) * w + 0.012 * breathe;
+    this.jelly.squash = springStep(this.jelly.squash, squashTarget, dt, settings.jelly);
+    const squash = this.jelly.squash.value;
     body.scaling.set(1 - squash * 0.5, 1 + squash, 1 - squash * 0.5);
-    body.rotation.x = 0.07 * w + 0.13 * lean;
+    body.rotation.x = 0.07 * w + 0.13 * lean + this.jelly.pitch.value;
+    body.rotation.z = this.jelly.roll.value;
+    for (const plugin of this.bodyPlugins) {
+      plugin.wobble = settings.jelly.ripple * (0.5 + w);
+      plugin.time = this.time;
+    }
 
     // Feet: planted, then swung forward; back to standing when you stop.
     /** @type {number[]} */

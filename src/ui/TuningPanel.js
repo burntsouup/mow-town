@@ -59,6 +59,14 @@ export class TuningPanel {
     trimmer.add(config.trimmer, 'walkSpeed', 0.5, 5, 0.1).name('Walk speed (m/s)');
     trimmer.close();
 
+    const jelly = gui.addFolder('Tuft jelly');
+    jelly.add(config.tuft.jelly, 'stiffness', 10, 300, 1).name('Wobble speed');
+    jelly.add(config.tuft.jelly, 'damping', 1, 30, 0.5).name('Settle speed');
+    jelly.add(config.tuft.jelly, 'lean', 0, 0.05, 0.001).name('Sway amount');
+    jelly.add(config.tuft.jelly, 'maxLean', 0, 0.5, 0.01).name('Max sway (rad)');
+    jelly.add(config.tuft.jelly, 'ripple', 0, 0.02, 0.001).name('Ripple (m)');
+    jelly.close();
+
     const mowingView = camera.addFolder('While mowing');
     mowingView.add(config.camera.mowing, 'distance', 2, 9, 0.1).name('Distance behind');
     mowingView.add(config.camera.mowing, 'shoulderOffset', -2, 2, 0.05).name('Shoulder offset');

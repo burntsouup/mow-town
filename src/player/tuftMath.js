@@ -143,3 +143,93 @@ export class Blinker {
     return 1;
   }
 }
+
+/** Tuft's body: an egg this big (half-widths, meters), its middle this far up from its base. */
+export const TUFT_BODY = { center: { x: 0, y: 0.5, z: 0 }, radii: { x: 0.42, y: 0.5, z: 0.4 } };
+
+/**
+ * A point on Tuft's body in a given direction from its middle, and which way the surface
+ * faces there. Not a perfect egg, which looked like a ball: it's a soft gumdrop, fullest a
+ * little below the middle, narrower at the top and flatter underneath, with a few gentle
+ * lumps (the same on both sides) so the outline is organic.
+ *
+ * @param {Vec3} direction Any length.
+ * @returns {{ point: Vec3, normal: Vec3 }}
+ */
+export function bodyPoint(direction) {
+  const at = (/** @type {Vec3} */ d) => {
+    const length = Math.hypot(d.x, d.y, d.z);
+    const x = d.x / length;
+    const y = d.y / length;
+    const z = d.z / length;
+    // Smooth curves only (bumps shaped like bells): a kink anywhere shows up as a crease.
+    const girth =
+      1 + 0.12 * Math.exp(-((y + 0.3) ** 2) / 0.2) - 0.2 * Math.exp(-((y - 1) ** 2) / 0.35);
+    const height = 1 + 0.03 * y - 0.06 * y * y;
+    const lumps = 1 + 0.028 * Math.sin(4 * z + 2 * y + 0.6) + 0.02 * Math.sin(6 * x * x + 3 * y);
+    const { radii, center } = TUFT_BODY;
+    const rx = radii.x * girth * lumps;
+    const ry = radii.y * height * lumps;
+    const rz = radii.z * girth * lumps;
+    const scale = 1 / Math.hypot(x / rx, y / ry, z / rz);
+    return { x: center.x + x * scale, y: center.y + y * scale, z: center.z + z * scale };
+  };
+  const length = Math.hypot(direction.x, direction.y, direction.z);
+  const d = { x: direction.x / length, y: direction.y / length, z: direction.z / length };
+  const point = at(d);
+  // The normal, from two tiny steps across the surface.
+  const helper = Math.abs(d.y) < 0.9 ? { x: 0, y: 1, z: 0 } : { x: 1, y: 0, z: 0 };
+  const t1 = normalize(cross(d, helper));
+  const t2 = cross(d, t1);
+  const e = 1e-4;
+  const p1 = at({ x: d.x + t1.x * e, y: d.y + t1.y * e, z: d.z + t1.z * e });
+  const p2 = at({ x: d.x + t2.x * e, y: d.y + t2.y * e, z: d.z + t2.z * e });
+  let normal = normalize(
+    cross(
+      { x: p1.x - point.x, y: p1.y - point.y, z: p1.z - point.z },
+      { x: p2.x - point.x, y: p2.y - point.y, z: p2.z - point.z },
+    ),
+  );
+  const out = {
+    x: point.x - TUFT_BODY.center.x,
+    y: point.y - TUFT_BODY.center.y,
+    z: point.z - TUFT_BODY.center.z,
+  };
+  if (normal.x * out.x + normal.y * out.y + normal.z * out.z < 0) {
+    normal = { x: -normal.x, y: -normal.y, z: -normal.z };
+  }
+  return { point, normal };
+}
+
+/**
+ * One step of a springy wobble: `value` is pulled toward `target` and overshoots a little,
+ * like jelly settling. Stable at any frame rate (it takes small steps inside a big frame).
+ *
+ * @param {{ value: number, velocity: number }} state
+ * @param {number} target
+ * @param {number} dt Seconds.
+ * @param {{ stiffness: number, damping: number }} settings stiffness: how hard it pulls
+ *   (higher = quicker wobble); damping: how fast the wobble dies away.
+ * @returns {{ value: number, velocity: number }}
+ */
+export function springStep(state, target, dt, { stiffness, damping }) {
+  let { value, velocity } = state;
+  const steps = Math.max(1, Math.ceil(dt / (1 / 120)));
+  const h = dt / steps;
+  for (let i = 0; i < steps; i++) {
+    velocity += (stiffness * (target - value) - damping * velocity) * h;
+    value += velocity * h;
+  }
+  return { value, velocity };
+}
+
+/** @param {Vec3} a @param {Vec3} b */
+function cross(a, b) {
+  return { x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x };
+}
+
+/** @param {Vec3} v */
+function normalize(v) {
+  const length = Math.hypot(v.x, v.y, v.z) || 1;
+  return { x: v.x / length, y: v.y / length, z: v.z / length };
+}

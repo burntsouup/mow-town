@@ -30,7 +30,7 @@ export function furShells(surface, { shells, length, skin = true }) {
   /** @type {number[]} */
   const furShell = [];
   for (let shell = skin ? 0 : 1; shell <= shells; shell++) {
-    const out = shell / shells;
+    const out = shells > 0 ? shell / shells : 0; // (just the skin: no dividing by zero)
     const first = positions.length / 3;
     for (let i = 0; i < count; i++) {
       for (let axis = 0; axis < 3; axis++) {
