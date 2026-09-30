@@ -56,6 +56,17 @@ export class Lawn {
     this.finishing.edges = true;
   }
 
+  /**
+   * How tall the grass is at a world spot, or 0 off the lawn (what's underfoot).
+   *
+   * @param {number} x
+   * @param {number} z
+   */
+  grassAt(x, z) {
+    const local = this.field.toLocal(x, z);
+    return this.grid.grassAt(local.x, local.z);
+  }
+
   /** Mows the whole lawn at once (a job you'd already finished, on a later visit). */
   mowAll() {
     this.grid.shrinkRemaining(Infinity);

@@ -369,10 +369,19 @@ switched from dark glass to cream cards with rounded lettering, striped progress
 keycaps. Restyling turned up two old bugs: the trimmer's guard sat beside its head, not
 toward you, and the receipt showed every line's label twice.
 
-### 5. Character juice
+### 5. Character juice ✅
 
-- [ ] A jump and a wave when a job's done, blinking and looking around, footstep puffs and
+- [x] A jump and a wave when a job's done, blinking and looking around, footstep puffs and
       sounds
+
+**Findings:** the camera sits behind Tuft almost all the time, so eyes glancing around
+would go unseen: the body turns a little with each glance, which reads from behind. Tuft
+only looks around when idle; walking briskly or working, it keeps its eyes ahead, which
+reads as concentrating. Finishing a job now gets two hops with both arms up and a wave,
+right as the aerial view begins; buying the deck gets the same, and trying on clothes in
+the closet gets a little hop and a bubbly pop. Footsteps puff grass bits on a lawn and dust
+on paths, and patter softly (a swish on grass, a sneaker pad on paths); the lawn's own grass
+map says which is underfoot.
 
 ### 6. Tuning + playtest
 

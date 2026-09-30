@@ -406,6 +406,11 @@ up, slows down and turns, and the fur shader adds a small ripple.
 material has a diffuse texture, so the fur's alpha is applied in `CUSTOM_FRAGMENT_BEFORE_FOG`
 instead, on `color.a`. `furShells` with 0 shells (the solid skin) once divided 0 by 0: every
 vertex was NaN, so the skin silently never drew; a test covers it now.
+**Juice:** looking around (`Glancer`) turns the body a little as well as the eyes, since the
+camera mostly sees Tuft from behind; cheers (`cheerPose`) are a timeline of hops, arms and
+a wave, laid over whatever Tuft was doing; footsteps come from the walk cycle itself
+(`footLandings`: the moment each foot's phase reaches its landing point), so puffs and
+sounds always match the feet.
 **Revisit when:** the walk needs to react to slopes or stairs (plant feet by raycasting), or
 Tuft needs more expressions (a mouth that opens).
 

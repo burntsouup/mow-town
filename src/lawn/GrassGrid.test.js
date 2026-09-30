@@ -22,6 +22,18 @@ function heightAt(grid, x, z) {
   return grid.height[Math.floor(z * 10) * grid.columns + Math.floor(x * 10)];
 }
 
+describe('GrassGrid.grassAt', () => {
+  it('says how tall the grass is at a spot, and 0 off the lawn or in its holes', () => {
+    const grid = lawn({ heightAt: (x) => (x < 1 ? 0.8 : 0) });
+    expect(grid.grassAt(0.5, 0.5)).toBeCloseTo(0.8);
+    expect(grid.grassAt(1.5, 0.5)).toBe(0); // a hole (a flower bed, say)
+    expect(grid.grassAt(-0.1, 0.5)).toBe(0);
+    expect(grid.grassAt(0.5, 2.5)).toBe(0);
+    grid.cutDeck({ x: 0.5, z: 0.5, yaw: 0 }, DECK, CUT);
+    expect(grid.grassAt(0.5, 0.5)).toBeCloseTo(CUT);
+  });
+});
+
 describe('GrassGrid setup', () => {
   it('sizes the grid from meters and detail', () => {
     const grid = new GrassGrid({ width: 2, depth: 1, texelsPerMeter: 10, targetHeight: CUT });

@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
+import { createRandom } from '../math/noise.js';
 import {
   advanceWalk,
   Blinker,
   bodyBob,
   bodyPoint,
+  CHEER_TIME,
+  cheerPose,
   ellipsoidPoint,
+  footLandings,
   footOffset,
+  Glancer,
   limbCurve,
   springStep,
   TUFT_BODY,
@@ -188,5 +193,96 @@ describe('bodyPoint smoothness', () => {
     for (let i = 1; i < turns.length; i++) {
       expect(Math.abs(turns[i] - turns[i - 1])).toBeLessThan(0.004);
     }
+  });
+});
+
+describe('footLandings', () => {
+  it('reports each foot as it touches down, once per step', () => {
+    const landed = [];
+    let phase = 0.05;
+    for (let i = 0; i < 400; i++) {
+      const next = advanceWalk(phase, 0.004, WALK.stride);
+      for (const foot of footLandings(phase, next)) {
+        landed.push(foot);
+        // It's planted (not lifted) right after landing.
+        const own = foot === 0 ? next : next + Math.PI;
+        expect(footOffset(own, WALK).up).toBe(0);
+      }
+      phase = next;
+    }
+    // 400 × 4 mm = 1.6 m of walking: 4 steps (each foot moves 0.4 m per stride).
+    expect(landed).toEqual([1, 0, 1, 0]);
+  });
+
+  it('reports nothing while standing still', () => {
+    expect(footLandings(1, 1)).toEqual([]);
+  });
+
+  it('catches both feet in one long frame', () => {
+    expect(footLandings(Math.PI * 0.9, Math.PI * 0.1).sort()).toEqual([0, 1]);
+  });
+});
+
+describe('Glancer', () => {
+  const settings = {
+    every: /** @type {[number, number]} */ ([1, 2]),
+    yaw: 0.5,
+    pitch: 0.2,
+    speed: 6,
+  };
+
+  it('looks around now and then, within its range', () => {
+    const glancer = new Glancer(createRandom(4), settings);
+    const yaws = new Set();
+    for (let i = 0; i < 60 * 20; i++) {
+      const { yaw, pitch } = glancer.update(1 / 60, 1);
+      expect(Math.abs(yaw)).toBeLessThanOrEqual(0.5);
+      expect(Math.abs(pitch)).toBeLessThanOrEqual(0.2);
+      if (i % 60 === 0) yaws.add(yaw.toFixed(2));
+    }
+    expect(yaws.size).toBeGreaterThan(4); // it didn't stare at one spot
+  });
+
+  it('keeps its eyes ahead while busy', () => {
+    const glancer = new Glancer(createRandom(4), settings);
+    for (let i = 0; i < 60 * 10; i++) {
+      const { yaw, pitch } = glancer.update(1 / 60, 0);
+      expect(Math.abs(yaw)).toBeLessThan(1e-9);
+      expect(Math.abs(pitch)).toBeLessThan(1e-9);
+    }
+  });
+});
+
+describe('cheerPose', () => {
+  it('hops twice, off the ground and back, then waves', () => {
+    const hops = [];
+    let wasUp = false;
+    let waved = false;
+    for (let t = 0; t < CHEER_TIME; t += 0.01) {
+      const pose = cheerPose(t);
+      expect(pose.hop).toBeGreaterThanOrEqual(0);
+      const up = pose.hop > 0.02;
+      if (up && !wasUp) hops.push(t);
+      wasUp = up;
+      if (Math.abs(pose.wave) > 0.9) waved = true;
+    }
+    expect(hops).toHaveLength(2);
+    expect(waved).toBe(true);
+    expect(cheerPose(0.3).arms).toBe(1); // hooray
+  });
+
+  it('is back to normal once it’s over (or before it starts)', () => {
+    for (const t of [-1, CHEER_TIME, CHEER_TIME + 5]) {
+      expect(cheerPose(t)).toEqual({ hop: 0, arms: 0, wave: 0, squint: 0 });
+    }
+    expect(cheerPose(CHEER_TIME - 0.001).arms).toBeLessThan(0.01); // arms come down smoothly
+  });
+
+  it('does a single little hop for a small cheer, no waving', () => {
+    const peak = Math.max(...Array.from({ length: 50 }, (_, i) => cheerPose(i * 0.01, false).hop));
+    expect(peak).toBeGreaterThan(0.05);
+    expect(peak).toBeLessThan(0.15);
+    expect(cheerPose(0.2, false).wave).toBe(0);
+    expect(cheerPose(0.5, false).hop).toBe(0);
   });
 });

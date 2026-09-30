@@ -181,6 +181,20 @@ export class GrassGrid {
     if (this.edge[i]) this.edgeRemainingWeight -= this.weight[i];
   }
 
+  /**
+   * How tall the grass is at a spot (lawn-local meters), or 0 where there's no lawn.
+   *
+   * @param {number} x
+   * @param {number} z
+   */
+  grassAt(x, z) {
+    const column = Math.floor(x * this.texelsPerMeter);
+    const row = Math.floor(z * this.texelsPerMeter);
+    if (column < 0 || row < 0 || column >= this.columns || row >= this.rows) return 0;
+    const i = row * this.columns + column;
+    return this.mask[i] ? this.height[i] : 0;
+  }
+
   /** @param {number} i Texel index. */
   isMowed(i) {
     return this.height[i] <= this.targetHeight + MOWED_TOLERANCE;

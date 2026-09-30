@@ -125,6 +125,11 @@ export class Player {
     this.velocity = { x: 0, z: 0 };
   }
 
+  /** A happy cheer (see Tuft.cheer). */
+  cheer(big = true) {
+    this.tuft.cheer(big);
+  }
+
   /** @param {import('./wardrobe.js').Outfit} outfit */
   wear(outfit) {
     this.tuft.wear(outfit);

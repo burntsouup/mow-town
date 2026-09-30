@@ -20,8 +20,11 @@ import {
   Blinker,
   bodyBob,
   bodyPoint,
+  cheerPose,
   ellipsoidPoint,
+  footLandings,
   footOffset,
+  Glancer,
   limbCurve,
   springStep,
 } from './tuftMath.js';
@@ -246,6 +249,13 @@ export class Tuft {
     this.walking = 0; // 0 standing .. 1 walking: eases, so steps start and stop smoothly
     this.time = 0;
     this.blinker = new Blinker(createRandom(23), { every: [2.2, 5.5], closedFor: 0.13 });
+    this.glancer = new Glancer(createRandom(31), config.tuft.glance);
+    /** How each eye faces with no glance (the glance turns them from there). */
+    this.eyeRest = this.eyes.map((eye) => eye.rotation.clone());
+    this.cheerTime = Infinity; // seconds since a cheer started (see cheer)
+    this.cheerBig = true;
+    /** @type {Vector3[]} Where feet touched down this frame (world), for puffs and sounds. */
+    this.steps = [];
     this.lastPosition = null;
     this.drag = new Vector3();
     this.toLocal = new Matrix(); // world → root space, reused every frame
@@ -291,6 +301,15 @@ export class Tuft {
     if (castShadow) this.shadows.addShadowCaster(mesh);
     this.meshes.push(mesh);
     return mesh;
+  }
+
+  /**
+   * A happy cheer: two hops with arms up and a wave (a job done), or one little hop (a new
+   * outfit).
+   */
+  cheer(big = true) {
+    this.cheerTime = 0;
+    this.cheerBig = big;
   }
 
   /**
@@ -452,8 +471,13 @@ export class Tuft {
     const speed = dt > 0 ? distance / dt : 0;
     const target = Math.min(1, speed / settings.walk.fullAt);
     this.walking += (target - this.walking) * (1 - Math.exp(-10 * dt));
+    const previousPhase = this.phase;
     this.phase = advanceWalk(this.phase, distance, settings.walk.stride);
     const w = this.walking;
+    // A cheer: hops, arms up, a wave (see cheerPose).
+    this.cheerTime += dt;
+    const cheer = cheerPose(this.cheerTime, this.cheerBig);
+    this.root.position.y = cheer.hop;
 
     // Body: bob and squash with each step; breathe while standing; lean in to push.
     const bob = bodyBob(this.phase);
@@ -466,6 +490,11 @@ export class Tuft {
     body.scaling.set(1 - squash * 0.5, 1 + squash, 1 - squash * 0.5);
     body.rotation.x = 0.07 * w + 0.13 * lean + this.jelly.pitch.value;
     body.rotation.z = this.jelly.roll.value;
+    // Looking around (the body turns a little with the eyes, so you see it from behind),
+    // but not while walking briskly or working.
+    const calm = (1 - w) * (hands ? 0 : 1) * (cheer.arms > 0 ? 0 : 1);
+    const gaze = this.glancer.update(dt, calm);
+    body.rotation.y = gaze.yaw * settings.glance.body;
     for (const plugin of this.bodyPlugins) {
       plugin.wobble = settings.jelly.ripple * (0.5 + w);
       plugin.time = this.time;
@@ -483,6 +512,13 @@ export class Tuft {
       this.shoes[i].rotation.x = -foot.up * w * 3;
       const hip = new Vector3(side * HIP.x, body.position.y + HIP.y - BODY_BASE + 0.05, 0);
       this.shapeLimb(this.legs[i], hip, ankle, new Vector3(0, 0, 0.04));
+    }
+    // Footsteps: which feet just landed (only while really walking, and not mid-hop).
+    this.steps.length = 0;
+    if (w > 0.3 && cheer.hop === 0) {
+      for (const i of footLandings(previousPhase, this.phase)) {
+        this.steps.push(Vector3.TransformCoordinates(this.shoes[i].position, world));
+      }
     }
 
     // Arms: swing opposite the legs, or reach for the handles.
@@ -504,6 +540,12 @@ export class Tuft {
           swing + 0.04,
         );
       }
+      if (cheer.arms > 0) {
+        // Hooray: arms up over the head, the right one waving.
+        const waving = i === 1 ? cheer.wave : 0;
+        const up = new Vector3(side * 0.5 + waving * 0.14, 1.3 - Math.abs(waving) * 0.04, 0.12);
+        hand = Vector3.Lerp(hand, up, cheer.arms);
+      }
       const bend = new Vector3(side * 0.08, -0.07, 0);
       const wrist = this.shapeLimb(this.arms[i], shoulder, hand, bend);
       // The mitten sits on the end of the arm, pointing the way the arm goes.
@@ -512,9 +554,16 @@ export class Tuft {
       handNode.lookAt(hand.add(hand.subtract(wrist)));
     }
 
-    // Eyes: blink now and then.
+    // Eyes: blink now and then, glance about, and scrunch up happily when cheering.
     const open = this.blinker.update(dt);
-    for (const eye of this.eyes) eye.scaling.y = 0.1 + 0.9 * open;
+    this.eyes.forEach((eye, i) => {
+      eye.scaling.y = Math.min(0.1 + 0.9 * open, 1 - 0.55 * cheer.squint);
+      eye.rotation.set(
+        this.eyeRest[i].x + gaze.pitch,
+        this.eyeRest[i].y + gaze.yaw * (1 - settings.glance.body),
+        this.eyeRest[i].z,
+      );
+    });
 
     this.outfit.update(); // sleeves and shorts follow the arms and legs
 
