@@ -333,11 +333,25 @@ put it at "not a number"), which is why the fur looked thin and seamy from some 
 the eyebrows now sit on the head: the top slopes back, so brows placed straight above the
 eyes floated in front of it.
 
-### 3. Wardrobe and saving
+### 3. Wardrobe and saving ✅
 
-- [ ] Fur colors, hats, glasses, gloves, shirts, shorts and shoes
-- [ ] A customize screen from the start menu, and a closet at your front door
-- [ ] Your outfit, money, deck and current job are saved between visits
+- [x] Fur colors, hats, glasses, gloves, shirts, shorts and shoes
+- [x] A customize screen from the start menu, and a closet at your front door
+- [x] Your outfit, money, deck and current job are saved between visits
+
+**Findings:** eight fur colors; a cap, beanie (with a furry pompom), bucket hat and sun hat;
+round specs, sunglasses and star shades; garden gloves; a T-shirt, striped tee and tank top;
+shorts; sneakers or rain boots; eleven colors for all of them, and a "Surprise me" button.
+Clothes on a blob are tricky: Tuft has no neck or waist, so clothes are cut from the body's
+own surface and pushed out a little, and the fur under them is hidden in the shader (it
+poked straight through otherwise). The first shirt stopped at Tuft's widest point with the
+fur overhanging it, like a muffin in its case; now it sits nearly as far out as the fur and
+its neckline dips at the front and rises round the back, so it wraps over the shoulders.
+Hats hug the head, tipped back so they clear the eyebrows. Every style is built once and
+switched on and off, so changing clothes is instant. The closet has its own camera that
+circles Tuft, and Tuft turns to face you first, so that camera lands where the view was
+already clear (not inside the house). Saving is small: money, the deck, which job you're on
+(it starts fresh) and your outfit; lawns from jobs you'd finished come back mowed.
 
 ### 4. Restyle the world
 

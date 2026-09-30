@@ -401,3 +401,38 @@ instead, on `color.a`. `furShells` with 0 shells (the solid skin) once divided 0
 vertex was NaN, so the skin silently never drew; a test covers it now.
 **Revisit when:** the walk needs to react to slopes or stairs (plant feet by raycasting), or
 Tuft needs more expressions (a mouth that opens).
+
+## 31. Clothes are cut from the body, and hide the fur under them
+
+**Why:** Tuft is one furry blob with no neck, waist or shoulders to hang clothes on, and
+modelled clothes would each need fitting by hand. Instead a garment is the band of the
+body's own surface between two levels (`bodyBand` in clothesMath.js), pushed out along its
+normals: it always fits, and the same code makes shirts, shorts and hat crowns. A level is
+`y - tilt × z = height`, so an edge can slope: a shirt's neckline dips below the smile at the
+front and rises round the back; a hat sits tipped back to clear the eyebrows. Where clothes
+cover the body, the fur shader discards its strands (`FurMaterialPlugin.cover`), or they poke
+through the fabric. Sleeves and shorts legs are short tubes that follow the first part of
+each limb. What there is to wear is plain data in wardrobe.js; TuftOutfit.js builds every
+style once and switches them on and off.
+**Gotchas:** a shirt that stops at the body's widest point looks like a bowl with the fur
+spilling over it: it has to wrap over the shoulders. Clothes much closer to the skin than
+the fur's length make the fur above them overhang.
+**Revisit when:** clothes should crease, flap or be bought (a shop with a changing room), or
+Tuft gets a new body shape (the levels in `CLOTHES` are tuned to this one).
+
+## 32. Saving: a small save in localStorage
+
+**Why:** coming back to your money, your deck and your dressed-up Tuft makes the game feel
+like yours; losing them on every reload made upgrades pointless. localStorage needs no
+server and no account. The save is small on purpose: money, what you own, which job you're
+on, and your outfit, with a version number. How much of a lawn you'd mowed isn't saved (a
+job you come back to starts fresh), which keeps it simple.
+**How:** save.js is pure (the storage is passed in) and tested. Reading fixes up anything
+odd instead of trusting it (a hand-edited or old save, an item or job that no longer exists)
+and returns nothing for saves it can't read. The game saves after you're paid, buy
+something, move on to the next job, or finish dressing up. "Start over" resets progress but
+keeps your outfit.
+**Gotcha:** some private windows throw just for looking at `localStorage`, so it's read
+inside a try/catch, and the game plays on without saving.
+**Revisit when:** there's more to save (half-mowed lawns, a street of clients), or saves
+should move between devices.
