@@ -8,9 +8,13 @@ import { CUT_STEP_SECONDS } from './DeckCutter.js';
  * so the lawn comes out the same at any frame rate.
  */
 export class TrimCutter {
-  /** @param {import('./GrassGrid.js').GrassGrid} grid */
-  constructor(grid) {
+  /**
+   * @param {import('./GrassGrid.js').GrassGrid} grid
+   * @param {import('./cutRecording.js').CutRecording | null} [recording] See DeckCutter.
+   */
+  constructor(grid, recording = null) {
     this.grid = grid;
+    this.recording = recording;
     this.ticker = new FixedTicker(CUT_STEP_SECONDS);
     /** @type {{ x: number, z: number } | null} Where the head was at the last tick. */
     this.last = null;
@@ -28,6 +32,7 @@ export class TrimCutter {
     let cut = 0;
     for (const f of this.ticker.advance(dt)) {
       const here = { x: from.x + (to.x - from.x) * f, z: from.z + (to.z - from.z) * f };
+      this.recording?.addTrim(this.last, here, radius, cutTo);
       cut += this.last
         ? this.grid.cutCircleStroke(this.last, here, radius, cutTo)
         : this.grid.cutCircle(here.x, here.z, radius, cutTo);
