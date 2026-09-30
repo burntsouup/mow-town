@@ -313,6 +313,63 @@ export function buildMailbox(kit, post) {
 }
 
 /**
+ * A wooden coat stand by the front door, with a few things hanging on it: Tuft's closet.
+ *
+ * @param {import('./greybox.js').Greybox} kit
+ * @param {{ x: number, z: number }} spot
+ */
+export function buildCoatStand(kit, { x, z }) {
+  const wood = COLORS.coatStand;
+  kit.rounded('coatStandBase', {
+    size: [0.42, 0.05, 0.42],
+    at: [x, 0, z],
+    color: wood,
+    radius: 0.02,
+  });
+  kit.rounded('coatStandPole', {
+    size: [0.06, 1.7, 0.06],
+    at: [x, 0, z],
+    color: wood,
+    radius: 0.025,
+  });
+  for (const [dx, dz] of [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ]) {
+    kit.puff('coatStandHook', {
+      radius: 0.03,
+      at: [x + dx * 0.07, 1.55, z + dz * 0.07],
+      color: wood,
+      shadow: false,
+    });
+  }
+  // A red cap on top, a yellow beanie with a pompom on one hook, a teal scarf on another.
+  kit.puff('coatStandCap', { radius: 0.12, at: [x, 1.66, z], color: '#e5484d', squash: 0.6 });
+  kit.rounded('coatStandCapBrim', {
+    size: [0.18, 0.02, 0.14],
+    at: [x, 1.68, z - 0.13],
+    color: '#e5484d',
+    radius: 0.01,
+  });
+  kit.puff('coatStandBeanie', { radius: 0.11, at: [x + 0.15, 1.3, z], color: '#ffc53d' });
+  kit.puff('coatStandPompom', {
+    radius: 0.045,
+    at: [x + 0.15, 1.51, z],
+    color: '#e5484d',
+    shadow: false,
+  });
+  kit.rounded('coatStandScarf', {
+    size: [0.12, 0.75, 0.03],
+    at: [x - 0.1, 0.8, z],
+    color: '#12a594',
+    radius: 0.014,
+  });
+  kit.contactShadow(x, z, 0.3);
+}
+
+/**
  * A row of soft, round bushes (two overlapping puffs each, so they're not perfect balls),
  * each sitting in a soft shadow.
  *

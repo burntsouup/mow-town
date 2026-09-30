@@ -1,5 +1,12 @@
 import { DRIVEWAY, FENCE, HOUSE, LAWN, SIDEWALK, SPOTS, WALKWAY } from './frontYardLayout.js';
-import { buildBushes, buildFlowerBed, buildHouse, buildMailbox, buildTree } from './props.js';
+import {
+  buildBushes,
+  buildCoatStand,
+  buildFlowerBed,
+  buildHouse,
+  buildMailbox,
+  buildTree,
+} from './props.js';
 import { COLLIDER_HEIGHT, COLORS, LAYER } from './style.js';
 
 // Our place: the house, the driveway, and the fenced front lawn with a tree, a flower bed and
@@ -57,6 +64,7 @@ export function buildFrontYard(kit) {
     kit.contactShadow(7.5, z, 0.6);
   }
   buildMailbox(kit, SPOTS.mailbox);
+  buildCoatStand(kit, SPOTS.coatStand);
 }
 
 /**

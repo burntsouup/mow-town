@@ -27,6 +27,7 @@ export const COLORS = {
   ball: '#e0483c',
   truck: '#f5b93a',
   tire: '#2b2c30',
+  coatStand: '#8b5e3c', // the closet by the front door
   // Next door
   theirWalls: '#d3e3ec',
   theirRoof: '#5d6b7c',

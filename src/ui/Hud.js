@@ -20,18 +20,20 @@ import './hud.css';
  *   money: number,
  *   moneyCounting: boolean,
  *   receipt: import('../game/pay.js').PayLine[] | null,
+ *   closetOpen: boolean,
  * }} HudState hasMower: the player has grabbed the mower at least once; progress is 0..1
  *   for display; elapsed is seconds on the job; nextJob is the one after this (null if this
  *   is the last); showCard: the "Job complete" card is up (it tucks away after a while);
  *   edges is 0..1 for display; money is what to show in the wallet (it counts up); receipt
- *   is what the job paid, once it's done.
+ *   is what the job paid, once it's done; closetOpen: you're dressing up (see Closet).
  */
 
 /**
  * The HTML overlay players see:
  * - while playing: the job objective with a progress bar, your money, interaction prompts,
  *   and a "Job complete!" card with a receipt at the end
- * - otherwise: a "click to play" card with the controls
+ * - otherwise: a "click to play" card with the controls, a button to dress Tuft up, and one
+ *   to start over
  */
 export class Hud {
   /**
@@ -40,6 +42,8 @@ export class Hud {
    */
   constructor(root, input) {
     this.input = input;
+    /** What the start screen's buttons do (the game fills these in). */
+    this.actions = { dressUp: () => {}, startOver: () => {} };
 
     this.prompt = element('div', 'interaction-prompt');
     this.toast = element('div', 'toast');
@@ -93,7 +97,7 @@ export class Hud {
         <dt>Mouse</dt><dd>Look around</dd>
         <dt>WASD</dt><dd>Move</dd>
         <dt>Shift</dt><dd>Run</dd>
-        <dt>E</dt><dd>Grab the mower / let go (or buy, at the sale stand)</dd>
+        <dt>E</dt><dd>Grab the mower / let go (or buy, or dress up at the coat stand)</dd>
         <dt>W / S</dt><dd>Push / pull the mower</dd>
         <dt>Mouse or A / D</dt><dd>Steer the mower</dd>
         <dt>Q</dt><dd>Take out / put away the string trimmer</dd>
@@ -106,6 +110,30 @@ export class Hud {
         <dt>T</dt><dd>Tuning panel</dd>
         <dt>Esc</dt><dd>Release the mouse</dd>
       </dl>`;
+    const dressUp = element('button', 'play-prompt-button');
+    dressUp.textContent = 'Dress up Tuft';
+    dressUp.addEventListener('click', () => this.actions.dressUp());
+    const buttons = element('div', 'play-prompt-buttons');
+    buttons.append(dressUp);
+    this.playPrompt.querySelector('.play-prompt-action')?.after(buttons);
+    // Starting over wipes your progress, so it takes a second click to be sure.
+    const startOver = element('button', 'play-prompt-reset');
+    const startOverText = 'Start over';
+    startOver.textContent = startOverText;
+    let armed = 0;
+    startOver.addEventListener('click', () => {
+      if (armed) {
+        this.actions.startOver();
+        return;
+      }
+      startOver.textContent = 'Sure? Your money, deck and jobs reset. Click again';
+      armed = window.setTimeout(() => {
+        armed = 0;
+        startOver.textContent = startOverText;
+      }, 4000);
+    });
+    this.playPrompt.append(startOver);
+    for (const button of [dressUp, startOver]) button.setAttribute('type', 'button');
 
     root.append(
       this.objective,
@@ -128,10 +156,12 @@ export class Hud {
     const locked = this.input.isPointerLocked;
     const complete = state.jobStatus === 'complete';
 
-    this.set('locked', locked, () => {
-      this.playPrompt.hidden = locked;
-      this.objective.hidden = !locked;
-      this.wallet.hidden = !locked;
+    let screen = locked ? 'playing' : 'menu';
+    if (state.closetOpen) screen = 'closet';
+    this.set('screen', screen, () => {
+      this.playPrompt.hidden = screen !== 'menu';
+      this.objective.hidden = screen !== 'playing';
+      this.wallet.hidden = screen !== 'playing';
     });
 
     const money = formatMoney(state.money);
@@ -142,13 +172,13 @@ export class Hud {
       this.wallet.classList.toggle('is-counting', state.moneyCounting);
     });
 
-    const toastText = locked ? state.toast : null;
+    const toastText = screen === 'playing' ? state.toast : null;
     this.set('toast', toastText, () => {
       this.toast.textContent = toastText ?? '';
       this.toast.hidden = !toastText;
     });
 
-    const promptText = locked ? state.prompt : null;
+    const promptText = screen === 'playing' ? state.prompt : null;
     this.set('prompt', promptText, () => {
       this.prompt.textContent = promptText ?? '';
       this.prompt.hidden = !promptText;
@@ -191,19 +221,23 @@ export class Hud {
       this.completeCard.classList.toggle('is-revealing', state.revealing);
     });
 
-    this.set('complete', locked && complete && state.showCard ? job.id : null, (shownJob) => {
-      this.completeCard.hidden = !shownJob;
-      if (!shownJob) return;
-      const next = state.nextJob;
-      const stripes = state.receipt?.find((line) => line.tip === 'stripes');
-      const neat = stripes && stripes.amount >= config.money.stripesTip;
-      this.completeTitle.textContent = neat ? 'Nice stripes!' : 'Job complete!';
-      this.jobSummary.textContent = job.summary;
-      this.jobTime.textContent = formatDuration(state.elapsed);
-      this.completeHint.textContent = next
-        ? `Press N for the next job: ${next.name ?? next.title}. R to redo this one.`
-        : 'Press R to start over: the grass grows back.';
-    });
+    this.set(
+      'complete',
+      screen === 'playing' && complete && state.showCard ? job.id : null,
+      (shownJob) => {
+        this.completeCard.hidden = !shownJob;
+        if (!shownJob) return;
+        const next = state.nextJob;
+        const stripes = state.receipt?.find((line) => line.tip === 'stripes');
+        const neat = stripes && stripes.amount >= config.money.stripesTip;
+        this.completeTitle.textContent = neat ? 'Nice stripes!' : 'Job complete!';
+        this.jobSummary.textContent = job.summary;
+        this.jobTime.textContent = formatDuration(state.elapsed);
+        this.completeHint.textContent = next
+          ? `Press N for the next job: ${next.name ?? next.title}. R to redo this one.`
+          : 'Press R to start over: the grass grows back.';
+      },
+    );
 
     this.set('receipt', state.receipt, () => this.showReceipt(state.receipt));
   }

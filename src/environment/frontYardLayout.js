@@ -46,6 +46,8 @@ export const SPOTS = {
     maxZ: -8.75,
   },
   mailbox: circle(1.2, SIDEWALK.back + 0.4, 0.08),
+  // Tuft's closet: a coat stand beside the front door (in the bed, off the lawn).
+  coatStand: circle(WALKWAY.centerX + 0.85, HOUSE.front - 0.45, 0.21),
 };
 
 /**
