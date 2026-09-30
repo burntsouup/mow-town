@@ -7,7 +7,8 @@ import { config } from '../config.js';
 import { Clippings } from '../effects/Clippings.js';
 import { Footsteps } from '../effects/Footsteps.js';
 import { createLevel } from '../environment/level.js';
-import { applyColorGrading, createLighting, createSky } from '../environment/lighting.js';
+import { applyColorGrading, createLighting } from '../environment/lighting.js';
+import { createSky } from '../environment/sky.js';
 import { Lawn } from '../lawn/Lawn.js';
 import { stripeNeatness } from '../lawn/neatness.js';
 import { grassSpeedFactor } from '../mower/mowerMath.js';
@@ -46,7 +47,7 @@ export class Game {
     this.input = new Input(canvas);
 
     const { shadows } = createLighting(this.scene);
-    createSky(this.scene);
+    this.sky = createSky(this.scene);
     applyColorGrading(this.scene);
     this.level = createLevel(this.scene, shadows);
     /** @type {Record<string, Lawn>} Every lawn on the street, by id (each job names its own). */
@@ -204,6 +205,7 @@ export class Game {
     this.updateMowing(dt);
     this.camera.mode = this.mower.isHeld ? 'mowing' : this.trimmer.isOut ? 'trimming' : 'walking';
     this.camera.update(dt); // follow the player to their new position
+    this.sky.update(dt);
     if (this.closet.isOpen) this.player.setOpacity(1); // the closet has its own camera
     this.updateTrimming(dt); // aims with the camera, so after it moves
     // Tuft's hands go wherever the mower or trimmer handles ended up.

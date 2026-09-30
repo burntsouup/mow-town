@@ -15,9 +15,17 @@ export const config = {
     highRefreshPixelRatio: 1.5,
     shadowMapSize: 2048,
     // Sky dome gradient. The horizon color is also the fog color so distant ground fades out.
-    // sunGlow: added around the sun; cloudShade: the undersides of clouds.
+    // sunGlow: added around the sun; sunSize: the sun disc's radius (radians); cloudShade:
+    // the undersides of clouds; cloudDrift: how fast they drift round (radians/second).
     // The sky and clouds skip the color grading, so these are the colors you see.
-    sky: { zenith: '#4f97e8', horizon: '#dfeaf2', sunGlow: '#ffe6bf', cloudShade: '#cdd9ec' },
+    sky: {
+      zenith: '#4f97e8',
+      horizon: '#dfeaf2',
+      sunGlow: '#ffe6bf',
+      sunSize: 0.022,
+      cloudShade: '#cdd9ec',
+      cloudDrift: 0.004,
+    },
     // Linear fog, in meters from the camera. Hides the edge of the world.
     fog: { start: 45, end: 120 },
     // Direction the sunlight travels: a late-afternoon sun, low enough for long shadows.
