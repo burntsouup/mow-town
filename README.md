@@ -6,15 +6,16 @@ A small, satisfying 3D lawn-mowing game. Grab the mower, push it across a shaggy
 watch the stripes appear. Built with [Babylon.js](https://www.babylonjs.com/) and plain
 JavaScript.
 
-**Status:** v0.4, "Looking amazing" (released as 0.4.0): a soft, toy-like neighborhood
-under a painted sky, with grass you can see every blade of up close, leafy trees, birds and
-butterflies, and you play as Tuft, a fuzzy critter you can dress up (at the coat stand by the
-front door, or "Dress up Tuft" on the start screen). Mow our front lawn for money, with tips
-for neat stripes and for trimming the edges with a string trimmer; buy a 30-inch deck at the
-garage-sale table; then push the mower next door and mow the Parkers' bigger, L-shaped lawn.
-Your money, deck, job and outfit are saved between visits. Next up (v0.5, "Show it off"):
-lawn art (checkerboards and diagonal stripes), a sped-up replay of your mow, music, and
-postcards and clips to share. See
+**Status:** v0.5, "Show it off" (released as 0.5.0): a soft, toy-like neighborhood under a
+painted sky, and you play as Tuft, a fuzzy critter you can dress up (at the coat stand by
+the front door, or "Dress up Tuft" on the start screen). Mow our front lawn for money, with
+tips for neat stripes and for trimming the edges with a string trimmer; buy a 30-inch deck
+at the garage-sale table; mow the Parkers' bigger lawn next door; then, a week later, try
+lawn art: a checkerboard on our lawn and diagonal stripes for the Parkers. Every finished
+lawn plays back as a sped-up timelapse from the air, to gentle music made in code, and
+photo mode (P) saves postcards and timelapse videos to share. Your money, deck, job, outfit
+and music setting are saved between visits. Next up (v0.6, "Bigger machines"): a riding
+mower and a large property built for it. See
 [docs/ROADMAP.md](docs/ROADMAP.md) for what's done and next.
 
 mow-town started as a copy of [p-washer](https://github.com/burntsouup/p-washer) v0.2.0 (a
