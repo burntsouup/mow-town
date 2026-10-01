@@ -23,6 +23,7 @@ const PROGRESS = {
   owned: ['wideDeck'],
   job: 1,
   outfit: cycleStyle(DEFAULT_OUTFIT, 'hat', 1),
+  music: false,
 };
 
 describe('saving progress', () => {
@@ -61,6 +62,7 @@ describe('saving progress', () => {
       owned: ['wideDeck'],
       job: 1, // the last job there is
       outfit: DEFAULT_OUTFIT,
+      music: true, // (older saves didn't say: it's on)
     });
     storage.setItem(SAVE_KEY, JSON.stringify({ version: SAVE_VERSION, money: 'lots' }));
     expect(readSave(storage, GAME)).toEqual({
@@ -68,6 +70,7 @@ describe('saving progress', () => {
       owned: [],
       job: 0,
       outfit: DEFAULT_OUTFIT,
+      music: true,
     });
   });
 
@@ -86,15 +89,16 @@ describe('saving progress', () => {
     expect(writeSave(null, PROGRESS)).toBe(false);
   });
 
-  it('starts over, keeping your outfit', () => {
+  it('starts over, keeping your outfit and the music setting', () => {
     const storage = memoryStorage();
     writeSave(storage, PROGRESS);
-    resetProgress(storage, PROGRESS.outfit);
+    resetProgress(storage, PROGRESS.outfit, PROGRESS.music);
     expect(readSave(storage, GAME)).toEqual({
       money: 0,
       owned: [],
       job: 0,
       outfit: PROGRESS.outfit,
+      music: false,
     });
   });
 });
