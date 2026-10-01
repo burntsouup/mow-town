@@ -245,6 +245,21 @@ export function cheerPose(t, big = true) {
   return { hop, arms, wave, squint };
 }
 
+/** When a big cheer's hops are over and the wave starts (seconds), and two waves' time. */
+const WAVE_FROM = 2 * 0.42;
+const WAVE_LOOP = 2 / 2.2;
+
+/**
+ * Holding a cheer for a photo: after the hops, the arms stay up and the wave goes on and on
+ * (the time loops round two waves, so it never reaches the end of the cheer).
+ *
+ * @param {number} t Seconds since the cheer started.
+ */
+export function heldCheerTime(t) {
+  if (t <= WAVE_FROM + WAVE_LOOP) return t;
+  return WAVE_FROM + ((t - WAVE_FROM) % WAVE_LOOP);
+}
+
 /** Tuft's body: an egg this big (half-widths, meters), its middle this far up from its base. */
 export const TUFT_BODY = { center: { x: 0, y: 0.5, z: 0 }, radii: { x: 0.42, y: 0.5, z: 0.4 } };
 

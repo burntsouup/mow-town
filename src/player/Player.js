@@ -130,6 +130,11 @@ export class Player {
     this.tuft.cheer(big);
   }
 
+  /** @param {boolean} on Hold a cheer for a photo (see Tuft.strikePose). */
+  strikePose(on) {
+    this.tuft.strikePose(on);
+  }
+
   /** @param {import('./wardrobe.js').Outfit} outfit */
   wear(outfit) {
     this.tuft.wear(outfit);

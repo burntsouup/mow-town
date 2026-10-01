@@ -348,6 +348,34 @@ export class AudioSystem {
   }
 
   /** A soft, bubbly "pop" (trying something on in the closet). */
+  /** A camera's shutter: two quick clicks, for photo mode. */
+  playShutter() {
+    if (!this.context || !this.master || !this.noise) return;
+    const context = this.context;
+    const now = context.currentTime;
+    for (const [delay, level] of [
+      [0, 1],
+      [0.07, 0.7],
+    ]) {
+      const click = context.createBufferSource();
+      click.buffer = this.noise;
+      const filter = context.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 3200;
+      filter.Q.value = 0.9;
+      const envelope = context.createGain();
+      const start = now + delay;
+      envelope.gain.setValueAtTime(0.0001, start);
+      envelope.gain.exponentialRampToValueAtTime(config.audio.shutter * level, start + 0.003);
+      envelope.gain.exponentialRampToValueAtTime(0.0001, start + 0.045);
+      click.connect(filter);
+      filter.connect(envelope);
+      envelope.connect(this.master);
+      click.start(start, this.random() * 0.5);
+      click.stop(start + 0.06);
+    }
+  }
+
   playPop() {
     if (!this.context || !this.master) return;
     const context = this.context;

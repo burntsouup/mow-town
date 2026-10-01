@@ -285,6 +285,7 @@ export const config = {
     coins: 0.16, // "ka-ching" when you're paid
     steps: { grass: 0.05, path: 0.04 }, // footsteps, at full stride
     pop: 0.1, // trying something on in the closet
+    shutter: 0.25, // taking a photo
     birds: 0.035, // birdsong in the distance
     // The soundtrack (see audio/music.js and MusicPlayer.js): how loud, how far it dips
     // while an engine's running, how much it swells for the aerial view, and how far the
