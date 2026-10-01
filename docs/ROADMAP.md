@@ -510,7 +510,7 @@ and pushes on `main`.
 - [x] The grass is a pleasure to look at, mowed and unmowed
 - [x] It runs as smoothly as v0.3
 
-## v0.5 — "Show it off"
+## v0.5 — "Show it off" ✅ (released as 0.5.0)
 
 Goal: a finished lawn is something you want to show people. Stripes become lawn art, the
 aerial view gets a sped-up replay of your whole mow, there's music, and you can save a
@@ -593,16 +593,23 @@ label) and recorded with the game's sound, as MP4 where the browser can (Chrome 
 and WebM otherwise; a whole timelapse is about 10 MB. Sharing straight to other apps only
 works where the browser offers it (mostly phones and Safari), so Save and Copy come first.
 
-### 5. Polish and playtest
+### 5. Polish and playtest ✅
 
-- [ ] Frame rate on budget, findings recorded here
-- [ ] Playtest
+- [x] Frame rate on budget, findings recorded here
+- [x] Playtest ("feels good")
+
+**Findings:** nothing in v0.5 adds to the cost of drawing a frame: measured side by side on
+the same day at the 1.5× render (2160 × 1350), v0.4 took about 9.0 ms at the start view and
+v0.5 about 9.4 ms, within the noise between runs (the machine was slower that day than when
+v0.4 measured 6.5 ms, hence comparing side by side). The timelapse adds under 1.5 ms of game
+logic a frame while it plays, the music runs on the browser's audio thread, and photo mode's
+looks are a CSS filter. The playtest verdict was "feels good".
 
 ### v0.5 success checklist
 
-- [ ] Finishing a lawn makes you want to show someone
-- [ ] Pulling off a checkerboard is satisfying
-- [ ] A postcard or a clip looks good enough to post
+- [x] Finishing a lawn makes you want to show someone
+- [x] Pulling off a checkerboard is satisfying
+- [x] A postcard or a clip looks good enough to post
 
 ## Deliberately not in v0.5
 
