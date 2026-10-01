@@ -78,6 +78,7 @@ export function nextDoorLawn() {
   const width = right - left;
   const depth = top - bottom;
   return {
+    name: "The Parkers' lawn",
     center: [(left + right) / 2, (bottom + top) / 2],
     width,
     depth,

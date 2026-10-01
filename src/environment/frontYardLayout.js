@@ -83,6 +83,7 @@ export function frontLawn() {
     return height + (tallest - height) * thickness(x, z); // thick grass grows tall
   };
   return {
+    name: 'Our front lawn',
     center: [(LAWN.left + LAWN.right) / 2, (LAWN.front + LAWN.back) / 2],
     width,
     depth,

@@ -325,6 +325,10 @@ export const config = {
     resetKey: 'KeyR', // after completion: redo the job (or, after the last one, start over)
     nextKey: 'KeyN', // after completion: move on to the next job
   },
+  // Photo mode (see photo/PhotoMode.js): the free camera moves at moveSpeed m/s, within
+  // range meters of the middle of the street; saved pictures are at most maxWidth pixels
+  // across, and timelapse videos clipWidth.
+  photo: { key: 'KeyP', moveSpeed: 4, range: 90, maxWidth: 2400, clipWidth: 1280 },
   // The timelapse (see game/Timelapse.js): your whole mow played back, sped up, from the air.
   timelapse: {
     key: 'KeyL', // watch it any time

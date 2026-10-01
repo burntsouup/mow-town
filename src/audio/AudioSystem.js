@@ -34,6 +34,10 @@ export class AudioSystem {
     this.musicOn = true;
     /** @type {MusicPlayer | null} */
     this.music = null;
+    /** @type {DynamicsCompressorNode | null} */
+    this.compressor = null;
+    /** @type {MediaStreamAudioDestinationNode | null} */
+    this.streamOut = null;
     this.rpm = 0; // mower engine speed, 0 (stopped) .. 1 (full speed)
     this.trimmerRpm = 0; // the same for the string trimmer
     this.random = createRandom(29); // so no two footsteps sound quite the same
@@ -51,6 +55,7 @@ export class AudioSystem {
 
     const compressor = context.createDynamicsCompressor(); // keeps loud moments from clipping
     compressor.connect(context.destination);
+    this.compressor = compressor;
     this.master = context.createGain();
     this.master.gain.value = this.muted ? 0 : config.audio.master;
     this.master.connect(compressor);
@@ -255,6 +260,16 @@ export class AudioSystem {
     volume.connect(/** @type {GainNode} */ (this.master));
     source.start(0, offset);
     return volume;
+  }
+
+  /** Everything you hear, as a stream (for recording a video), or null before it starts. */
+  get stream() {
+    if (!this.context || !this.compressor) return null;
+    if (!this.streamOut) {
+      this.streamOut = this.context.createMediaStreamDestination();
+      this.compressor.connect(this.streamOut);
+    }
+    return this.streamOut.stream;
   }
 
   toggleMute() {
