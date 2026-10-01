@@ -157,6 +157,10 @@ export class TuningPanel {
     audio.add(config.audio.trimmer, 'frequency', 60, 300, 1).name('Trimmer pitch (Hz)');
     audio.add(config.audio.trimmer, 'full', 0, 0.4, 0.01).name('Trimmer (revving)');
     audio.add(config.audio.trimmer, 'cutting', 0, 0.6, 0.01).name('Trimmer cutting');
+    audio.add(config.audio.music, 'volume', 0, 1.5, 0.01).name('Music');
+    audio.add(config.audio.music, 'duck', 0, 1, 0.01).name('Music under engines');
+    audio.add(config.audio.music, 'swell', 0.5, 2.5, 0.05).name('Music in aerial view');
+    audio.add(config.audio.music, 'aerialTools', 0, 1, 0.01).name('Engines in aerial view');
     audio.add(config.audio, 'chime', 0, 0.5, 0.01).name('Job complete chime');
     audio.add(config.audio, 'coins', 0, 0.5, 0.01).name('Ka-ching');
     audio.close();

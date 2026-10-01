@@ -24,13 +24,15 @@ import './hud.css';
  *   receipt: import('../game/pay.js').PayLine[] | null,
  *   closetOpen: boolean,
  *   timelapse: { speed: number, seconds: number, total: number } | null,
+ *   musicOn: boolean,
  * }} HudState hasMower: the player has grabbed the mower at least once; stageHint: a hint
  *   for where you are in the job (like "now mow across"), over the job's own; progress is 0..1
  *   for display; elapsed is seconds on the job; nextJob is the one after this (null if this
  *   is the last); showCard: the "Job complete" card is up (it tucks away after a while);
  *   edges is 0..1 for display; money is what to show in the wallet (it counts up); receipt
  *   is what the job paid, once it's done; closetOpen: you're dressing up (see Closet);
- *   timelapse: while a timelapse plays, how fast and how far through (seconds of mowing).
+ *   timelapse: while a timelapse plays, how fast and how far through (seconds of mowing);
+ *   musicOn: the soundtrack's playing (a button on the start screen turns it off and on).
  */
 
 /**
@@ -48,7 +50,7 @@ export class Hud {
   constructor(root, input) {
     this.input = input;
     /** What the start screen's buttons do (the game fills these in). */
-    this.actions = { dressUp: () => {}, startOver: () => {} };
+    this.actions = { dressUp: () => {}, startOver: () => {}, toggleMusic: () => {} };
 
     this.prompt = element('div', 'interaction-prompt');
     this.toast = element('div', 'toast');
@@ -131,8 +133,10 @@ export class Hud {
     const dressUp = element('button', 'play-prompt-button');
     dressUp.textContent = 'Dress up Tuft';
     dressUp.addEventListener('click', () => this.actions.dressUp());
+    this.musicButton = element('button', 'play-prompt-button is-quiet');
+    this.musicButton.addEventListener('click', () => this.actions.toggleMusic());
     const buttons = element('div', 'play-prompt-buttons');
-    buttons.append(dressUp);
+    buttons.append(dressUp, this.musicButton);
     this.playPrompt.querySelector('.play-prompt-action')?.after(buttons);
     // Starting over wipes your progress, so it takes a second click to be sure.
     const startOver = element('button', 'play-prompt-reset');
@@ -151,7 +155,9 @@ export class Hud {
       }, 4000);
     });
     this.playPrompt.append(startOver);
-    for (const button of [dressUp, startOver]) button.setAttribute('type', 'button');
+    for (const button of [dressUp, this.musicButton, startOver]) {
+      button.setAttribute('type', 'button');
+    }
 
     root.append(
       this.objective,
@@ -180,6 +186,11 @@ export class Hud {
       this.playPrompt.hidden = screen !== 'menu';
       this.objective.hidden = screen !== 'playing';
       this.wallet.hidden = screen !== 'playing';
+    });
+
+    this.set('music', state.musicOn, () => {
+      this.musicButton.textContent = state.musicOn ? '♪ Music: on' : '♪ Music: off';
+      this.musicButton.setAttribute('aria-pressed', String(state.musicOn));
     });
 
     const money = formatMoney(state.money);

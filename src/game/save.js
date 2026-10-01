@@ -3,12 +3,13 @@ import { sanitizeOutfit } from '../player/wardrobe.js';
 
 /**
  * Saving your progress between visits, in the browser's localStorage: your money, what
- * you've bought, which job you're on, and your outfit. (Not how much of a lawn you'd mowed:
+ * you've bought, which job you're on, your outfit, and whether the music's on. (Not how
+ * much of a lawn you'd mowed:
  * a job you come back to starts fresh.) Pure: the storage is passed in, so tests can use a
  * stand-in.
  *
  * @typedef {{ money: number, owned: string[], job: number,
- *   outfit: import('../player/wardrobe.js').Outfit }} Progress
+ *   outfit: import('../player/wardrobe.js').Outfit, music: boolean }} Progress
  * @typedef {Pick<globalThis.Storage, 'getItem' | 'setItem' | 'removeItem'>} SaveStorage
  */
 
@@ -37,7 +38,8 @@ export function readSave(storage, { jobs, items }) {
   const money = Number.isFinite(data.money) ? Math.max(0, Math.round(data.money)) : 0;
   const owned = Array.isArray(data.owned) ? items.filter((id) => data.owned.includes(id)) : [];
   const job = Number.isInteger(data.job) ? Math.min(Math.max(data.job, 0), jobs - 1) : 0;
-  return { money, owned, job, outfit: sanitizeOutfit(data.outfit) };
+  const music = data.music !== false; // on, unless you turned it off
+  return { money, owned, job, outfit: sanitizeOutfit(data.outfit), music };
 }
 
 /**
@@ -56,11 +58,13 @@ export function writeSave(storage, progress) {
 }
 
 /**
- * Forgets your progress (money, upgrades, jobs), but keeps your outfit: that's you.
+ * Forgets your progress (money, upgrades, jobs), but keeps your outfit (that's you) and
+ * whether you like the music on.
  *
  * @param {SaveStorage | null} storage
  * @param {import('../player/wardrobe.js').Outfit} outfit
+ * @param {boolean} [music]
  */
-export function resetProgress(storage, outfit) {
-  return writeSave(storage, { money: 0, owned: [], job: 0, outfit });
+export function resetProgress(storage, outfit, music = true) {
+  return writeSave(storage, { money: 0, owned: [], job: 0, outfit, music });
 }

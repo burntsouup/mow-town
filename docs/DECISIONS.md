@@ -553,3 +553,20 @@ walking, so at high speed he's animated in slices of recorded time. Anything rea
 lawn (job progress, the edges tip) has to skip the replay's lawn, which isn't the real one.
 **Revisit when:** recordings should outlive a page reload (the steps would need saving),
 or the replay should show the string trimmer in Tuft's hands.
+
+## 39. The soundtrack is written and played in code
+
+**Why:** the sound effects are already synthesized (DECISIONS #20), and the same tools make
+a small band: an FM electric piano, a marimba, a triangle bass and noise drums
+(`MusicPlayer.js`). Writing the notes in code too (`music.js`, seeded) means endless tunes
+in a few kilobytes, all in the same style, with no licenses to track. It's cozy on purpose:
+seventh chords from the key that glide to the nearest inversion, a pentatonic tune that lands
+on chord notes on the strong beats, a lazy swing at 80–92 beats a minute. Each song changes
+key and tempo. Notes are scheduled a moment ahead from the game loop, a bar at a time; Web
+Audio then plays them exactly on time, whatever the frame rate.
+**Gotchas:** none of it can be checked by ear from code, so tests check the music theory
+(in key, in range, chord notes on the beat, phrases coming home) and levels are measured
+at the master. A hidden tab stops the game loop, so the scheduler picks up from "now"
+rather than cramming in the bars it missed.
+**Revisit when:** it sounds cheap or samey after a while: then real instrument samples
+(CC0) played by the same composer, or a few recorded CC0 tracks.

@@ -340,6 +340,7 @@ kbd {
 .play-prompt-buttons {
   display: flex;
   justify-content: center;
+  gap: 8px;
   margin: -4px 0 16px;
 }
 
@@ -355,6 +356,16 @@ kbd {
 
 .play-prompt-button:hover {
   background: #ffd47a;
+}
+
+/* A setting rather than an action: the same shape, quieter. */
+.play-prompt-button.is-quiet {
+  background: var(--line);
+  color: var(--ink);
+}
+
+.play-prompt-button.is-quiet:hover {
+  background: #f3e9d6;
 }
 
 .play-prompt-reset {

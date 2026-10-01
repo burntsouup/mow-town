@@ -140,6 +140,7 @@ export class Game {
     this.hud.actions = {
       dressUp: () => this.openCloset(),
       startOver: () => this.startOver(),
+      toggleMusic: () => this.toggleMusic(),
     };
     // Once everything's built: shiny things reflect the sky.
     createSkyReflections(this.scene, [
@@ -162,6 +163,7 @@ export class Game {
     if (!progress) return;
     this.outfit = progress.outfit;
     this.player.wear(this.outfit);
+    this.audio.musicOn = progress.music;
     this.money = progress.money;
     this.moneyShown = progress.money;
     if (progress.owned.includes(this.stand.item.id)) {
@@ -184,7 +186,14 @@ export class Game {
       owned: this.stand.owned ? [this.stand.item.id] : [],
       job: this.jobs.index,
       outfit: this.outfit,
+      music: this.audio.musicOn,
     });
+  }
+
+  /** The start screen's music button: the soundtrack on or off (and remembered). */
+  toggleMusic() {
+    this.audio.musicOn = !this.audio.musicOn;
+    this.save();
   }
 
   /**
@@ -304,6 +313,7 @@ export class Game {
         throttle: this.trimmer.isRunning,
         load: this.trimRate / config.audio.trimmer.fullLoadCutRate,
       },
+      { aerial: this.reveal.isActive },
     );
     if (this.input.wasPressed(config.debug.tuningKey)) this.tuning.toggle();
     this.toastTime = Math.max(0, this.toastTime - dt);
@@ -330,6 +340,7 @@ export class Game {
       // (Not over the timelapse: it pops back in once the replay's done.)
       showCard: !this.timelapse.isPlaying && (this.reveal.isActive || this.cardTime > 0),
       timelapse: this.timelapse.status,
+      musicOn: this.audio.musicOn,
       edges: Math.min(1, this.lawn.edgeProgress / config.job.edgesDoneAt),
       edgesDone: this.edgesDone,
       money: this.moneyShown,
@@ -609,9 +620,9 @@ export class Game {
     this.input.lockPointer(); // straight back to playing (clicking Done lets us)
   }
 
-  /** Forgets your money, deck and jobs (keeping your outfit), and starts afresh. */
+  /** Forgets your money, deck and jobs (keeping your outfit and music), and starts afresh. */
   startOver() {
-    resetProgress(this.storage, this.outfit);
+    resetProgress(this.storage, this.outfit, this.audio.musicOn);
     window.location.reload();
   }
 
