@@ -570,3 +570,21 @@ at the master. A hidden tab stops the game loop, so the scheduler picks up from 
 rather than cramming in the bars it missed.
 **Revisit when:** it sounds cheap or samey after a while: then real instrument samples
 (CC0) played by the same composer, or a few recorded CC0 tracks.
+
+## 40. Photo mode copies the canvas; videos use the browser's recorder
+
+**Why:** sharing is the point of v0.5 (DECISIONS #36), so pictures and videos should be easy
+and look as good as the game. A postcard is a fresh frame copied off the game's canvas onto
+a 2D canvas, then framed, captioned and stamped in code (`PhotoMode.js`); no server, no
+libraries. Looks are CSS filters on the canvas while you frame the shot (free), and the
+same filters as color matrices from the Filter Effects spec on the saved picture
+(`looks.js`), so what you see is what you save. The timelapse video copies each frame onto
+a smaller canvas and records it, with the game's sound, through `MediaRecorder`
+(`ClipRecorder.js`).
+**Gotchas:** a WebGL canvas keeps its picture only until the page redraws, so the copy is
+taken right after a `scene.render()`, in the same task (or from `onAfterRenderObservable`
+for videos). Pointer lock can't be taken back by Escape (it doesn't count as a click), so
+leaving photo mode with Escape shows "click to play"; P or Done goes straight back.
+MediaRecorder formats vary: MP4 is tried first, then WebM.
+**Revisit when:** players want to share a link rather than a file (that needs a server),
+or a phone version wants the share sheet first.

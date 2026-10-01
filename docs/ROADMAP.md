@@ -577,11 +577,21 @@ drops to 60% while an engine runs, and swells to 150% for the aerial view while 
 drop to 35%. The band costs about 120 short-lived audio nodes a bar, nothing next to the
 graphics. Every level has a slider in the tuning panel, for tuning by ear.
 
-### 4. Photo mode and sharing
+### 4. Photo mode and sharing ✅
 
-- [ ] Photo mode: a free camera, the HUD hidden, a few looks, Tuft striking a pose
-- [ ] Save a postcard (the picture in a frame, with a caption), or copy or share it
-- [ ] Save the timelapse as a short video clip, with the music
+- [x] Photo mode: a free camera, the HUD hidden, a few looks, Tuft striking a pose
+- [x] Save a postcard (the picture in a frame, with a caption), or copy or share it
+- [x] Save the timelapse as a short video clip, with the music
+
+**Findings:** the picture is copied straight off the game's canvas, right after drawing a
+fresh frame (a WebGL canvas only holds its picture until the page redraws), so a postcard
+is as sharp as your screen: up to 2400 pixels across. The looks preview for free as a CSS
+filter on the canvas, and the saved picture gets the same colors from the color matrices
+the CSS spec defines for each filter. Videos come from the browser's own MediaRecorder: the
+game's frames are copied onto a 1280-pixel canvas (with the look and a little "mow-town"
+label) and recorded with the game's sound, as MP4 where the browser can (Chrome and Safari)
+and WebM otherwise; a whole timelapse is about 10 MB. Sharing straight to other apps only
+works where the browser offers it (mostly phones and Safari), so Save and Copy come first.
 
 ### 5. Polish and playtest
 

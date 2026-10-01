@@ -38,6 +38,7 @@ player movement, jobs, tuning panel, HUD, and synthesized audio.
 | Hold F        | Highlight the grass that's left                                 |
 | V             | View the lawn from above                                        |
 | L             | Watch a timelapse of your mow (it also plays when a job's done) |
+| P             | Photo mode: save a postcard, or a video of the timelapse        |
 | N             | Next job (once this one's done)                                 |
 | R             | Mow it again (once it's done)                                   |
 | M             | Mute / unmute                                                   |
@@ -92,6 +93,8 @@ src/
                        pure parts)
   effects/             Grass clippings and particle textures drawn in code
   math/                Small pure helpers: seeded noise, rectangles, ground shapes
+  photo/               Photo mode: postcards, looks and timelapse videos (looks.js and
+                       postcard.js are the tested, pure parts)
   ui/                  HTML overlay: HUD, prompts, "click to play", the closet, tuning panel
 docs/
   ROADMAP.md           Milestones and checklists (our plan)
