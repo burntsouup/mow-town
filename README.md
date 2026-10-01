@@ -46,8 +46,8 @@ player movement, jobs, tuning panel, HUD, and synthesized audio.
 | Drag / scroll | Turn Tuft round / zoom, while dressing up                       |
 | `` ` `` (key) | Toggle the Babylon Inspector (dev builds only)                  |
 
-The start screen also has **Dress up Tuft** and **Start over** (which resets your money,
-deck and jobs, but keeps your outfit).
+The start screen also has **Dress up Tuft**, **Music: on/off**, and **Start over** (which
+resets your money, deck and jobs, but keeps your outfit and music setting).
 
 **Dev tip:** in dev builds, type `game` in the browser console to inspect the running game,
 e.g. `game.scene.meshes` or `game.camera.yaw`.
@@ -88,7 +88,8 @@ src/
   mower/               The push mower (mowerMath.js is the tested, pure handling)
   trimmer/             The string trimmer (trimmerMath.js: tested, pure aiming)
   shop/                The sale stand by the garage (shop.js: tested, pure rules)
-  audio/               Synthesized sounds (audioMix.js is the tested, pure part)
+  audio/               Synthesized sounds and music (audioMix.js and music.js are the tested,
+                       pure parts)
   effects/             Grass clippings and particle textures drawn in code
   math/                Small pure helpers: seeded noise, rectangles, ground shapes
   ui/                  HTML overlay: HUD, prompts, "click to play", the closet, tuning panel

@@ -561,12 +561,21 @@ than gliding (anything over 0.5 m a step counts as a teleport), and each step co
 a tree that had faded out of the way came back very slightly see-through, which made it
 look dark and hollow from above; it now snaps back to solid.
 
-### 3. Soundtrack
+### 3. Soundtrack ✅
 
-- [ ] Gentle music, generated in code like the other sounds (seeded: the same tunes each
+- [x] Gentle music, generated in code like the other sounds (seeded: the same tunes each
       time)
-- [ ] It ducks under the engines and swells for the aerial view
-- [ ] Music on and off, apart from the sound effects
+- [x] It ducks under the engines and swells for the aerial view
+- [x] Music on and off, apart from the sound effects
+
+**Findings:** a computer can't judge how music sounds, so the code sticks to things that
+reliably sound pleasant: chords from the key that move as little as possible, a tune on
+the major pentatonic that lands on the chord's own notes on the strong beats, and phrases
+that answer each other. Levels were measured instead of heard: on its own the music sits a
+little under the mower idling (about 0.03 against 0.04, average loudness at the master), it
+drops to 60% while an engine runs, and swells to 150% for the aerial view while the engines
+drop to 35%. The band costs about 120 short-lived audio nodes a bar, nothing next to the
+graphics. Every level has a slider in the tuning panel, for tuning by ear.
 
 ### 4. Photo mode and sharing
 
