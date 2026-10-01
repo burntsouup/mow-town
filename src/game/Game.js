@@ -304,6 +304,7 @@ export class Game {
         throttle: this.trimmer.isRunning,
         load: this.trimRate / config.audio.trimmer.fullLoadCutRate,
       },
+      { aerial: this.reveal.isActive },
     );
     if (this.input.wasPressed(config.debug.tuningKey)) this.tuning.toggle();
     this.toastTime = Math.max(0, this.toastTime - dt);

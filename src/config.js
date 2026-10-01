@@ -286,6 +286,10 @@ export const config = {
     steps: { grass: 0.05, path: 0.04 }, // footsteps, at full stride
     pop: 0.1, // trying something on in the closet
     birds: 0.035, // birdsong in the distance
+    // The soundtrack (see audio/music.js and MusicPlayer.js): how loud, how far it dips
+    // while an engine's running, how much it swells for the aerial view, and how far the
+    // engines drop meanwhile (so the music carries the show).
+    music: { volume: 0.5, duck: 0.6, swell: 1.5, aerialTools: 0.35 },
     birdsongEvery: [4, 11], // seconds between bursts of birdsong, at random in this range
     muteKey: 'KeyM',
   },

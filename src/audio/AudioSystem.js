@@ -1,6 +1,7 @@
 import { config } from '../config.js';
 import { createRandom } from '../math/noise.js';
 import { engineSound, trimmerSound } from './audioMix.js';
+import { MusicPlayer } from './MusicPlayer.js';
 
 /** How quickly volumes follow the game (seconds). Short enough to feel instant, long enough
  * to avoid clicks when a sound starts or stops. */
@@ -18,6 +19,8 @@ const FADE_TIME = 0.04;
  * The string trimmer has its own, higher buzz, with the whirr of its line and a snipping
  * layer while it cuts.
  *
+ * The soundtrack plays underneath (see MusicPlayer.js), dipping while an engine runs.
+ *
  * Browsers only allow audio after the player interacts with the page, so nothing is created
  * until the first click.
  */
@@ -28,6 +31,9 @@ export class AudioSystem {
     /** @type {AudioBuffer | null} White noise, shared by the sounds made from it. */
     this.noise = null;
     this.muted = false;
+    this.musicOn = true;
+    /** @type {MusicPlayer | null} */
+    this.music = null;
     this.rpm = 0; // mower engine speed, 0 (stopped) .. 1 (full speed)
     this.trimmerRpm = 0; // the same for the string trimmer
     this.random = createRandom(29); // so no two footsteps sound quite the same
@@ -62,6 +68,7 @@ export class AudioSystem {
       { type: 'bandpass', frequency: 2600, Q: 0.8 },
     ]);
     this.trimmer = this.createTrimmer(noise, crackle);
+    this.music = new MusicPlayer(context, this.master, noise);
   }
 
   /**
@@ -70,8 +77,9 @@ export class AudioSystem {
    *   load: how hard the blades are working (0..1); bumped/grabbed: just ran into something /
    *   just grabbed the handle, this frame.
    * @param {{ out: boolean, throttle: boolean, load: number }} trimmer See trimmerSound.
+   * @param {{ aerial: boolean }} [scene] aerial: the aerial view (or the timelapse) is on.
    */
-  update(dt, mower, trimmer) {
+  update(dt, mower, trimmer, scene = { aerial: false }) {
     if (mower.grabbed || mower.bumped) this.playClunk();
     const sound = engineSound(this.rpm, mower, config.audio, dt);
     this.rpm = sound.rpm;
@@ -79,21 +87,28 @@ export class AudioSystem {
     this.trimmerRpm = trimmed.rpm;
     if (!this.context || !this.engine || !this.cutting || !this.crackle || !this.trimmer) return;
     const now = this.context.currentTime;
+    const music = config.audio.music;
+    // Up in the aerial view, the engines drop back and the music swells; down here, the
+    // music dips while an engine's running.
+    const tools = scene.aerial ? music.aerialTools : 1;
+    const busy = mower.running || trimmer.out;
+    const mood = scene.aerial ? music.swell : busy ? music.duck : 1;
+    this.music?.update(this.musicOn ? music.volume * mood : 0, scene.aerial ? 0.8 : 0.5);
     const frequency = config.audio.engineFrequency * (0.3 + 0.7 * this.rpm);
     this.engine.setFrequency(frequency, now);
-    this.engine.volume.gain.setTargetAtTime(sound.engine, now, FADE_TIME);
-    this.cutting.gain.setTargetAtTime(sound.cutting, now, FADE_TIME);
-    this.crackle.gain.setTargetAtTime(sound.cutting * 0.6, now, FADE_TIME);
+    this.engine.volume.gain.setTargetAtTime(sound.engine * tools, now, FADE_TIME);
+    this.cutting.gain.setTargetAtTime(sound.cutting * tools, now, FADE_TIME);
+    this.crackle.gain.setTargetAtTime(sound.cutting * 0.6 * tools, now, FADE_TIME);
 
     this.trimmer.setFrequency(
       config.audio.trimmer.frequency * (0.35 + 0.65 * this.trimmerRpm),
       now,
     );
-    this.trimmer.volume.gain.setTargetAtTime(trimmed.engine, now, FADE_TIME);
+    this.trimmer.volume.gain.setTargetAtTime(trimmed.engine * tools, now, FADE_TIME);
     // The line whirs louder the faster it spins.
-    const whirr = trimmed.engine * Math.max(0, this.trimmerRpm - 0.4) * 1.5;
+    const whirr = trimmed.engine * Math.max(0, this.trimmerRpm - 0.4) * 1.5 * tools;
     this.trimmer.whirr.gain.setTargetAtTime(whirr, now, FADE_TIME);
-    this.trimmer.cutting.gain.setTargetAtTime(trimmed.cutting, now, FADE_TIME);
+    this.trimmer.cutting.gain.setTargetAtTime(trimmed.cutting * tools, now, FADE_TIME);
   }
 
   /**
