@@ -1,4 +1,4 @@
-import { Engine, Scene } from '@babylonjs/core';
+import { Engine, Scene, Vector3 } from '@babylonjs/core';
 import { smoothTowards } from '../audio/audioMix.js';
 import { AudioSystem } from '../audio/AudioSystem.js';
 import { RevealCamera } from '../camera/RevealCamera.js';
@@ -17,6 +17,9 @@ import { Lawn } from '../lawn/Lawn.js';
 import { PATTERNS, patternProgress, patternScore } from '../lawn/patterns.js';
 import { grassSpeedFactor } from '../mower/mowerMath.js';
 import { PushMower } from '../mower/PushMower.js';
+import { ClipRecorder } from '../photo/ClipRecorder.js';
+import { cssFilter } from '../photo/looks.js';
+import { PhotoMode } from '../photo/PhotoMode.js';
 import { Player } from '../player/Player.js';
 import { DEFAULT_OUTFIT } from '../player/wardrobe.js';
 import { SaleStand } from '../shop/SaleStand.js';
@@ -137,6 +140,19 @@ export class Game {
       },
       done: () => this.closeCloset(),
     });
+    this.photo = new PhotoMode(this.scene, hudRoot, {
+      info: () => this.photoInfo(),
+      pose: (on) => this.player.strikePose(on),
+      faceCamera: () => this.faceCamera(),
+      canRecord: () => this.clip.isSupported && this.timelapse.canPlay(this.lawn),
+      record: () => this.recordClip(),
+      shutter: () => this.audio.playShutter(),
+      done: () => this.closePhoto(),
+    });
+    this.clip = new ClipRecorder(canvas);
+    this.recordingClip = false;
+    this.scene.onAfterRenderObservable.add(() => this.clip.captureFrame());
+    this.toldAboutPhoto = false; // we've pointed out photo mode
     this.hud.actions = {
       dressUp: () => this.openCloset(),
       startOver: () => this.startOver(),
@@ -258,8 +274,9 @@ export class Game {
    * @param {number} dt Seconds since the previous frame.
    */
   update(dt) {
-    // The timelapse moves Tuft and the mower itself, and nothing gets cut meanwhile.
-    const replay = this.timelapse.isActive;
+    // The timelapse moves Tuft and the mower itself, and nothing gets cut meanwhile. Photo
+    // mode pauses the game the same way.
+    const replay = this.timelapse.isActive || this.photo.isOpen;
     if (!replay) {
       // Walk relative to where the camera looks, unless you're pushing the mower. While
       // trimming, you face the trimmer's head.
@@ -273,8 +290,11 @@ export class Game {
     this.sky.update(dt);
     this.wildlife.update(dt);
     this.updateBirdsong(dt);
-    // The closet and the aerial view have their own cameras, so no need to see through Tuft.
-    if (this.closet.isOpen || this.reveal.isActive) this.player.setOpacity(1);
+    // The closet, the aerial view and photo mode have their own cameras, so no need to see
+    // through Tuft.
+    if (this.closet.isOpen || this.reveal.isActive || this.photo.isOpen) {
+      this.player.setOpacity(1);
+    }
     if (!replay) this.updateTrimming(dt); // aims with the camera, so after it moves
     if (!this.timelapse.isPlaying) {
       // Tuft's hands go wherever the mower or trimmer handles ended up.
@@ -284,9 +304,11 @@ export class Game {
       this.player.animate(dt, hands, this.mower.isHeld ? 1 : 0);
     }
     if (!replay) this.updateFootsteps();
+    const wasRevealing = this.reveal.isActive;
     this.updateReveal(dt);
-    if (replay) this.showReplayClippings(dt);
-    this.updateJob(dt);
+    if (this.timelapse.isActive) this.showReplayClippings(dt);
+    this.updatePhoto(dt, wasRevealing);
+    if (!this.photo.isOpen) this.updateJob(dt);
     // Finish off leftovers and send cut grass to the GPU. Real blades grow round you, a
     // little ahead, where the camera's looking.
     const feet = this.player.position;
@@ -313,7 +335,7 @@ export class Game {
         throttle: this.trimmer.isRunning,
         load: this.trimRate / config.audio.trimmer.fullLoadCutRate,
       },
-      { aerial: this.reveal.isActive },
+      { aerial: this.reveal.isActive || this.photo.isOpen },
     );
     if (this.input.wasPressed(config.debug.tuningKey)) this.tuning.toggle();
     this.toastTime = Math.max(0, this.toastTime - dt);
@@ -341,6 +363,7 @@ export class Game {
       showCard: !this.timelapse.isPlaying && (this.reveal.isActive || this.cardTime > 0),
       timelapse: this.timelapse.status,
       musicOn: this.audio.musicOn,
+      photoOpen: this.photo.isOpen,
       edges: Math.min(1, this.lawn.edgeProgress / config.job.edgesDoneAt),
       edgesDone: this.edgesDone,
       money: this.moneyShown,
@@ -402,6 +425,82 @@ export class Game {
     reveal.update(dt);
     timelapse.update(dt);
     input.blocked = reveal.isActive;
+  }
+
+  /**
+   * Photo mode (P), the timelapse video it can record, and pointing photo mode out after
+   * your first aerial view.
+   *
+   * @param {number} dt
+   * @param {boolean} wasRevealing The aerial view was on at the start of this frame.
+   */
+  updatePhoto(dt, wasRevealing) {
+    const { input } = this;
+    const free = !this.reveal.isActive && !this.closet.isOpen && !this.photo.isOpen;
+    if (free && input.isPointerLocked && input.wasPressed(config.photo.key)) this.openPhoto();
+    this.photo.update(dt, (code) => input.isDown(code));
+    if (this.recordingClip) {
+      const status = this.timelapse.status;
+      this.clip.badge = status ? `▶▶ ${Math.round(status.speed)}×` : '';
+      if (!this.timelapse.isActive) {
+        this.recordingClip = false;
+        this.clip.finish().then(() => this.toast('Timelapse video saved to your downloads', 5));
+      }
+    }
+    const justLanded = wasRevealing && !this.reveal.isActive;
+    if (justLanded && this.jobs.currentJob.isComplete && !this.toldAboutPhoto) {
+      this.toldAboutPhoto = true;
+      this.toast('Press P for photo mode: save a postcard of your lawn', 6);
+    }
+  }
+
+  openPhoto() {
+    const view = this.scene.activeCamera;
+    if (!view) return;
+    this.input.lockOnClick = false; // clicks are for the photo panel now
+    this.input.unlockPointer();
+    const feet = this.player.position;
+    this.photo.open(feet.add(new Vector3(0, 0.8, 0)), view.position);
+  }
+
+  closePhoto() {
+    this.input.lockOnClick = true;
+    this.input.lockPointer(); // straight back to playing
+  }
+
+  /** Tuft turns to face the photo camera, unless he's holding a tool. */
+  faceCamera() {
+    if (this.mower.isHeld || this.trimmer.isOut) return false;
+    const feet = this.player.position;
+    const eye = this.photo.camera.position;
+    this.player.placeAt(feet.x, feet.z, Math.atan2(eye.x - feet.x, eye.z - feet.z));
+    return true;
+  }
+
+  /** What a postcard says: the lawn you're working on, and how it's going. */
+  photoInfo() {
+    const { lawn } = this;
+    const { name } = PATTERNS[this.pattern];
+    const done = this.jobs.currentJob.isComplete;
+    return {
+      place: lawn.name,
+      pattern: name,
+      patternId: this.pattern,
+      score: done ? this.neatness : null,
+      progress: lawn.progress,
+    };
+  }
+
+  /** Plays the timelapse, recording it as a video in the photo's look. */
+  recordClip() {
+    this.closePhoto();
+    if (!this.timelapse.canPlay(this.lawn)) return;
+    if (!this.clip.start(this.audio.stream, cssFilter(this.photo.look))) {
+      this.toast("This browser can't record video");
+      return;
+    }
+    this.recordingClip = true;
+    this.timelapse.start(this.lawn);
   }
 
   /**

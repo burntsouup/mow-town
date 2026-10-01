@@ -21,6 +21,7 @@ import {
   bodyBob,
   bodyPoint,
   cheerPose,
+  heldCheerTime,
   ellipsoidPoint,
   footLandings,
   footOffset,
@@ -254,6 +255,7 @@ export class Tuft {
     this.eyeRest = this.eyes.map((eye) => eye.rotation.clone());
     this.cheerTime = Infinity; // seconds since a cheer started (see cheer)
     this.cheerBig = true;
+    this.posing = false; // holding a cheer for a photo (see strikePose)
     /** @type {Vector3[]} Where feet touched down this frame (world), for puffs and sounds. */
     this.steps = [];
     this.lastPosition = null;
@@ -312,6 +314,17 @@ export class Tuft {
   cheer(big = true) {
     this.cheerTime = 0;
     this.cheerBig = big;
+  }
+
+  /**
+   * Strikes a pose for a photo: a big cheer that keeps its arms up and waving until told to
+   * stop.
+   *
+   * @param {boolean} on
+   */
+  strikePose(on) {
+    if (on && !this.posing) this.cheer(true);
+    this.posing = on;
   }
 
   /**
@@ -478,6 +491,7 @@ export class Tuft {
     const w = this.walking;
     // A cheer: hops, arms up, a wave (see cheerPose).
     this.cheerTime += dt;
+    if (this.posing) this.cheerTime = heldCheerTime(this.cheerTime);
     const cheer = cheerPose(this.cheerTime, this.cheerBig);
     this.root.position.y = cheer.hop;
 

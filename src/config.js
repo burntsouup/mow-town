@@ -285,6 +285,7 @@ export const config = {
     coins: 0.16, // "ka-ching" when you're paid
     steps: { grass: 0.05, path: 0.04 }, // footsteps, at full stride
     pop: 0.1, // trying something on in the closet
+    shutter: 0.25, // taking a photo
     birds: 0.035, // birdsong in the distance
     // The soundtrack (see audio/music.js and MusicPlayer.js): how loud, how far it dips
     // while an engine's running, how much it swells for the aerial view, and how far the
@@ -324,6 +325,10 @@ export const config = {
     resetKey: 'KeyR', // after completion: redo the job (or, after the last one, start over)
     nextKey: 'KeyN', // after completion: move on to the next job
   },
+  // Photo mode (see photo/PhotoMode.js): the free camera moves at moveSpeed m/s, within
+  // range meters of the middle of the street; saved pictures are at most maxWidth pixels
+  // across, and timelapse videos clipWidth.
+  photo: { key: 'KeyP', moveSpeed: 4, range: 90, maxWidth: 2400, clipWidth: 1280 },
   // The timelapse (see game/Timelapse.js): your whole mow played back, sped up, from the air.
   timelapse: {
     key: 'KeyL', // watch it any time

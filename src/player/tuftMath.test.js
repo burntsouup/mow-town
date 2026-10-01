@@ -11,6 +11,7 @@ import {
   footLandings,
   footOffset,
   Glancer,
+  heldCheerTime,
   limbCurve,
   springStep,
   TUFT_BODY,
@@ -284,5 +285,21 @@ describe('cheerPose', () => {
     expect(peak).toBeLessThan(0.15);
     expect(cheerPose(0.2, false).wave).toBe(0);
     expect(cheerPose(0.5, false).hop).toBe(0);
+  });
+});
+
+describe('heldCheerTime', () => {
+  it('runs the cheer as usual, then keeps the arms up and waving for as long as you like', () => {
+    expect(heldCheerTime(0.3)).toBe(0.3); // the hops play out
+    for (const t of [2, 5, 60.7, 3600]) {
+      const held = heldCheerTime(t);
+      expect(cheerPose(held).arms).toBe(1);
+      expect(cheerPose(held).hop).toBe(0);
+    }
+    // ...and the wave moves smoothly round the loop.
+    const loop = 2 / 2.2;
+    const before = cheerPose(0.84 + loop - 1e-6).wave;
+    const after = cheerPose(heldCheerTime(0.84 + loop + 1e-6)).wave;
+    expect(Math.abs(after - before)).toBeLessThan(0.01);
   });
 });

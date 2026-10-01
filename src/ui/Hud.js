@@ -25,6 +25,7 @@ import './hud.css';
  *   closetOpen: boolean,
  *   timelapse: { speed: number, seconds: number, total: number } | null,
  *   musicOn: boolean,
+ *   photoOpen: boolean,
  * }} HudState hasMower: the player has grabbed the mower at least once; stageHint: a hint
  *   for where you are in the job (like "now mow across"), over the job's own; progress is 0..1
  *   for display; elapsed is seconds on the job; nextJob is the one after this (null if this
@@ -32,7 +33,8 @@ import './hud.css';
  *   edges is 0..1 for display; money is what to show in the wallet (it counts up); receipt
  *   is what the job paid, once it's done; closetOpen: you're dressing up (see Closet);
  *   timelapse: while a timelapse plays, how fast and how far through (seconds of mowing);
- *   musicOn: the soundtrack's playing (a button on the start screen turns it off and on).
+ *   musicOn: the soundtrack's playing (a button on the start screen turns it off and on);
+ *   photoOpen: photo mode's on (it has its own panel, so the rest of the HUD hides).
  */
 
 /**
@@ -124,6 +126,7 @@ export class Hud {
         <dt>Hold F</dt><dd>Highlight the grass that's left</dd>
         <dt>V</dt><dd>View the lawn from above</dd>
         <dt>L</dt><dd>Watch a timelapse of your mow</dd>
+        <dt>P</dt><dd>Photo mode: postcards and videos</dd>
         <dt>N</dt><dd>Next job (once this one's done)</dd>
         <dt>R</dt><dd>Mow it again (once it's done)</dd>
         <dt>M</dt><dd>Mute / unmute</dd>
@@ -182,6 +185,7 @@ export class Hud {
 
     let screen = locked ? 'playing' : 'menu';
     if (state.closetOpen) screen = 'closet';
+    if (state.photoOpen) screen = 'photo';
     this.set('screen', screen, () => {
       this.playPrompt.hidden = screen !== 'menu';
       this.objective.hidden = screen !== 'playing';
@@ -376,7 +380,7 @@ function element(tag, className) {
  */
 function showWithKeys(element, text) {
   // Split on the game's one-letter keys, standing alone: odd pieces are the keys.
-  const pieces = text.split(/\b([EFLMNQRTV])\b/);
+  const pieces = text.split(/\b([EFLMNPQRTV])\b/);
   element.replaceChildren(
     ...pieces.map((piece, i) => {
       if (i % 2 === 0) return piece;
