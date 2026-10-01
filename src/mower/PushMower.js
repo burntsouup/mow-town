@@ -298,6 +298,20 @@ export class PushMower {
   }
 
   /**
+   * Shows the mower somewhere else, without really moving it (the timelapse's replay):
+   * syncModel puts it back.
+   *
+   * @param {{ x: number, z: number, yaw: number }} pose World meters.
+   * @param {number} rolled Meters rolled forward since the last one, to spin the wheels.
+   */
+  showAt(pose, rolled) {
+    const { root, wheels } = this.model;
+    root.position.set(pose.x, 0, pose.z);
+    root.rotation.y = pose.yaw;
+    for (const wheel of wheels) wheel.rotation.x += rolled / WHEEL_RADIUS;
+  }
+
+  /**
    * Moves the visible mower to the collider, spins the wheels, and shakes the engine.
    *
    * @param {number} rolled Meters rolled forward this frame (negative = backward).

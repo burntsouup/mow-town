@@ -537,3 +537,19 @@ start by eye, hence the string line.
 **Revisit when:** the second pass needs a "what's left" highlight (it needs to know which
 grass hasn't been crossed, which the grass texture doesn't carry yet), or clients ask for
 harder patterns (circles, words).
+
+## 38. The timelapse replays recorded cuts, not a video
+
+**Why:** we already cut in fixed 60 Hz steps (DECISIONS #17), so a list of the steps is a
+tiny, exact recording of a mow: each lawn keeps one since it last grew back
+(`cutRecording.js`). The replay grows the lawn back and applies the steps sped up, so it's
+drawn live, from any angle, at full quality, and costs next to nothing to keep. Tuft and the
+mower are moved to where each step says (behind the handle while mowing; trimming steps
+note where Tuft and the parked mower were). When it's over, or cut short, the lawn is put
+back from a snapshot, and Tuft and the mower from where they were, so nothing can drift.
+While it plays, the game leaves Tuft, the mower and the job alone (`Game.update`).
+**Gotchas:** Tuft treats a jump of over 0.5 m in one update as a teleport and stops
+walking, so at high speed he's animated in slices of recorded time. Anything reading the
+lawn (job progress, the edges tip) has to skip the replay's lawn, which isn't the real one.
+**Revisit when:** recordings should outlive a page reload (the steps would need saving),
+or the replay should show the string trimmer in Tuft's hands.

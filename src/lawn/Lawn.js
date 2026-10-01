@@ -1,5 +1,6 @@
 import { stripeViewAngle } from '../camera/revealMath.js';
 import { config } from '../config.js';
+import { CutRecording } from './cutRecording.js';
 import { DeckCutter } from './DeckCutter.js';
 import { GrassField } from './GrassField.js';
 import { GrassGrid, MOWED_TOLERANCE } from './GrassGrid.js';
@@ -7,8 +8,9 @@ import { stripeAxes } from './patterns.js';
 import { TrimCutter } from './TrimCutter.js';
 
 /**
- * The mowable lawn: its grass data (GrassGrid), how it's drawn (GrassField), and the cutter
- * that turns deck movement into cut grass. Takes world positions and converts them.
+ * The mowable lawn: its grass data (GrassGrid), how it's drawn (GrassField), the cutters
+ * that turn deck and trimmer movement into cut grass, and a recording of every cut since the
+ * grass last grew back (for the timelapse). Takes world positions and converts them.
  */
 export class Lawn {
   /**
@@ -33,12 +35,14 @@ export class Lawn {
     this.grid.fill(area.heightAt, area.densityAt);
     this.grid.markEdges(config.job.edgeWidth, area.edgeAt);
     this.field = new GrassField(scene, this.grid, area);
-    this.cutter = new DeckCutter(this.grid);
-    this.trimCutter = new TrimCutter(this.grid);
+    this.recording = new CutRecording({ width: area.width, depth: area.depth });
+    this.cutter = new DeckCutter(this.grid, this.recording);
+    this.trimCutter = new TrimCutter(this.grid, this.recording);
     // Anything taller than this in the grass map (half a byte of slack) still needs mowing.
     this.field.state.uncutAbove = config.grass.cutHeight + MOWED_TOLERANCE + 0.5 / 255;
     /** Which leftovers are shrinking away: the lawn away from the edges, and the edges. */
     this.finishing = { inner: false, edges: false };
+    this.replaying = false; // the timelapse is replaying a mow here: leave the grass to it
   }
 
   /** @param {number} amount 0..1: how strongly to highlight grass that still needs mowing. */
@@ -52,11 +56,13 @@ export class Lawn {
    */
   finish() {
     this.finishing.inner = true;
+    this.recording.addFinish({ inner: true, edges: false });
   }
 
   /** The edges are done: the last bits along them shrink away too. */
   finishEdges() {
     this.finishing.edges = true;
+    this.recording.addFinish({ inner: false, edges: true });
   }
 
   /**
@@ -73,6 +79,7 @@ export class Lawn {
   /** Mows the whole lawn at once (a job you'd already finished, on a later visit). */
   mowAll() {
     this.grid.shrinkRemaining(Infinity);
+    this.recording.spoil(); // no record of how, so nothing to replay
   }
 
   /**
@@ -87,6 +94,7 @@ export class Lawn {
   /** Grows all the grass back, ready to mow again. */
   reset() {
     this.grid.reset();
+    this.recording.clear();
     this.cutter.lift();
     this.trimCutter.lift();
     this.finishing = { inner: false, edges: false };
@@ -153,9 +161,12 @@ export class Lawn {
    * @param {number} dt
    * @param {{ x: number, z: number }} from World position at the start of the frame.
    * @param {{ x: number, z: number }} to World position at the end of the frame.
+   * @param {import('./cutRecording.js').Actors | null} [actors] Where Tuft and the mower
+   *   are, for the timelapse to show.
    * @returns {number} Grass cut this frame (see GrassGrid.cutDeck).
    */
-  trim(dt, from, to) {
+  trim(dt, from, to, actors = null) {
+    this.recording.actors = actors;
     return this.trimCutter.update(
       dt,
       this.field.toLocal(from.x, from.z),
@@ -177,7 +188,7 @@ export class Lawn {
    */
   update(dt) {
     const { inner, edges } = this.finishing;
-    if (inner || edges) {
+    if ((inner || edges) && !this.replaying) {
       const left = this.grid.shrinkRemaining(dt / config.job.finishFadeTime, this.finishing);
       if (!left) this.finishing = { inner: false, edges: false };
     }

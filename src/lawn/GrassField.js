@@ -156,6 +156,17 @@ export class GrassField {
     const { center, width, depth } = this.area;
     return { x: x - center[0] + width / 2, z: z - center[1] + depth / 2 };
   }
+
+  /**
+   * Converts lawn-local meters back to a world position.
+   *
+   * @param {number} x
+   * @param {number} z
+   */
+  toWorld(x, z) {
+    const { center, width, depth } = this.area;
+    return { x: x + center[0] - width / 2, z: z + center[1] - depth / 2 };
+  }
 }
 
 /** @type {WeakMap<import('@babylonjs/core').Scene, RawTexture>} */

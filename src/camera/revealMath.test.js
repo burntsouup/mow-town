@@ -90,6 +90,20 @@ describe('RevealTimeline', () => {
     expect(timeline.duration).toBe(7);
   });
 
+  it('can hold longer this time round (for a timelapse)', () => {
+    const timeline = new RevealTimeline({ flyTime: 2, holdTime: 3 });
+    timeline.start(10);
+    expect(timeline.duration).toBe(14);
+    run(timeline, 2.1);
+    expect(timeline.isOverhead).toBe(true);
+    run(timeline, 9.5);
+    expect(timeline.isOverhead).toBe(true); // still holding, 11.6 s in
+    run(timeline, 0.6);
+    expect(timeline.isOverhead).toBe(false); // on the way down
+    timeline.start();
+    expect(timeline.duration).toBe(7); // back to the usual next time
+  });
+
   it('flies straight back from wherever it is when skipped', () => {
     const timeline = new RevealTimeline({ flyTime: 2, holdTime: 3 });
     timeline.start();

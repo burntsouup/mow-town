@@ -128,6 +128,40 @@ export class GrassGrid {
     this.markChanged(this.fullRect());
   }
 
+  /**
+   * A copy of everything about the lawn that cutting changes, to put back later with
+   * restore (the timelapse replays a mow on the grown-back lawn, then puts it back exactly).
+   */
+  snapshot() {
+    return {
+      height: this.height.slice(),
+      mowX: this.mowX.slice(),
+      mowZ: this.mowZ.slice(),
+      crossX: this.crossX.slice(),
+      crossZ: this.crossZ.slice(),
+      remainingWeight: this.remainingWeight,
+      edgeRemainingWeight: this.edgeRemainingWeight,
+      crossedWeight: this.crossedWeight,
+    };
+  }
+
+  /**
+   * Puts the lawn back exactly as it was when the snapshot was taken.
+   *
+   * @param {ReturnType<GrassGrid['snapshot']>} snapshot
+   */
+  restore(snapshot) {
+    this.height.set(snapshot.height);
+    this.mowX.set(snapshot.mowX);
+    this.mowZ.set(snapshot.mowZ);
+    this.crossX.set(snapshot.crossX);
+    this.crossZ.set(snapshot.crossZ);
+    this.remainingWeight = snapshot.remainingWeight;
+    this.edgeRemainingWeight = snapshot.edgeRemainingWeight;
+    this.crossedWeight = snapshot.crossedWeight;
+    this.markChanged(this.fullRect());
+  }
+
   /** Fraction of the lawn mowed (weighted), 0..1. */
   get progress() {
     if (this.totalWeight <= 0) return 1;

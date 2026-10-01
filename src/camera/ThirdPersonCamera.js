@@ -153,6 +153,9 @@ export class ThirdPersonCamera {
       const faint = mesh.metadata.seeThroughOpacity ?? config.camera.seeThroughOpacity;
       const target = blocking ? faint : 1;
       mesh.visibility += (target - mesh.visibility) * (1 - Math.exp(-8 * dt));
+      // Land exactly on solid: anything under 1 is drawn as see-through, which leaves the
+      // canopy looking dark and hollow from above.
+      if (mesh.visibility > 0.995) mesh.visibility = 1;
       mesh.isVisible = mesh.visibility > 0.02;
     }
   }

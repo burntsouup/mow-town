@@ -544,12 +544,22 @@ the checkerboard's second pass counts toward finishing the job, but only neat, s
 passes earn the tip (a scribble scores about 0.15). Not done yet: during the second pass,
 holding F can't show the bits you haven't crossed (the grass there is already short).
 
-### 2. Timelapse
+### 2. Timelapse ✅
 
-- [ ] Every cut is recorded (the fixed 60 Hz steps), from the last time the lawn grew back
-- [ ] After the aerial view (or on a key), the whole mow plays back sped up from above, with
+- [x] Every cut is recorded (the fixed 60 Hz steps), from the last time the lawn grew back
+- [x] After the aerial view (or on a key), the whole mow plays back sped up from above, with
       Tuft and the mower zipping round
-- [ ] The lawn ends up exactly as you left it
+- [x] The lawn ends up exactly as you left it
+
+**Findings:** because cutting runs in fixed steps, a recording of each step replays into
+exactly the same lawn, down to the last blade (a test checks it); only standing still and
+wandering off the lawn are left out, so the replay skips the dull bits. A full front lawn
+is about three and a half minutes of mowing, so it plays about 20 times faster to fit its
+10 seconds. Tuft is animated in steps of 0.2 s of recorded time, so he still walks rather
+than gliding (anything over 0.5 m a step counts as a teleport), and each step costs about
+0.4 ms, so the replay adds under 1.5 ms a frame even at 40 times faster. Found on the way:
+a tree that had faded out of the way came back very slightly see-through, which made it
+look dark and hollow from above; it now snaps back to solid.
 
 ### 3. Soundtrack
 

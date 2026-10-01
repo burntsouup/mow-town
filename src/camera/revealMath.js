@@ -70,8 +70,9 @@ export function blendViews(a, b, t) {
 }
 
 /**
- * The reveal's timing: fly up (flyTime), hold the aerial view (holdTime), fly back down
- * (flyTime). It can be cut short, in which case it flies straight back from wherever it is.
+ * The reveal's timing: fly up (flyTime), hold the aerial view (holdTime, or longer, say for
+ * a timelapse), fly back down (flyTime). It can be cut short, in which case it flies
+ * straight back from wherever it is.
  */
 export class RevealTimeline {
   /** @param {{ flyTime: number, holdTime: number }} timing Seconds. */
@@ -79,16 +80,24 @@ export class RevealTimeline {
     this.timing = timing;
     this.progress = 0; // 0 = the player's view, 1 = fully aerial (before easing)
     this.held = 0;
+    this.hold = timing.holdTime; // seconds to hold this time round
     this.time = 0; // seconds since it started
     this.isActive = false;
     this.isReturning = false;
   }
 
-  start() {
+  /** @param {number} [holdTime] Seconds to hold the aerial view (default: the usual). */
+  start(holdTime = this.timing.holdTime) {
     this.isActive = true;
     this.isReturning = false;
     this.held = 0;
+    this.hold = holdTime;
     this.time = 0;
+  }
+
+  /** True once it's all the way up (and until it heads back down). */
+  get isOverhead() {
+    return this.isActive && !this.isReturning && this.progress >= 1;
   }
 
   /** Head back down now. */
@@ -98,7 +107,7 @@ export class RevealTimeline {
 
   /** Total length of an uninterrupted reveal, in seconds. */
   get duration() {
-    return this.timing.flyTime * 2 + this.timing.holdTime;
+    return this.timing.flyTime * 2 + this.hold;
   }
 
   /**
@@ -113,7 +122,7 @@ export class RevealTimeline {
       this.progress = Math.min(1, this.progress + step);
       if (this.progress >= 1) {
         this.held += dt;
-        if (this.held >= this.timing.holdTime) this.isReturning = true;
+        if (this.held >= this.hold) this.isReturning = true;
       }
     } else {
       this.progress = Math.max(0, this.progress - step);

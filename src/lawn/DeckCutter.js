@@ -14,9 +14,14 @@ export const CUT_STEP_SECONDS = 1 / 60;
  * rate, which will matter for multiplayer.
  */
 export class DeckCutter {
-  /** @param {import('./GrassGrid.js').GrassGrid} grid */
-  constructor(grid) {
+  /**
+   * @param {import('./GrassGrid.js').GrassGrid} grid
+   * @param {import('./cutRecording.js').CutRecording | null} [recording] Where to keep each
+   *   tick's cut, for the timelapse.
+   */
+  constructor(grid, recording = null) {
     this.grid = grid;
+    this.recording = recording;
     this.ticker = new FixedTicker(CUT_STEP_SECONDS);
     /** @type {import('./deckPose.js').DeckPose | null} Where the deck was at the last tick. */
     this.lastPose = null;
@@ -34,6 +39,7 @@ export class DeckCutter {
     let cut = 0;
     for (const fraction of this.ticker.advance(dt)) {
       const pose = lerpPose(from, to, fraction);
+      this.recording?.addDeck(this.lastPose, pose, deck, cutTo);
       cut += this.lastPose
         ? this.grid.cutStroke(this.lastPose, pose, deck, cutTo)
         : this.grid.cutDeck(pose, deck, cutTo);
